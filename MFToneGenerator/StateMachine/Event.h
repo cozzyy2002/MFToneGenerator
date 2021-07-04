@@ -33,13 +33,14 @@ public:
 		MAX
 	};
 
-	typedef struct {
-		Event::Type eventType;
+	struct EventData {
+		Type eventType;
+		MediaEventType mediaEventType;
 		LPCTSTR name;
-		DWORD mediaSessionEvent;    // Used by Media Session Event.
-	} EventData;
+	};
 
-	static const EventData eventDataList[];
+	static const EventData* find(Type type);
+	static const EventData* find(MediaEventType mediaEventType);
 
 	Event(Type type) : type(type) {}
 	const Type type;

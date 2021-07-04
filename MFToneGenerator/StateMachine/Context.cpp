@@ -38,10 +38,10 @@ HRESULT Context::setupSession()
 
     MF_OBJECT_TYPE objectType;
     CComPtr<IUnknown> unk;
-    static LPCWSTR url =
-        //L"D:\\home\\MyMusic\\Rainbow\\Ritchie Blackmore's Rainbow\\01 Man on the Silver Mountain.wma"
-        //L"D:\\home\\MyMusic\\iAUDIO - Friends & Lovers.mp3"
-        L"D:\\home\\MyMusic\\Leon Russell\\Carney\\07 Carney.wma"
+    static LPCWSTR url = L"D:\\home\\MyMusic\\"
+        //L"Rainbow\\Ritchie Blackmore's Rainbow\\01 Man on the Silver Mountain.wma"
+        //L"iAUDIO - Friends & Lovers.mp3"
+        L"Leon Russell\\Carney\\07 Carney.wma"
         ;
     HR_ASSERT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
     HR_ASSERT_OK(unk->QueryInterface(&m_source));
@@ -155,13 +155,7 @@ HRESULT Context::MediaSessionCallback::Invoke(__RPC__in_opt IMFAsyncResult* pAsy
     MediaEventType mediaEventType;
     HR_ASSERT_OK(mediaEvent->GetType(&mediaEventType));
 
-    const Event::EventData* data = nullptr;
-    for(auto& d : Event::eventDataList) {
-        if(mediaEventType == d.mediaSessionEvent) {
-            data = &d;
-            break;
-        }
-    }
+    auto data = Event::find(mediaEventType);
     if(data) {
         HR_ASSERT_OK(m_context->triggerEvent(new SessionEvent(data->eventType, mediaEvent)));
     } else {

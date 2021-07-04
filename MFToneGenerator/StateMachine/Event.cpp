@@ -2,9 +2,9 @@
 
 #include "Event.h"
 
-/*static*/ const Event::EventData Event::eventDataList[] = {
+static const Event::EventData eventDataList[] = {
     // UI Events
-#define EVENT_DATA0(x) { Event::Type::x, _T(#x), MEUnknown }
+#define EVENT_DATA0(x) { Event::Type::x, MEUnknown, _T(#x) }
     EVENT_DATA0(Unknown),
     EVENT_DATA0(StartStop),
     EVENT_DATA0(PauseResume),
@@ -12,7 +12,7 @@
 #undef EVENT_DATA0
 
     // Media Session Events
-#define EVENT_DATA(x) { Event::Type::x, _T(#x), x }
+#define EVENT_DATA(x) { Event::Type::x, x, _T(#x) }
     EVENT_DATA(MEEndOfPresentation),
     EVENT_DATA(MEError),
     EVENT_DATA(MESessionClosed),
@@ -27,12 +27,34 @@
 #undef EVENT_DATA
 };
 
+/*static*/ const Event::EventData* Event::find(MediaEventType value)
+{
+    const EventData* data = nullptr;
+    for(auto& d : eventDataList) {
+        if(d.mediaEventType == value) {
+            data = &d;
+            break;
+        }
+    }
+    return data;
+}
+
+/*static*/ const Event::EventData* Event::find(Event::Type value)
+{
+    const EventData* data = nullptr;
+    if((size_t)value < ARRAYSIZE(eventDataList)) {
+        data = &eventDataList[(size_t)value];
+    }
+    return data;
+}
+
 std::tstring Event::toString() const
 {
     if(m_string.empty()) {
         auto baseString = tsm::Event<Context>::toString();
-        if((Type::Unknown <= type) && ((size_t)type < ARRAYSIZE(eventDataList))) {
-            m_string = format(_T("%s:%s"), baseString.c_str(), eventDataList[(int)type].name);
+        auto data = find(type);
+        if(data) {
+            m_string = format(_T("%s:%s"), baseString.c_str(), data->name);
         } else {
             m_string = format(_T("%s:Unknown(%d)"), baseString.c_str(), type);
         }

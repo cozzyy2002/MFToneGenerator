@@ -48,6 +48,7 @@ public:
 	virtual std::tstring toString() const override;
 
 protected:
+	using BaseClass = tsm::Event<Context>;
 	mutable std::tstring m_string;
 };
 

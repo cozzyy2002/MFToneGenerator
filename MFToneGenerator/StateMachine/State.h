@@ -8,7 +8,10 @@ class Event;
 class State : public tsm::State<Context, Event, State>
 {
 public:
-	State(State* masterState = nullptr) : tsm::State<Context, Event, State>(masterState) {}
+	State(State* masterState = nullptr) : BaseClass(masterState) {}
+
+protected:
+	using BaseClass = tsm::State<Context, Event, State>;
 };
 
 class StoppedState : public State

@@ -45,4 +45,5 @@ public:
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButtonStartStop();
 	afx_msg void OnBnClickedButtonPauseResume();
+	CString m_audioFileName;
 };

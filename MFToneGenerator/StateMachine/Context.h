@@ -11,6 +11,10 @@ public:
 	Context(HWND hWnd, UINT msg);
 	~Context();
 
+	void setAudioFileName(LPCTSTR value) { m_audioFileName = value; }
+	LPCTSTR getAudioFileName() const { return m_audioFileName.c_str(); }
+
+	HRESULT setup();
 	HRESULT setKey(Event* event);
 	HRESULT setupSession();
 	HRESULT startSession();
@@ -23,6 +27,8 @@ public:
 	virtual tsm::IStateMonitor* _getStateMonitor() override { return m_stateMonitor.get(); }
 
 protected:
+	using BaseClass = tsm::AsyncContext<Event, State>;
+	std::tstring m_audioFileName;
 	CComPtr<IMFMediaSource> m_source;
 	CComPtr<IMFMediaSession> m_session;
 

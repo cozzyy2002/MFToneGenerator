@@ -17,6 +17,11 @@ Context::~Context()
     HR_EXPECT_OK(MFShutdown());
 }
 
+HRESULT Context::setup()
+{
+    return HR_EXPECT_OK(BaseClass::setup(new StoppedState()));
+}
+
 HRESULT Context::setKey(Event* event)
 {
     if(event->type == Event::Type::SetKey) {
@@ -38,11 +43,7 @@ HRESULT Context::setupSession()
 
     MF_OBJECT_TYPE objectType;
     CComPtr<IUnknown> unk;
-    static LPCWSTR url = L"D:\\home\\MyMusic\\"
-        //L"Rainbow\\Ritchie Blackmore's Rainbow\\01 Man on the Silver Mountain.wma"
-        //L"iAUDIO - Friends & Lovers.mp3"
-        L"Leon Russell\\Carney\\07 Carney.wma"
-        ;
+    CT2W url(m_audioFileName.c_str());
     HR_ASSERT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
     HR_ASSERT_OK(unk->QueryInterface(&m_source));
 

@@ -9,7 +9,6 @@
 #include "afxdialogex.h"
 
 #include "StateMachine/Event.h"
-#include "StateMachine/State.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -55,6 +54,7 @@ END_MESSAGE_MAP()
 
 CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFTONEGENERATOR_DIALOG, pParent)
+	, m_audioFileName(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -62,6 +62,7 @@ CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 void CMFToneGeneratorDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Text(pDX, IDC_EDIT_AUDIO_FILE_NAME, m_audioFileName);
 }
 
 BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
@@ -110,7 +111,7 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 	m_context.reset(new Context(m_hWnd, WM_USER));
-	m_context->setup(new StoppedState());
+	m_context->setup();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -203,6 +204,8 @@ void CMFToneGeneratorDlg::OnClose()
 
 void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 {
+	UpdateData();
+	m_context->setAudioFileName(m_audioFileName);
 	m_context->triggerEvent(new Event(Event::Type::StartStop));
 }
 

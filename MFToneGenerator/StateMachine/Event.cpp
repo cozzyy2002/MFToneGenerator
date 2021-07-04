@@ -51,7 +51,7 @@ static const Event::EventData eventDataList[] = {
 std::tstring Event::toString() const
 {
     if(m_string.empty()) {
-        auto baseString = tsm::Event<Context>::toString();
+        auto baseString = BaseClass::toString();
         auto data = find(type);
         if(data) {
             m_string = format(_T("%s:%s"), baseString.c_str(), data->name);

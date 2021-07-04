@@ -1,5 +1,19 @@
 #pragma once
 
+template<typename T>
+struct ValueName {
+    T value;
+    LPCTSTR name;
+
+    template<size_t size>
+    static const ValueName* find(const ValueName(&list)[size], T& value) {
+        for(auto& d : list) {
+            if(d.value == value) { return &d; }
+        }
+        return nullptr;
+    }
+};
+
 class StringFormatter
 {
 public:

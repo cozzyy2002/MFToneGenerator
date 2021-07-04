@@ -8,6 +8,9 @@
 #include "MFToneGeneratorDlg.h"
 #include "afxdialogex.h"
 
+#include "StateMachine/Event.h"
+#include "StateMachine/State.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif

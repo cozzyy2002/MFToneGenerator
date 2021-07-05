@@ -17,6 +17,26 @@ std::tstring StringFormatter::format(LPCTSTR fmt, ...) const
 	return str;
 }
 
+std::tstring StringFormatter::format(HRESULT hr, ...) const
+{
+	va_list args;
+	va_start(args, hr);
+
+	std::tstring msg;
+	DWORD dwFlags = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM;
+	DWORD dwLanguageId = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+	LPTSTR lpBuffer;
+	auto size = FormatMessage(dwFlags, nullptr, hr, dwLanguageId, (LPTSTR)&lpBuffer, 100, &args);
+	va_end(args);
+	if(size) {
+		msg.assign(lpBuffer, size);
+		LocalFree(lpBuffer);
+	} else {
+		msg = format(_T("Error code: 0x%p"), hr);
+	}
+	return msg;
+}
+
 void Logger::log(LPCTSTR fmt, ...) const
 {
 	va_list args;

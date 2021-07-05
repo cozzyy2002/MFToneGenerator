@@ -19,6 +19,7 @@ class StringFormatter
 public:
 	std::tstring format_v(LPCTSTR fmt, va_list args) const;
 	std::tstring format(LPCTSTR fmt, ...) const;
+    std::tstring format(HRESULT hr, ...) const;
 };
 
 class Logger : public StringFormatter

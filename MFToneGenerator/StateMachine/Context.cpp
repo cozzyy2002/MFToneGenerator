@@ -43,8 +43,13 @@ HRESULT Context::setupSession()
 
     MF_OBJECT_TYPE objectType;
     CComPtr<IUnknown> unk;
-    CT2W url(m_audioFileName.c_str());
-    HR_ASSERT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
+    auto audioFileName = m_audioFileName.c_str();
+    CT2W url(audioFileName);
+    auto hr = HR_EXPECT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
+    if(FAILED(hr)) {
+        log(_T("%s: %s"), audioFileName, format(hr, audioFileName).c_str());
+        return hr;
+    }
     HR_ASSERT_OK(unk->QueryInterface(&m_source));
 
     HR_ASSERT_OK(MFCreateMediaSession(nullptr, &m_session));

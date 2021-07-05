@@ -8,11 +8,15 @@ HRESULT StoppedState::handleEvent(Context* context, Event* event, State** nextSt
 {
     switch(event->type) {
     case Event::Type::StartStop:
-        *nextState = new PlayingState();
+        if(SUCCEEDED(context->setupSession())) {
+            *nextState = new PlayingState();
+        }
         break;
     case Event::Type::SetKey:
         HR_ASSERT_OK(context->setKey(event));
-        *nextState = new PlayingState();
+        if(SUCCEEDED(context->setupSession())) {
+            *nextState = new PlayingState();
+        }
         break;
     case Event::Type::MESessionStopped:
     case Event::Type::MESessionEnded:
@@ -22,16 +26,6 @@ HRESULT StoppedState::handleEvent(Context* context, Event* event, State** nextSt
         HR_ASSERT_OK(context->shutdownSession());
         break;
     }
-    return S_OK;
-}
-
-HRESULT PlayingState::entry(Context* context, Event*, State*)
-{
-    return HR_EXPECT_OK(context->setupSession());
-}
-
-HRESULT PlayingState::exit(Context* context, Event*, State*)
-{
     return S_OK;
 }
 
@@ -64,11 +58,6 @@ HRESULT PlayingState::handleEvent(Context* context, Event* event, State** nextSt
 HRESULT PausedState::entry(Context* context, Event*, State*)
 {
     return HR_EXPECT_OK(context->pauseSession());
-}
-
-HRESULT PausedState::exit(Context* context, Event*, State*)
-{
-    return S_OK;
 }
 
 HRESULT PausedState::handleEvent(Context* context, Event* event, State** nextState)

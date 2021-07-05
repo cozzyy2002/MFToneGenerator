@@ -5,7 +5,7 @@
 class Event;
 class State;
 
-class Context : public tsm::AsyncContext<Event, State>
+class Context : public tsm::AsyncContext<Event, State>, public Logger
 {
 public:
 	Context(HWND hWnd, UINT msg);

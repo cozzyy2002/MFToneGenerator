@@ -26,8 +26,6 @@ public:
 	// Stop playing on shutdown of StateMachine.
 	virtual bool _isExitCalledOnShutdown() const override { return true; }
 
-	virtual HRESULT entry(Context* context, Event*, State*) override;
-	virtual HRESULT exit(Context* context, Event*, State*) override;
 	virtual HRESULT handleEvent(Context* context, Event* event, State** nextState) override;
 };
 
@@ -37,6 +35,5 @@ public:
 	PausedState(State* masterState) : State(masterState) {}
 
 	virtual HRESULT entry(Context* context, Event*, State*) override;
-	virtual HRESULT exit(Context* context, Event*, State*) override;
 	virtual HRESULT handleEvent(Context* context, Event* event, State** nextState) override;
 };

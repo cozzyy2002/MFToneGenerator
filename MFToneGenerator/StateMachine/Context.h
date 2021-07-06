@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utils.h"
+#include <functional>
 
 class Event;
 class State;
@@ -10,6 +11,21 @@ class Context : public tsm::AsyncContext<Event, State>, public Logger
 public:
 	Context(HWND hWnd, UINT msg);
 	~Context();
+
+	class ICallback
+	{
+	public:
+		virtual void onStarted() = 0;
+		virtual void onStopped() = 0;
+		virtual void onPaused() = 0;
+		virtual void onResumed() = 0;
+		virtual void onError(HRESULT hr, LPCTSTR message) = 0;
+	};
+
+	void setCallback(ICallback* callback) { m_callback = callback; }
+	ICallback* getCallback() { return m_callback; }
+
+	void callback(std::function<void (ICallback*)> func);
 
 	void setAudioFileName(LPCTSTR value) { m_audioFileName = value; }
 	LPCTSTR getAudioFileName() const { return m_audioFileName.c_str(); }
@@ -28,6 +44,7 @@ public:
 
 protected:
 	using BaseClass = tsm::AsyncContext<Event, State>;
+	ICallback* m_callback;
 	std::tstring m_audioFileName;
 	CComPtr<IMFMediaSource> m_source;
 	CComPtr<IMFMediaSession> m_session;
@@ -67,7 +84,7 @@ protected:
 		tsm::UnknownImpl<MediaSessionCallback> m_unknownImpl;
 	};
 
-	CComPtr<MediaSessionCallback> m_callback;
+	CComPtr<MediaSessionCallback> m_mediaSessionCallback;
 
 	class StateMonitor : public tsm::StateMonitor<Context, Event, State>, public Logger
 	{

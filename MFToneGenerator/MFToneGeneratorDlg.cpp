@@ -59,10 +59,42 @@ CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
+void CMFToneGeneratorDlg::onStarted()
+{
+	m_startStopButton.SetWindowText(_T("Stop"));
+	m_pauseResumeButton.SetWindowText(_T("Pause"));
+	m_pauseResumeButton.EnableWindow(TRUE);
+}
+
+void CMFToneGeneratorDlg::onStopped()
+{
+	m_startStopButton.SetWindowText(_T("Start"));
+	m_pauseResumeButton.SetWindowText(_T("Pause"));
+	m_pauseResumeButton.EnableWindow(FALSE);
+}
+
+void CMFToneGeneratorDlg::onPaused()
+{
+	m_pauseResumeButton.SetWindowText(_T("Resume"));
+}
+
+void CMFToneGeneratorDlg::onResumed()
+{
+	m_pauseResumeButton.SetWindowText(_T("Pause"));
+}
+
+void CMFToneGeneratorDlg::onError(HRESULT hr, LPCTSTR message)
+{
+	m_audioFileName = message;
+	UpdateData(FALSE);
+}
+
 void CMFToneGeneratorDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT_AUDIO_FILE_NAME, m_audioFileName);
+	DDX_Control(pDX, IDC_BUTTON_START_STOP, m_startStopButton);
+	DDX_Control(pDX, IDC_BUTTON_PAUSE_RESUME, m_pauseResumeButton);
 }
 
 BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
@@ -109,8 +141,11 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
+	m_pauseResumeButton.EnableWindow(FALSE);
+
 	// TODO: Add extra initialization here
 	m_context.reset(new Context(m_hWnd, WM_USER));
+	m_context->setCallback(this);
 	m_context->setup();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control

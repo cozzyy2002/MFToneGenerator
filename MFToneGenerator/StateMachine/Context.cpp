@@ -5,6 +5,7 @@
 #include "State.h"
 
 Context::Context(HWND hWnd, UINT msg)
+    : m_callback(nullptr)
 {
     HR_EXPECT_OK(MFStartup(MF_VERSION));
 
@@ -15,6 +16,13 @@ Context::Context(HWND hWnd, UINT msg)
 Context::~Context()
 {
     HR_EXPECT_OK(MFShutdown());
+}
+
+void Context::callback(std::function<void(ICallback*)> func)
+{
+    if(m_callback) {
+        func(m_callback);
+    }
 }
 
 HRESULT Context::setup()
@@ -47,14 +55,16 @@ HRESULT Context::setupSession()
     CT2W url(audioFileName);
     auto hr = HR_EXPECT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
     if(FAILED(hr)) {
-        log(_T("%s: %s"), audioFileName, format(hr, audioFileName).c_str());
+        auto msg(format(hr, audioFileName));
+        log(_T("%s: %s"), audioFileName, msg.c_str());
+        callback([hr, &msg](ICallback* callback) { callback->onError(hr, msg.c_str()); });
         return hr;
     }
     HR_ASSERT_OK(unk->QueryInterface(&m_source));
 
     HR_ASSERT_OK(MFCreateMediaSession(nullptr, &m_session));
-    m_callback = new MediaSessionCallback(this, m_session);
-    HR_ASSERT_OK(m_callback->beginGetEvent());
+    m_mediaSessionCallback = new MediaSessionCallback(this, m_session);
+    HR_ASSERT_OK(m_mediaSessionCallback->beginGetEvent());
 
     CComPtr <IMFTopology> topology;
     HR_ASSERT_OK(MFCreateTopology(&topology));
@@ -130,7 +140,7 @@ HRESULT Context::shutdownSession()
         HR_EXPECT_OK(m_session->Shutdown());
         m_session.Release();
     }
-    m_callback.Release();
+    m_mediaSessionCallback.Release();
 
     return S_OK;
 }

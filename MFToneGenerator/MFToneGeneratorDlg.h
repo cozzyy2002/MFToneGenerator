@@ -9,7 +9,7 @@
 #include <memory>
 
 // CMFToneGeneratorDlg dialog
-class CMFToneGeneratorDlg : public CDialogEx
+class CMFToneGeneratorDlg : public CDialogEx, public Context::ICallback
 {
 // Construction
 public:
@@ -19,6 +19,14 @@ public:
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_MFTONEGENERATOR_DIALOG };
 #endif
+
+#pragma region Implementation of Context::ICallback
+	virtual void onStarted();
+	virtual void onStopped();
+	virtual void onPaused();
+	virtual void onResumed();
+	virtual void onError(HRESULT hr, LPCTSTR message);
+#pragma endregion
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
@@ -46,4 +54,6 @@ public:
 	afx_msg void OnBnClickedButtonStartStop();
 	afx_msg void OnBnClickedButtonPauseResume();
 	CString m_audioFileName;
+	CButton m_startStopButton;
+	CButton m_pauseResumeButton;
 };

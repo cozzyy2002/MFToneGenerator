@@ -28,6 +28,8 @@ public:
 	virtual void onError(HRESULT hr, LPCTSTR message);
 #pragma endregion
 
+	void showStatus(LPCTSTR msg, ...);
+
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
@@ -56,4 +58,5 @@ public:
 	CString m_audioFileName;
 	CButton m_startStopButton;
 	CButton m_pauseResumeButton;
+	CString m_statusMessage;
 };

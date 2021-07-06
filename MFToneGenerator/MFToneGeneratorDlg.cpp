@@ -55,6 +55,7 @@ END_MESSAGE_MAP()
 CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFTONEGENERATOR_DIALOG, pParent)
 	, m_audioFileName(_T(""))
+	, m_statusMessage(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -64,6 +65,7 @@ void CMFToneGeneratorDlg::onStarted()
 	m_startStopButton.SetWindowText(_T("Stop"));
 	m_pauseResumeButton.SetWindowText(_T("Pause"));
 	m_pauseResumeButton.EnableWindow(TRUE);
+	showStatus(_T("Playing"));
 }
 
 void CMFToneGeneratorDlg::onStopped()
@@ -71,21 +73,35 @@ void CMFToneGeneratorDlg::onStopped()
 	m_startStopButton.SetWindowText(_T("Start"));
 	m_pauseResumeButton.SetWindowText(_T("Pause"));
 	m_pauseResumeButton.EnableWindow(FALSE);
+	showStatus(_T("Stopped"));
 }
 
 void CMFToneGeneratorDlg::onPaused()
 {
 	m_pauseResumeButton.SetWindowText(_T("Resume"));
+	showStatus(_T("Paused"));
 }
 
 void CMFToneGeneratorDlg::onResumed()
 {
 	m_pauseResumeButton.SetWindowText(_T("Pause"));
+	showStatus(_T("Playing"));
 }
 
 void CMFToneGeneratorDlg::onError(HRESULT hr, LPCTSTR message)
 {
-	m_audioFileName = message;
+	showStatus(_T("Error 0x%p: %s"), hr, message);
+}
+
+void CMFToneGeneratorDlg::showStatus(LPCTSTR msg, ...)
+{
+	va_list args;
+	va_start(args, msg);
+	m_statusMessage.FormatV(msg, args);
+	va_end(args);
+
+	m_statusMessage.TrimRight(_T("\r\n"));
+
 	UpdateData(FALSE);
 }
 
@@ -95,6 +111,7 @@ void CMFToneGeneratorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT_AUDIO_FILE_NAME, m_audioFileName);
 	DDX_Control(pDX, IDC_BUTTON_START_STOP, m_startStopButton);
 	DDX_Control(pDX, IDC_BUTTON_PAUSE_RESUME, m_pauseResumeButton);
+	DDX_Text(pDX, IDC_STATIC_STATUS, m_statusMessage);
 }
 
 BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)

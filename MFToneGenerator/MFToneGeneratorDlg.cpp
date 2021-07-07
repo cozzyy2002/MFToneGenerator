@@ -124,6 +124,7 @@ BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BUTTON_START_STOP, &CMFToneGeneratorDlg::OnBnClickedButtonStartStop)
 	ON_BN_CLICKED(IDC_BUTTON_PAUSE_RESUME, &CMFToneGeneratorDlg::OnBnClickedButtonPauseResume)
+	ON_WM_DROPFILES()
 END_MESSAGE_MAP()
 
 
@@ -265,4 +266,17 @@ void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 void CMFToneGeneratorDlg::OnBnClickedButtonPauseResume()
 {
 	m_context->triggerEvent(new Event(Event::Type::PauseResume));
+}
+
+
+void CMFToneGeneratorDlg::OnDropFiles(HDROP hDropInfo)
+{
+	auto size = DragQueryFile(hDropInfo, 0, nullptr, 0);
+	if(0 < size) {
+		size++;
+		std::unique_ptr<TCHAR[]> fileName(new TCHAR[size]);
+		DragQueryFile(hDropInfo, 0, fileName.get(), size);
+		m_audioFileName = fileName.get();
+		UpdateData(FALSE);
+	}
 }

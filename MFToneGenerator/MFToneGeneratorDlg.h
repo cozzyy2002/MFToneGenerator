@@ -59,4 +59,5 @@ public:
 	CButton m_startStopButton;
 	CButton m_pauseResumeButton;
 	CString m_statusMessage;
+	afx_msg void OnDropFiles(HDROP hDropInfo);
 };

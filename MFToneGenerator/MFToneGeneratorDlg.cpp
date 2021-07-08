@@ -88,9 +88,9 @@ void CMFToneGeneratorDlg::onResumed()
 	showStatus(_T("Playing"));
 }
 
-void CMFToneGeneratorDlg::onError(HRESULT hr, LPCTSTR message)
+void CMFToneGeneratorDlg::onError(LPCTSTR source, HRESULT hr, LPCTSTR message)
 {
-	showStatus(_T("Error 0x%p: %s"), hr, message);
+	showStatus(_T("%s failed. Error 0x%p: %s"), source, hr, message);
 }
 
 void CMFToneGeneratorDlg::showStatus(LPCTSTR msg, ...)

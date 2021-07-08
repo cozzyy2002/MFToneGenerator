@@ -19,7 +19,7 @@ public:
 		virtual void onStopped() = 0;
 		virtual void onPaused() = 0;
 		virtual void onResumed() = 0;
-		virtual void onError(HRESULT hr, LPCTSTR message) = 0;
+		virtual void onError(LPCTSTR source, HRESULT hr, LPCTSTR message) = 0;
 	};
 
 	void setCallback(ICallback* callback) { m_callback = callback; }

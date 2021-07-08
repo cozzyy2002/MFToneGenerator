@@ -21,11 +21,11 @@ public:
 #endif
 
 #pragma region Implementation of Context::ICallback
-	virtual void onStarted();
-	virtual void onStopped();
-	virtual void onPaused();
-	virtual void onResumed();
-	virtual void onError(HRESULT hr, LPCTSTR message);
+	virtual void onStarted() override;
+	virtual void onStopped() override;
+	virtual void onPaused() override;
+	virtual void onResumed() override;
+	virtual void onError(LPCTSTR source, HRESULT hr, LPCTSTR message) override;
 #pragma endregion
 
 	void showStatus(LPCTSTR msg, ...);

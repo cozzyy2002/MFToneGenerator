@@ -57,7 +57,7 @@ HRESULT Context::setupSession()
     if(FAILED(hr)) {
         auto msg(format(hr, audioFileName));
         log(_T("%s: %s"), audioFileName, msg.c_str());
-        callback([hr, &msg](ICallback* callback) { callback->onError(hr, msg.c_str()); });
+        callback([hr, &msg](ICallback* callback) { callback->onError(_T("CreateObjectFromURL()"), hr, msg.c_str()); });
         return hr;
     }
     HR_ASSERT_OK(unk->QueryInterface(&m_source));

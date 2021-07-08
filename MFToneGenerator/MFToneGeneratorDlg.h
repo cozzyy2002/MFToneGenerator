@@ -55,7 +55,7 @@ public:
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButtonStartStop();
 	afx_msg void OnBnClickedButtonPauseResume();
-	CString m_audioFileName;
+	CEdit m_audioFileName;
 	CButton m_startStopButton;
 	CButton m_pauseResumeButton;
 	CString m_statusMessage;

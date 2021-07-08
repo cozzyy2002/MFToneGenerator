@@ -54,7 +54,6 @@ END_MESSAGE_MAP()
 
 CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFTONEGENERATOR_DIALOG, pParent)
-	, m_audioFileName(_T(""))
 	, m_statusMessage(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -62,6 +61,8 @@ CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 
 void CMFToneGeneratorDlg::onStarted()
 {
+	DragAcceptFiles(FALSE);
+	m_audioFileName.EnableWindow(FALSE);
 	m_startStopButton.SetWindowText(_T("Stop"));
 	m_pauseResumeButton.SetWindowText(_T("Pause"));
 	m_pauseResumeButton.EnableWindow(TRUE);
@@ -70,6 +71,8 @@ void CMFToneGeneratorDlg::onStarted()
 
 void CMFToneGeneratorDlg::onStopped()
 {
+	DragAcceptFiles(TRUE);
+	m_audioFileName.EnableWindow(TRUE);
 	m_startStopButton.SetWindowText(_T("Start"));
 	m_pauseResumeButton.SetWindowText(_T("Pause"));
 	m_pauseResumeButton.EnableWindow(FALSE);
@@ -108,7 +111,7 @@ void CMFToneGeneratorDlg::showStatus(LPCTSTR msg, ...)
 void CMFToneGeneratorDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Text(pDX, IDC_EDIT_AUDIO_FILE_NAME, m_audioFileName);
+	DDX_Control(pDX, IDC_EDIT_AUDIO_FILE_NAME, m_audioFileName);
 	DDX_Control(pDX, IDC_BUTTON_START_STOP, m_startStopButton);
 	DDX_Control(pDX, IDC_BUTTON_PAUSE_RESUME, m_pauseResumeButton);
 	DDX_Text(pDX, IDC_STATIC_STATUS, m_statusMessage);
@@ -258,7 +261,9 @@ void CMFToneGeneratorDlg::OnClose()
 void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 {
 	UpdateData();
-	m_context->setAudioFileName(m_audioFileName);
+	CString fileName;
+	m_audioFileName.GetWindowText(fileName);
+	m_context->setAudioFileName(fileName);
 	m_context->triggerEvent(new Event(Event::Type::StartStop));
 }
 
@@ -276,7 +281,7 @@ void CMFToneGeneratorDlg::OnDropFiles(HDROP hDropInfo)
 		size++;
 		std::unique_ptr<TCHAR[]> fileName(new TCHAR[size]);
 		DragQueryFile(hDropInfo, 0, fileName.get(), size);
-		m_audioFileName = fileName.get();
+		m_audioFileName.SetWindowText(fileName.get());
 		UpdateData(FALSE);
 	}
 }

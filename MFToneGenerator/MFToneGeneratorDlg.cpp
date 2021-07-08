@@ -162,8 +162,6 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	m_pauseResumeButton.EnableWindow(FALSE);
-
 	// TODO: Add extra initialization here
 	m_context.reset(new Context(m_hWnd, WM_USER));
 	m_context->setCallback(this);

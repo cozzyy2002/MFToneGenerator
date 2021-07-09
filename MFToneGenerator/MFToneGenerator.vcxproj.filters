@@ -48,6 +48,9 @@
     <ClInclude Include="StateMachine\State.h">
       <Filter>StateMachine</Filter>
     </ClInclude>
+    <ClInclude Include="StateMachine\IContext.h">
+      <Filter>StateMachine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MFToneGenerator.cpp">

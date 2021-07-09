@@ -2,6 +2,8 @@
 
 #include "Utils.h"
 
+namespace statemachine {
+
 class Context;
 class Event;
 
@@ -40,3 +42,5 @@ public:
 	virtual HRESULT exit(Context* context, Event* event, State* nextState) override;
 	virtual HRESULT handleEvent(Context* context, Event* event, State** nextState) override;
 };
+
+}

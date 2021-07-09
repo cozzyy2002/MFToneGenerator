@@ -8,8 +8,6 @@
 #include "MFToneGeneratorDlg.h"
 #include "afxdialogex.h"
 
-#include "StateMachine/Event.h"
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -163,7 +161,7 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-	m_context.reset(new Context(m_hWnd, WM_USER));
+	m_context.reset(statemachine::IContext::create(m_hWnd, WM_USER));
 	m_context->setCallback(this);
 	m_context->setup();
 
@@ -244,7 +242,7 @@ void CMFToneGeneratorDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 void CMFToneGeneratorDlg::OnBnClickedButtonE()
 {
 	OutputDebugString(_T("OnBnClickedButtonE()\n"));
-	m_context->triggerEvent(new SetKeyEvent(300));
+	m_context->setKey(300);
 }
 
 
@@ -262,13 +260,13 @@ void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 	CString fileName;
 	m_audioFileName.GetWindowText(fileName);
 	m_context->setAudioFileName(fileName);
-	m_context->triggerEvent(new Event(Event::Type::StartStop));
+	m_context->startStop();
 }
 
 
 void CMFToneGeneratorDlg::OnBnClickedButtonPauseResume()
 {
-	m_context->triggerEvent(new Event(Event::Type::PauseResume));
+	m_context->pauseResume();
 }
 
 

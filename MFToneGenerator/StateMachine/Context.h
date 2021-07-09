@@ -1,36 +1,36 @@
 #pragma once
 
+#include "IContext.h"
 #include "Utils.h"
 #include <functional>
+
+namespace statemachine {
 
 class Event;
 class State;
 
-class Context : public tsm::AsyncContext<Event, State>, public Logger
+class Context : public IContext, public tsm::AsyncContext<Event, State>, public Logger
 {
 public:
 	Context(HWND hWnd, UINT msg);
 	~Context();
 
-	class ICallback
-	{
-	public:
-		virtual void onStarted() = 0;
-		virtual void onStopped() = 0;
-		virtual void onPaused() = 0;
-		virtual void onResumed() = 0;
-		virtual void onError(LPCTSTR source, HRESULT hr, LPCTSTR message) = 0;
-	};
+	virtual void setCallback(ICallback* callback) override { m_callback = callback; }
+	virtual ICallback* getCallback() override { return m_callback; }
 
-	void setCallback(ICallback* callback) { m_callback = callback; }
-	ICallback* getCallback() { return m_callback; }
+	void callback(std::function<void(ICallback*)> func);
 
-	void callback(std::function<void (ICallback*)> func);
+	virtual void setAudioFileName(LPCTSTR value) override { m_audioFileName = value; }
+	virtual LPCTSTR getAudioFileName() const override { return m_audioFileName.c_str(); }
 
-	void setAudioFileName(LPCTSTR value) { m_audioFileName = value; }
-	LPCTSTR getAudioFileName() const { return m_audioFileName.c_str(); }
+#pragma region Implementation of IContext
+	virtual HRESULT setup() override;
+	virtual HRESULT shutdown() override;
+	virtual HRESULT setKey(float key) override;
+	virtual HRESULT startStop() override;
+	virtual HRESULT pauseResume() override;
+#pragma endregion
 
-	HRESULT setup();
 	HRESULT setKey(Event* event);
 	HRESULT setupSession();
 	HRESULT startSession();
@@ -95,3 +95,5 @@ protected:
 
 	std::unique_ptr<StateMonitor> m_stateMonitor;
 };
+
+}

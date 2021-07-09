@@ -2,6 +2,8 @@
 
 #include "Event.h"
 
+namespace statemachine {
+
 static const Event::EventData eventDataList[] = {
     // UI Events
 #define EVENT_DATA0(x) { Event::Type::x, MEUnknown, _T(#x) }
@@ -111,4 +113,6 @@ std::tstring SessionEvent::toString() const
         }
     }
     return m_string;
+}
+
 }

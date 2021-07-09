@@ -4,9 +4,16 @@
 #include "Event.h"
 #include "State.h"
 
+namespace statemachine {
+
 static void print(IMFMediaSource*);
 static void print(IMFStreamDescriptor*, DWORD index);
-static void print(IMFAttributes* , LPCTSTR title);
+static void print(IMFAttributes*, LPCTSTR title);
+
+/*static*/ IContext* IContext::create(HWND hWnd, UINT msg)
+{
+    return new Context(hWnd, msg);
+}
 
 Context::Context(HWND hWnd, UINT msg)
     : m_callback(nullptr)
@@ -32,6 +39,26 @@ void Context::callback(std::function<void(ICallback*)> func)
 HRESULT Context::setup()
 {
     return HR_EXPECT_OK(BaseClass::setup(new StoppedState()));
+}
+
+HRESULT Context::shutdown()
+{
+    return HR_EXPECT_OK(BaseClass::shutdown());
+}
+
+HRESULT Context::setKey(float key)
+{
+    return HR_EXPECT_OK(triggerEvent(new SetKeyEvent(key)));
+}
+
+HRESULT Context::startStop()
+{
+    return HR_EXPECT_OK(triggerEvent(new Event(Event::Type::StartStop)));
+}
+
+HRESULT Context::pauseResume()
+{
+    return HR_EXPECT_OK(triggerEvent(new Event(Event::Type::PauseResume)));
 }
 
 HRESULT Context::setKey(Event* event)
@@ -284,11 +311,11 @@ void print(IMFAttributes* attr, LPCTSTR title)
             strValue = log.format(_T("VT_UI8(%d) %u"), VT_UI8, value.bVal);
             break;
         case VT_LPWSTR:
-            {
-                CW2T tValue(value.pwszVal);
-                strValue = log.format(_T("VT_LPWSTR(%d) `%s`"), VT_LPWSTR, (LPCTSTR)tValue);
-            }
-            break;
+        {
+            CW2T tValue(value.pwszVal);
+            strValue = log.format(_T("VT_LPWSTR(%d) `%s`"), VT_LPWSTR, (LPCTSTR)tValue);
+        }
+        break;
         default:
             strValue = log.format(_T("Unknown type %d"), value.vt);
             break;
@@ -297,4 +324,6 @@ void print(IMFAttributes* attr, LPCTSTR title)
         log.log(_T("  %2d %s %s"), i, (LPCTSTR)tstrKey, strValue.c_str());
         PropVariantClear(&value);
     }
+}
+
 }

@@ -2,6 +2,8 @@
 
 #include "Utils.h"
 
+namespace statemachine {
+
 class Context;
 class State;
 
@@ -70,3 +72,5 @@ public:
 protected:
 	CComPtr<IMFMediaEvent> m_mediaEvent;
 };
+
+}

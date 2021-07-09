@@ -4,6 +4,8 @@
 #include "Event.h"
 #include "State.h"
 
+namespace statemachine {
+
 HRESULT StoppedState::handleEvent(Context* context, Event* event, State** nextState)
 {
     switch(event->type) {
@@ -93,4 +95,6 @@ HRESULT PausedState::handleEvent(Context* context, Event* event, State** nextSta
         return S_FALSE;
     }
     return S_OK;
+}
+
 }

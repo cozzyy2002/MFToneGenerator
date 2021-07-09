@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "StateMachine/Context.h"
+#include "StateMachine/IContext.h"
 
 #include <memory>
 
 // CMFToneGeneratorDlg dialog
-class CMFToneGeneratorDlg : public CDialogEx, public Context::ICallback
+class CMFToneGeneratorDlg : public CDialogEx, public statemachine::IContext::ICallback
 {
 // Construction
 public:
@@ -20,7 +20,7 @@ public:
 	enum { IDD = IDD_MFTONEGENERATOR_DIALOG };
 #endif
 
-#pragma region Implementation of Context::ICallback
+#pragma region Implementation of statemachine::IContext::ICallback
 	virtual void onStarted() override;
 	virtual void onStopped() override;
 	virtual void onPaused() override;
@@ -50,7 +50,7 @@ public:
 	afx_msg void OnBnClickedButtonE();
 
 protected:
-	std::unique_ptr<Context> m_context;
+	std::unique_ptr<statemachine::IContext> m_context;
 public:
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButtonStartStop();

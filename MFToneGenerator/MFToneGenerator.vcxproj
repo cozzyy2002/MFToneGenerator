@@ -244,6 +244,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="StateMachine\Context.h" />
     <ClInclude Include="StateMachine\Event.h" />
+    <ClInclude Include="StateMachine\IContext.h" />
     <ClInclude Include="StateMachine\State.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Utils.h" />

@@ -4,6 +4,10 @@
 #include "Event.h"
 #include "State.h"
 
+static void print(IMFMediaSource*);
+static void print(IMFStreamDescriptor*, DWORD index);
+static void print(IMFAttributes* , LPCTSTR title);
+
 Context::Context(HWND hWnd, UINT msg)
     : m_callback(nullptr)
 {
@@ -61,6 +65,7 @@ HRESULT Context::setupSession()
         return hr;
     }
     HR_ASSERT_OK(unk->QueryInterface(&m_source));
+    print(m_source);
 
     HR_ASSERT_OK(MFCreateMediaSession(nullptr, &m_session));
     m_mediaSessionCallback = new MediaSessionCallback(this, m_session);
@@ -196,4 +201,100 @@ void Context::StateMonitor::onStateChanged(Context* context, Event* event, State
 #define TO_STRING(x) x ? x->toString().c_str() : _T("null")
     log(_T("onStateChanged(%s, %s, %s)"), TO_STRING(event), TO_STRING(previous), TO_STRING(next));
 #undef TO_STRING
+}
+
+
+void print(IMFMediaSource* mediaSource)
+{
+    Logger log;
+
+    struct Charact {
+        MFMEDIASOURCE_CHARACTERISTICS charact;
+        LPCTSTR name;
+    };
+    static const Charact charactList[] = {
+#define ITEM(x) { MFMEDIASOURCE_##x, _T(#x) }
+        ITEM(IS_LIVE),
+        ITEM(CAN_SEEK),
+        ITEM(CAN_PAUSE),
+        ITEM(HAS_SLOW_SEEK),
+        ITEM(HAS_MULTIPLE_PRESENTATIONS),
+        ITEM(CAN_SKIPFORWARD),
+        ITEM(CAN_SKIPBACKWARD),
+        ITEM(DOES_NOT_USE_NETWORK),
+#undef ITEM
+    };
+    DWORD characts;
+    mediaSource->GetCharacteristics(&characts);
+    std::tstring strCharacts;
+    std::tstring separator;
+    for(auto& charact : charactList) {
+        if(charact.charact == (charact.charact & characts)) {
+            strCharacts += separator + charact.name;
+            if(separator.empty()) { separator = _T(", "); }
+            continue;
+        }
+    }
+
+    CComPtr<IMFPresentationDescriptor> pd;
+    mediaSource->CreatePresentationDescriptor(&pd);
+    DWORD sdCount;
+    pd->GetStreamDescriptorCount(&sdCount);
+    log.log(_T("IMFMediaSource: %d Stream Desctiptors, Characteristics=0x%08x [%s]"), sdCount, characts, strCharacts.c_str());
+    print(pd, _T("Attributes of IMFPresentationDescriptor"));
+    for(DWORD i = 0; i < sdCount; i++) {
+        BOOL isSelected;
+        CComPtr<IMFStreamDescriptor> sd;
+        pd->GetStreamDescriptorByIndex(i, &isSelected, &sd);
+        print(sd, i);
+    }
+}
+
+void print(IMFStreamDescriptor* sd, DWORD index)
+{
+    Logger log;
+    DWORD id;
+    sd->GetStreamIdentifier(&id);
+    log.log(_T("IMFStreamDescriptor %d: Identifier=%d"), index, id);
+    print(sd, _T("Attributes of IMFStreamDescriptor"));
+}
+
+void print(IMFAttributes* attr, LPCTSTR title)
+{
+    Logger log;
+    UINT32 count;
+    attr->GetCount(&count);
+
+    log.log(_T("%s: %d Items"), title, count);
+    for(UINT32 i = 0; i < count; i++) {
+        GUID key;
+        PROPVARIANT value;
+        attr->GetItemByIndex(i, &key, &value);
+
+        OLECHAR wstrKey[50];
+        StringFromGUID2(key, wstrKey, ARRAYSIZE(wstrKey));
+        CW2T tstrKey(wstrKey);
+
+        std::tstring strValue;
+        switch(value.vt) {
+        case VT_UI4:
+            strValue = log.format(_T("VT_UI4(%d) %u"), VT_UI4, value.uintVal);
+            break;
+        case VT_UI8:
+            strValue = log.format(_T("VT_UI8(%d) %u"), VT_UI8, value.bVal);
+            break;
+        case VT_LPWSTR:
+            {
+                CW2T tValue(value.pwszVal);
+                strValue = log.format(_T("VT_LPWSTR(%d) `%s`"), VT_LPWSTR, (LPCTSTR)tValue);
+            }
+            break;
+        default:
+            strValue = log.format(_T("Unknown type %d"), value.vt);
+            break;
+        }
+
+        log.log(_T("  %2d %s %s"), i, (LPCTSTR)tstrKey, strValue.c_str());
+        PropVariantClear(&value);
+    }
 }

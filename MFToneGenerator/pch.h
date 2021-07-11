@@ -12,6 +12,7 @@
 
 #include <mfidl.h>
 #include <mfapi.h>
+#include <Mferror.h>
 #include <stdio.h>
 
 #include <StateMachine/stdafx.h>

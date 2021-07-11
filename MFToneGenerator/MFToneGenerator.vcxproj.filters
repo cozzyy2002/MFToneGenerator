@@ -16,6 +16,9 @@
     <Filter Include="StateMachine">
       <UniqueIdentifier>{76c48bb8-d418-4eb7-b3a3-6c1979033243}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ToneMediaSource">
+      <UniqueIdentifier>{50108ce3-a9aa-4fae-a036-f6ba05f4cbfb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MFToneGenerator.h">
@@ -51,6 +54,9 @@
     <ClInclude Include="StateMachine\IContext.h">
       <Filter>StateMachine</Filter>
     </ClInclude>
+    <ClInclude Include="ToneMediaSource\ToneMediaSource.h">
+      <Filter>ToneMediaSource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MFToneGenerator.cpp">
@@ -73,6 +79,9 @@
     </ClCompile>
     <ClCompile Include="StateMachine\State.cpp">
       <Filter>StateMachine</Filter>
+    </ClCompile>
+    <ClCompile Include="ToneMediaSource\ToneMediaSource.cpp">
+      <Filter>ToneMediaSource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

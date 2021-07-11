@@ -247,6 +247,7 @@
     <ClInclude Include="StateMachine\IContext.h" />
     <ClInclude Include="StateMachine\State.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="ToneMediaSource\ToneMediaSource.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -261,6 +262,7 @@
     <ClCompile Include="StateMachine\Context.cpp" />
     <ClCompile Include="StateMachine\Event.cpp" />
     <ClCompile Include="StateMachine\State.cpp" />
+    <ClCompile Include="ToneMediaSource\ToneMediaSource.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>

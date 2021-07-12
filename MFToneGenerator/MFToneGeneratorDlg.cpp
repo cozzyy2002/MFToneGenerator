@@ -57,13 +57,15 @@ CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
-void CMFToneGeneratorDlg::onStarted()
+void CMFToneGeneratorDlg::onStarted(bool canPause)
 {
 	DragAcceptFiles(FALSE);
 	m_audioFileName.EnableWindow(FALSE);
 	m_startStopButton.SetWindowText(_T("Stop"));
-	m_pauseResumeButton.SetWindowText(_T("Pause"));
-	m_pauseResumeButton.EnableWindow(TRUE);
+	if(canPause) {
+		m_pauseResumeButton.SetWindowText(_T("Pause"));
+		m_pauseResumeButton.EnableWindow(TRUE);
+	}
 	showStatus(_T("Playing"));
 }
 

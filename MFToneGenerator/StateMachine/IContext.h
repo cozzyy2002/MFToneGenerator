@@ -11,7 +11,7 @@ public:
 	class ICallback
 	{
 	public:
-		virtual void onStarted() = 0;
+		virtual void onStarted(bool canPause) = 0;
 		virtual void onStopped() = 0;
 		virtual void onPaused() = 0;
 		virtual void onResumed() = 0;

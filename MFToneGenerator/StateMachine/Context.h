@@ -19,6 +19,7 @@ public:
 	virtual ICallback* getCallback() override { return m_callback; }
 
 	void callback(std::function<void(ICallback*)> func);
+	IMFMediaSession* getSession() { return m_session; }
 
 	virtual void setAudioFileName(LPCTSTR value) override { m_audioFileName = value; }
 	virtual LPCTSTR getAudioFileName() const override { return m_audioFileName.c_str(); }

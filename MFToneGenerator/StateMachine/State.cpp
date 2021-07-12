@@ -28,7 +28,10 @@ HRESULT StoppedState::handleEvent(Context* context, Event* event, State** nextSt
 
 HRESULT PlayingState::entry(Context* context, Event* event, State* previousState)
 {
-    context->callback([](Context::ICallback* callback) { callback->onStarted(); });
+    DWORD caps;
+    HR_ASSERT_OK(context->getSession()->GetSessionCapabilities(&caps));
+    bool canPause = caps & MFSESSIONCAP_PAUSE;
+    context->callback([canPause](Context::ICallback* callback) { callback->onStarted(canPause); });
     return S_OK;
 }
 

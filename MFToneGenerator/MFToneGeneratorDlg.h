@@ -21,7 +21,7 @@ public:
 #endif
 
 #pragma region Implementation of statemachine::IContext::ICallback
-	virtual void onStarted() override;
+	virtual void onStarted(bool canPause) override;
 	virtual void onStopped() override;
 	virtual void onPaused() override;
 	virtual void onResumed() override;

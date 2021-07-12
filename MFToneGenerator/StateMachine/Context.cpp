@@ -3,6 +3,7 @@
 #include "Context.h"
 #include "Event.h"
 #include "State.h"
+#include "ToneMediaSource/ToneMediaSource.h"
 
 namespace statemachine {
 
@@ -77,21 +78,25 @@ HRESULT Context::setupSession()
     // Media Session should not be created yet.
     HR_ASSERT(!m_session, E_ILLEGAL_METHOD_CALL);
 
-    CComPtr<IMFSourceResolver> resolver;
-    HR_ASSERT_OK(MFCreateSourceResolver(&resolver));
+    if(m_audioFileName.empty()) {
+        m_source = new ToneMediaSource();
+    } else {
+        CComPtr<IMFSourceResolver> resolver;
+        HR_ASSERT_OK(MFCreateSourceResolver(&resolver));
 
-    MF_OBJECT_TYPE objectType;
-    CComPtr<IUnknown> unk;
-    auto audioFileName = m_audioFileName.c_str();
-    CT2W url(audioFileName);
-    auto hr = HR_EXPECT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
-    if(FAILED(hr)) {
-        auto msg(format(hr, audioFileName));
-        log(_T("%s: %s"), audioFileName, msg.c_str());
-        callback([hr, &msg](ICallback* callback) { callback->onError(_T("CreateObjectFromURL()"), hr, msg.c_str()); });
-        return hr;
+        MF_OBJECT_TYPE objectType;
+        CComPtr<IUnknown> unk;
+        auto audioFileName = m_audioFileName.c_str();
+        CT2W url(audioFileName);
+        auto hr = HR_EXPECT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
+        if(FAILED(hr)) {
+            auto msg(format(hr, audioFileName));
+            log(_T("%s: %s"), audioFileName, msg.c_str());
+            callback([hr, &msg](ICallback* callback) { callback->onError(_T("CreateObjectFromURL()"), hr, msg.c_str()); });
+            return hr;
+        }
+        HR_ASSERT_OK(unk->QueryInterface(&m_source));
     }
-    HR_ASSERT_OK(unk->QueryInterface(&m_source));
     print(m_source);
 
     HR_ASSERT_OK(MFCreateMediaSession(nullptr, &m_session));

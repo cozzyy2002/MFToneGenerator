@@ -57,6 +57,12 @@
     <ClInclude Include="ToneMediaSource\ToneMediaSource.h">
       <Filter>ToneMediaSource</Filter>
     </ClInclude>
+    <ClInclude Include="ToneMediaSource\ToneMediaStream.h">
+      <Filter>ToneMediaSource</Filter>
+    </ClInclude>
+    <ClInclude Include="ToneMediaSource\MediaEventGenerator.h">
+      <Filter>ToneMediaSource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MFToneGenerator.cpp">
@@ -81,6 +87,12 @@
       <Filter>StateMachine</Filter>
     </ClCompile>
     <ClCompile Include="ToneMediaSource\ToneMediaSource.cpp">
+      <Filter>ToneMediaSource</Filter>
+    </ClCompile>
+    <ClCompile Include="ToneMediaSource\ToneMediaStream.cpp">
+      <Filter>ToneMediaSource</Filter>
+    </ClCompile>
+    <ClCompile Include="ToneMediaSource\MediaEventGenerator.cpp">
       <Filter>ToneMediaSource</Filter>
     </ClCompile>
   </ItemGroup>

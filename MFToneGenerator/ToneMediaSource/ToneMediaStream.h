@@ -3,38 +3,36 @@
 #include "MediaEventGenerator.h"
 #include "Utils.h"
 
-class ToneMediaStream;
+class ToneMediaSource;
 
 /**
- * Custom Media Source generates Tone Wave.
+ * Custom Media Stream generates Tone Wave.
  */
-class ToneMediaSource : public IMFMediaSource, DoNotCopy
+class ToneMediaStream : public IMFMediaStream, DoNotCopy
 {
 public:
-    ToneMediaSource();
-    ToneMediaStream* getMediaStream() { return m_mediaStream; }
+    ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd);
+
+    HRESULT start();
+    HRESULT stop();
+    HRESULT shutdown();
+    HRESULT QueueEvent(MediaEventType met, const PROPVARIANT* pvValue = nullptr) { return m_eventGenerator.QueueEvent(met, pvValue); }
 
 protected:
-    HRESULT checkShutdown();
+    CComPtr<ToneMediaSource> m_mediaSource;
+    CComPtr<IMFStreamDescriptor> m_sd;
 
-#pragma region Implementation of IMFMediaSource
+#pragma region Implementation of IMFMediaStream
 public:
-    virtual HRESULT STDMETHODCALLTYPE GetCharacteristics(
-        /* [out] */ __RPC__out DWORD* pdwCharacteristics) override;
-    virtual /* [local] */ HRESULT STDMETHODCALLTYPE CreatePresentationDescriptor(
-        /* [annotation][out] */
-        _Outptr_  IMFPresentationDescriptor** ppPresentationDescriptor) override;
-    virtual HRESULT STDMETHODCALLTYPE Start(
-        /* [in] */ __RPC__in_opt IMFPresentationDescriptor* pPresentationDescriptor,
-        /* [unique][in] */ __RPC__in_opt const GUID* pguidTimeFormat,
-        /* [unique][in] */ __RPC__in_opt const PROPVARIANT* pvarStartPosition) override;
-    virtual HRESULT STDMETHODCALLTYPE Stop(void) override;
-    virtual HRESULT STDMETHODCALLTYPE Pause(void) override;
-    virtual HRESULT STDMETHODCALLTYPE Shutdown(void) override;
+    virtual HRESULT STDMETHODCALLTYPE GetMediaSource(
+        /* [out] */ __RPC__deref_out_opt IMFMediaSource** ppMediaSource) override;
+    virtual HRESULT STDMETHODCALLTYPE GetStreamDescriptor(
+        /* [out] */ __RPC__deref_out_opt IMFStreamDescriptor** ppStreamDescriptor) override;
+    virtual /* [local] */ HRESULT STDMETHODCALLTYPE RequestSample(
+        /* [in] */ IUnknown* pToken) override;
 
 protected:
-    CComPtr<IMFPresentationDescriptor> m_pd;
-    CComPtr<ToneMediaStream> m_mediaStream;
+    LONGLONG m_sampleTime;
 #pragma endregion
 
 #pragma region Implementation of IMFMediaEventGenerator
@@ -67,6 +65,6 @@ public:
     virtual ULONG STDMETHODCALLTYPE Release(void) override;
 
 protected:
-    tsm::UnknownImpl<ToneMediaSource> m_unknownImpl;
+    tsm::UnknownImpl<ToneMediaStream> m_unknownImpl;
 #pragma endregion
 };

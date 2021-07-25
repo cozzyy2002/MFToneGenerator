@@ -17,6 +17,7 @@ struct ValueName {
 class StringFormatter
 {
 public:
+    template<size_t size = 0x100>
 	std::tstring format_v(LPCTSTR fmt, va_list args) const;
 	std::tstring format(LPCTSTR fmt, ...) const;
     std::tstring format(HRESULT hr, ...) const;

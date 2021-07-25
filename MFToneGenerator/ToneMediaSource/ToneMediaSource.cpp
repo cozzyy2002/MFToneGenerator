@@ -33,16 +33,16 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_  IMFPre
 	if(!m_pd) {
 		// Create MediaType
 		static const WORD nChannels = 1;			// Mono
-		static const DWORD nSamplesPerSec = 8000;	// 8.0kHz
+		static const DWORD nSamplesPerSec = 44100;	// 44.1kHz
 		static const WORD wBitsPerSample = 16;		// 16bit/Sample
 		WAVEFORMATEX waveFormat = {
 			WAVE_FORMAT_PCM,
-			nChannels,								// nChannels
-			nSamplesPerSec,							// nSamplesPerSec
-			nSamplesPerSec * wBitsPerSample / 8,	// nAvgBytesPerSec
-			wBitsPerSample / 8,						// nBlockAlign
-			wBitsPerSample,							// wBitsPerSample
-			0,										// cbSize(No extra information)
+			nChannels,											// nChannels
+			nSamplesPerSec,										// nSamplesPerSec
+			nChannels * nSamplesPerSec * wBitsPerSample / 8,	// nAvgBytesPerSec
+			nChannels * wBitsPerSample / 8,						// nBlockAlign
+			wBitsPerSample,										// wBitsPerSample
+			0,													// cbSize(No extra information)
 		};
 
 		CComPtr<IMFMediaType> mediaType;
@@ -51,13 +51,15 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_  IMFPre
 
 		// Create StreamDesctiptor and set current MediaType
 		CComPtr<IMFStreamDescriptor> sd;
-		MFCreateStreamDescriptor(1, 1, &mediaType, &sd);
+		IMFMediaType* mediaTypes[] = { mediaType.p };
+		MFCreateStreamDescriptor(1, ARRAYSIZE(mediaTypes), mediaTypes, &sd);
 		CComPtr<IMFMediaTypeHandler> mth;
 		sd->GetMediaTypeHandler(&mth);
 		mth->SetCurrentMediaType(mediaType);
 
 		// Create PresentationDesctiptor and select the only MediaStream.
-		MFCreatePresentationDescriptor(1, &sd, &m_pd);
+		IMFStreamDescriptor* sds[] = { sd.p };
+		MFCreatePresentationDescriptor(ARRAYSIZE(sds), sds, &m_pd);
 		m_pd->SelectStream(0);
 	}
 

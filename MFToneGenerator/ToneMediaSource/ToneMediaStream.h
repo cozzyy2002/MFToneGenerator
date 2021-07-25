@@ -19,8 +19,14 @@ public:
     HRESULT QueueEvent(MediaEventType met, const PROPVARIANT* pvValue = nullptr) { return m_eventGenerator.QueueEvent(met, pvValue); }
 
 protected:
-    CComPtr<ToneMediaSource> m_mediaSource;
+    ToneMediaSource* m_mediaSource;
     CComPtr<IMFStreamDescriptor> m_sd;
+    float m_key;
+
+    // PCM data for 1-cycle wave.
+    std::unique_ptr<BYTE[]> m_cycleData;
+    size_t m_cycleSize;
+    size_t m_cyclePosition;
 
 #pragma region Implementation of IMFMediaStream
 public:

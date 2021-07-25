@@ -1,9 +1,10 @@
 #include "pch.h"
 #include "Utils.h"
 
+template<size_t size>
 std::tstring StringFormatter::format_v(LPCTSTR fmt, va_list args) const
 {
-	TCHAR str[1000];
+	TCHAR str[size];
 	_vstprintf_s(str, fmt, args);
 	return str;
 }

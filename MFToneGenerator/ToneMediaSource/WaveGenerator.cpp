@@ -5,15 +5,11 @@
 
 #pragma region Declaration for available T types.
 
-template<>
-UINT16 WaveGenerator<UINT16>::getHighValue() const { return 2000; }
-template<>
-UINT16 WaveGenerator<UINT16>::getLowValue() const { return 0; }
+template<> const UINT16 WaveGenerator<UINT16>::HighValue = 2000;
+template<> const UINT16 WaveGenerator<UINT16>::LowValue = 0;
 
-template<>
-UINT8 WaveGenerator<UINT8>::getHighValue() const { return 200; }
-template<>
-UINT8 WaveGenerator<UINT8>::getLowValue() const { return 0; }
+template<> const UINT8 WaveGenerator<UINT8>::HighValue = 200;
+template<> const UINT8 WaveGenerator<UINT8>::LowValue = 0;
 
 #pragma endregion
 

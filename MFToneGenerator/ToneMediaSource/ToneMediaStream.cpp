@@ -51,7 +51,7 @@ HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 	m_sd->GetMediaTypeHandler(&mh);
 	CComPtr<IMFMediaType> mediaType;
 	mh->GetCurrentMediaType(&mediaType);
-	WAVEFORMATEX* pWaveFormat;
+	CComHeapPtr<WAVEFORMATEX> pWaveFormat;
 	UINT32 size;
 	HR_ASSERT_OK(MFCreateWaveFormatExFromMFMediaType(mediaType, &pWaveFormat, &size, MFWaveFormatExConvertFlag_Normal));
 
@@ -86,7 +86,7 @@ HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 
 	// Send MEMediaSample Event with the sample as Event Value.
 	PROPVARIANT value = { VT_UNKNOWN };
-	value.punkVal = sample.Detach();
+	value.punkVal = sample;
 	QueueEvent(MEMediaSample, &value);
 	return S_OK;
 }

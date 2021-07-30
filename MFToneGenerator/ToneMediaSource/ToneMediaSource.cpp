@@ -25,7 +25,7 @@ HRESULT __stdcall ToneMediaSource::GetCharacteristics(__RPC__out DWORD* pdwChara
 	return S_OK;
 }
 
-HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_  IMFPresentationDescriptor** ppPresentationDescriptor)
+HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPresentationDescriptor** ppPresentationDescriptor)
 {
 	HR_ASSERT(ppPresentationDescriptor, E_POINTER);
 	HR_ASSERT_OK(checkShutdown());

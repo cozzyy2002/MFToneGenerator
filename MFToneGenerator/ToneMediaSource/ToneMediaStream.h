@@ -1,5 +1,6 @@
 #pragma once
 
+#include "WaveGenerator.h"
 #include "MediaEventGenerator.h"
 #include "Utils.h"
 
@@ -23,10 +24,8 @@ protected:
     CComPtr<IMFStreamDescriptor> m_sd;
     float m_key;
 
-    // PCM data for 1-cycle wave.
-    std::unique_ptr<BYTE[]> m_cycleData;
-    size_t m_cycleSize;
-    size_t m_cyclePosition;
+    // PCM data generator.
+    std::unique_ptr<IWaveGenerator> m_waveGenerator;
 
 #pragma region Implementation of IMFMediaStream
 public:

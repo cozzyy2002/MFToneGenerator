@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Utils.h"
+
 /*
  * IWaveGenerator interface.
  */
@@ -24,7 +26,7 @@ public:
 /*
  * WaveGenerator template abstract class
  * Type parameter T is data type of wave sample data.
- *   Such as T=UINT16 for 16 bit per sample per channel.
+ *   Such as T=INT16 for 16 bit per sample per channel.
  *   This case, minimum atomic unit of 2-channel sample is 16 / 8 * 2 byte.
  * 
  * IWaveGenerator::generate() and getFormatTag() methods should be implemented by derived class.
@@ -39,6 +41,7 @@ public:
 
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) override;
 
+	virtual WORD getFormatTag() const { return FormatTag; }
 	// Returns byte size of the minimum atomic unit of data to be generated.
 	virtual size_t getBlockAlign() const override { return m_channels * sizeof(T); }
 	virtual size_t getBitsPerSample() const override { return sizeof(T) * 8; }
@@ -46,12 +49,11 @@ public:
 	virtual WORD getChannels() const override { return m_channels; }
 	virtual size_t getSampleBufferSize(size_t duration) const { return m_samplesPerSec * getBlockAlign() * duration / 1000; }
 
-	operator bool() const { return (bool)m_cycleData; }
-
 protected:
 	// Allocate buffer enough to hold 1-cycle PCM data.
-	void allocateCycleData(float key);
+	T* allocateCycleData(float key);
 
+	static const WORD FormatTag;
 	static const T HighValue;
 	static const T LowValue;
 
@@ -60,11 +62,14 @@ protected:
 	size_t m_cycleSize;
 	size_t m_currentPosition;
 	std::unique_ptr<T[]> m_cycleData;
+	CriticalSection::Object m_cycleDataLock;
 };
 
 template<typename T>
 HRESULT WaveGenerator<T>::copyTo(BYTE* destBuffer, size_t destSize)
 {
+	CriticalSection lock(m_cycleDataLock);
+
 	// Assert that data has been generated.
 	HR_ASSERT(m_cycleData, E_ILLEGAL_METHOD_CALL);
 
@@ -77,13 +82,20 @@ HRESULT WaveGenerator<T>::copyTo(BYTE* destBuffer, size_t destSize)
 }
 
 template<typename T>
-void WaveGenerator<T>::allocateCycleData(float key)
+T* WaveGenerator<T>::allocateCycleData(float key)
 {
 	m_currentPosition = 0;
 	m_cycleSize = (size_t)(m_channels * m_samplesPerSec / key);
 	auto blockAlign = getBlockAlign();
-	m_cycleSize = (m_cycleSize / blockAlign) * blockAlign;		// Adjust buffer size to block align boundary
-	m_cycleData.reset(new T[m_cycleSize]);
+	// Round up buffer size to block align boundary
+	m_cycleSize = ((m_cycleSize / blockAlign) + ((m_cycleSize % blockAlign) ? 1 : 0)) * blockAlign;
+	T* cycleData;
+	{
+		CriticalSection lock(m_cycleDataLock);
+		cycleData = new T[m_cycleSize];
+		m_cycleData.reset(cycleData);
+	}
+	return cycleData;
 }
 
 /*
@@ -113,18 +125,20 @@ void SquareWaveGenerator<T>::generate(float key, float level /*= DefaultLevel*/)
 template<typename T>
 void SquareWaveGenerator<T>::generate(float key, float level, float duty)
 {
-	allocateCycleData(key);
+	auto cycleData = allocateCycleData(key);
 
+	auto highValue = (T)(HighValue * level);
+	auto lowValue = (T)(LowValue * level);
 	size_t highDuration = (size_t)(m_cycleSize * duty);
 	size_t pos = 0;
 	for(; pos < highDuration; pos++) {
 		for(size_t ch = 0; ch < m_channels; ch++) {
-			m_cycleData[pos + ch] = HighValue;
+			cycleData[pos + ch] = highValue;
 		}
 	}
 	for(; pos < m_cycleSize; pos++) {
 		for(size_t ch = 0; ch < m_channels; ch++) {
-			m_cycleData[pos + ch] = LowValue;
+			cycleData[pos + ch] = lowValue;
 		}
 	}
 }
@@ -132,18 +146,5 @@ void SquareWaveGenerator<T>::generate(float key, float level, float duty)
 template<typename T>
 /*static*/ const float SquareWaveGenerator<T>::DefaultDuty = 0.5f;
 
-class Square8bpsWaveGenerator : public SquareWaveGenerator<UINT8>
-{
-public:
-	Square8bpsWaveGenerator(WORD samplesPerSec, WORD channels) : SquareWaveGenerator(samplesPerSec, channels) {}
-
-	virtual WORD getFormatTag() const override { return WAVE_FORMAT_PCM; }
-};
-
-class Square16bpsWaveGenerator : public SquareWaveGenerator<UINT16>
-{
-public:
-	Square16bpsWaveGenerator(WORD samplesPerSec, WORD channels) : SquareWaveGenerator(samplesPerSec, channels) {}
-
-	virtual WORD getFormatTag() const override { return WAVE_FORMAT_PCM; }
-};
+using Square8bpsWaveGenerator = SquareWaveGenerator<UINT8>;
+using Square16bpsWaveGenerator = SquareWaveGenerator<INT16>;

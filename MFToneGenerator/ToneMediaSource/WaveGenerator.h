@@ -40,6 +40,7 @@ public:
 	virtual ~WaveGenerator() {}
 
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) override;
+	virtual void generate(float key, float level = DefaultLevel) override;
 
 	virtual WORD getFormatTag() const { return FormatTag; }
 	// Returns byte size of the minimum atomic unit of data to be generated.
@@ -50,8 +51,9 @@ public:
 	virtual size_t getSampleBufferSize(size_t duration) const { return m_samplesPerSec * getBlockAlign() * duration / 1000; }
 
 protected:
-	// Allocate buffer enough to hold 1-cycle PCM data.
-	T* allocateCycleData(float key);
+	// Internal generate() method implemented by derived classes
+	// generates PCM wave data specific for the class.
+	virtual void generate(T* cycleData, size_t cycleSize, float level) = 0;
 
 	static const WORD FormatTag;
 	static const T HighValue;
@@ -82,20 +84,22 @@ HRESULT WaveGenerator<T>::copyTo(BYTE* destBuffer, size_t destSize)
 }
 
 template<typename T>
-T* WaveGenerator<T>::allocateCycleData(float key)
+void WaveGenerator<T>::generate(float key, float level /*= DefaultLevel*/)
 {
-	m_currentPosition = 0;
-	m_cycleSize = (size_t)(m_channels * m_samplesPerSec / key);
+	auto cycleSize = (size_t)(m_channels * m_samplesPerSec / key);
 	auto blockAlign = getBlockAlign();
 	// Round up buffer size to block align boundary
-	m_cycleSize = ((m_cycleSize / blockAlign) + ((m_cycleSize % blockAlign) ? 1 : 0)) * blockAlign;
-	T* cycleData;
+	cycleSize = ((cycleSize / blockAlign) + ((cycleSize % blockAlign) ? 1 : 0)) * blockAlign;
+	std::unique_ptr<T[]> cycleData(new T[cycleSize]);
+	generate(cycleData.get(), cycleSize, level);
+
+	// Update member variables in the Critical Section.
 	{
 		CriticalSection lock(m_cycleDataLock);
-		cycleData = new T[m_cycleSize];
-		m_cycleData.reset(cycleData);
+		m_cycleData = std::move(cycleData);
+		m_cycleSize = cycleSize;
+		m_currentPosition = 0;
 	}
-	return cycleData;
 }
 
 /*
@@ -112,31 +116,29 @@ public:
 
 	SquareWaveGenerator(WORD samplesPerSec, WORD channels) : WaveGenerator(samplesPerSec, channels) {}
 
-	virtual void generate(float key, float level = DefaultLevel) override;
-	void generate(float key, float level, float duty);
+	virtual void generate(T* cycleData, size_t cycleSize, float level) override;
+	void generate(T* cycleData, size_t cycleSize, float level, float duty);
 };
 
 template<typename T>
-void SquareWaveGenerator<T>::generate(float key, float level /*= DefaultLevel*/)
+void SquareWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, float level)
 {
-	generate(key, level, DefaultDuty);
+	generate(cycleData, cycleSize, level, DefaultDuty);
 }
 
 template<typename T>
-void SquareWaveGenerator<T>::generate(float key, float level, float duty)
+void SquareWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, float level, float duty)
 {
-	auto cycleData = allocateCycleData(key);
-
 	auto highValue = (T)(HighValue * level);
 	auto lowValue = (T)(LowValue * level);
-	size_t highDuration = (size_t)(m_cycleSize * duty);
+	size_t highDuration = (size_t)(cycleSize * duty);
 	size_t pos = 0;
 	for(; pos < highDuration; pos++) {
 		for(size_t ch = 0; ch < m_channels; ch++) {
 			cycleData[pos + ch] = highValue;
 		}
 	}
-	for(; pos < m_cycleSize; pos++) {
+	for(; pos < cycleSize; pos++) {
 		for(size_t ch = 0; ch < m_channels; ch++) {
 			cycleData[pos + ch] = lowValue;
 		}
@@ -146,5 +148,34 @@ void SquareWaveGenerator<T>::generate(float key, float level, float duty)
 template<typename T>
 /*static*/ const float SquareWaveGenerator<T>::DefaultDuty = 0.5f;
 
+/*
+ * SquareWaveGenerator class derived from WaveGenerator class.
+ *
+ * Override of WaveGenerator::generate() method generates Sign wave.
+ */
+template<typename T>
+class SignWaveGenerator : public WaveGenerator<T>
+{
+public:
+	static const float DefaultDuty;
+
+	SignWaveGenerator(WORD samplesPerSec, WORD channels) : WaveGenerator(samplesPerSec, channels) {}
+
+	virtual void generate(float key, float level = DefaultLevel) override;
+};
+
+template<typename T>
+void SignWaveGenerator<T>::generate(float key, float level /*= DefaultLevel*/)
+{
+	auto value = HightValue - LowValue;
+
+	for(size_t pos = 0; pos < m_cycleSize; pos++) {
+//#error Not implemented
+	}
+}
+
 using Square8bpsWaveGenerator = SquareWaveGenerator<UINT8>;
 using Square16bpsWaveGenerator = SquareWaveGenerator<INT16>;
+
+using Sign8bpsWaveGenerator = SignWaveGenerator<UINT8>;
+using Sign16bpsWaveGenerator = SignWaveGenerator<INT16>;

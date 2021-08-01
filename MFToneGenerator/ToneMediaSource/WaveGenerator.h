@@ -57,6 +57,7 @@ protected:
 
 	static const WORD FormatTag;
 	static const T HighValue;
+	static const T ZeroValue;
 	static const T LowValue;
 
 	const WORD m_samplesPerSec;
@@ -157,25 +158,25 @@ template<typename T>
 class SignWaveGenerator : public WaveGenerator<T>
 {
 public:
-	static const float DefaultDuty;
-
 	SignWaveGenerator(WORD samplesPerSec, WORD channels) : WaveGenerator(samplesPerSec, channels) {}
 
-	virtual void generate(float key, float level = DefaultLevel) override;
+	virtual void generate(T* cycleData, size_t cycleSize, float level) override;
 };
 
 template<typename T>
-void SignWaveGenerator<T>::generate(float key, float level /*= DefaultLevel*/)
+void SignWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, float level)
 {
 	auto value = HightValue - LowValue;
 
-	for(size_t pos = 0; pos < m_cycleSize; pos++) {
+	for(size_t pos = 0; pos < cycleSize; pos++) {
 //#error Not implemented
 	}
 }
 
 using Square8bpsWaveGenerator = SquareWaveGenerator<UINT8>;
 using Square16bpsWaveGenerator = SquareWaveGenerator<INT16>;
+using SquareFloatWaveGenerator = SquareWaveGenerator<float>;
 
 using Sign8bpsWaveGenerator = SignWaveGenerator<UINT8>;
 using Sign16bpsWaveGenerator = SignWaveGenerator<INT16>;
+using SignFloatWaveGenerator = SignWaveGenerator<float>;

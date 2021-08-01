@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WaveGenerator.h"
+#include "PcmData.h"
 #include "MediaEventGenerator.h"
 #include "Utils.h"
 
@@ -25,7 +25,7 @@ protected:
     float m_key;
 
     // PCM data generator.
-    std::unique_ptr<IWaveGenerator> m_waveGenerator;
+    std::unique_ptr<IPcmData> m_pcmData;
 
 #pragma region Implementation of IMFMediaStream
 public:

@@ -63,7 +63,10 @@
     <ClInclude Include="ToneMediaSource\MediaEventGenerator.h">
       <Filter>ToneMediaSource</Filter>
     </ClInclude>
-    <ClInclude Include="ToneMediaSource\WaveGenerator.h">
+    <ClInclude Include="ToneMediaSource\PcmDataImpl.h">
+      <Filter>ToneMediaSource</Filter>
+    </ClInclude>
+    <ClInclude Include="ToneMediaSource\PcmData.h">
       <Filter>ToneMediaSource</Filter>
     </ClInclude>
   </ItemGroup>
@@ -98,7 +101,7 @@
     <ClCompile Include="ToneMediaSource\MediaEventGenerator.cpp">
       <Filter>ToneMediaSource</Filter>
     </ClCompile>
-    <ClCompile Include="ToneMediaSource\WaveGenerator.cpp">
+    <ClCompile Include="ToneMediaSource\PcmDataImpl.cpp">
       <Filter>ToneMediaSource</Filter>
     </ClCompile>
   </ItemGroup>

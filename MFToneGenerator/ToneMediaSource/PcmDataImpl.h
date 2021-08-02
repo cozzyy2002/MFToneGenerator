@@ -3,23 +3,28 @@
 #include "PcmData.h"
 #include "Utils.h"
 
+#include <math.h>
+
 class IWaveGenerator
 {
 public:
+	virtual ~IWaveGenerator() {}
+
 	virtual IPcmData::SampleDataType getSampleDatatype() const = 0;
 };
 
 template<typename T>
-class WaveGeneratorImpl : public IWaveGenerator
+class WaveGenerator : public IWaveGenerator
 {
 public:
-	virtual ~WaveGeneratorImpl() {}
+	virtual ~WaveGenerator() {}
 
-	static const IPcmData::SampleDataType SampleDataType;
 	virtual IPcmData::SampleDataType getSampleDatatype() const override { return SampleDataType; }
 
-	virtual void setPcmData(IPcmData* pcmData) = 0;
-	virtual void generate(T* cycleData, size_t cycleSize, float level) = 0;
+	virtual void generate(T* cycleData, size_t cycleSize, WORD channels, float level) = 0;
+
+protected:
+	static const IPcmData::SampleDataType SampleDataType;
 };
 
 /*
@@ -34,14 +39,9 @@ template<typename T>
 class PcmData : public IPcmData
 {
 public:
-	PcmData(WORD samplesPerSec, WORD channels, WaveGeneratorImpl<T>* waveGenerator)
+	PcmData(WORD samplesPerSec, WORD channels, WaveGenerator<T>* waveGenerator)
 		: m_samplesPerSec(samplesPerSec), m_channels(channels), m_waveGenerator(waveGenerator)
-		, m_cycleSize(0), m_currentPosition(0)
-	{
-		m_waveGenerator->setPcmData(this);
-	}
-
-	virtual ~PcmData() {}
+		, m_cycleSize(0), m_currentPosition(0) {}
 
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) override;
 	virtual void generate(float key, float level = DefaultLevel) override;
@@ -65,7 +65,7 @@ protected:
 	size_t m_cycleSize;
 	size_t m_currentPosition;
 	std::unique_ptr<T[]> m_cycleData;
-	std::unique_ptr<WaveGeneratorImpl<T>> m_waveGenerator;
+	std::unique_ptr<WaveGenerator<T>> m_waveGenerator;
 	CriticalSection::Object m_cycleDataLock;
 };
 
@@ -93,7 +93,7 @@ void PcmData<T>::generate(float key, float level)
 	// Round up buffer size to block align boundary
 	cycleSize = ((cycleSize / blockAlign) + ((cycleSize % blockAlign) ? 1 : 0)) * blockAlign;
 	std::unique_ptr<T[]> cycleData(new T[cycleSize]);
-	m_waveGenerator->generate(cycleData.get(), cycleSize, level);
+	m_waveGenerator->generate(cycleData.get(), cycleSize, m_channels, level);
 
 	// Update member variables in the Critical Section.
 	{
@@ -104,15 +104,6 @@ void PcmData<T>::generate(float key, float level)
 	}
 }
 
-template<typename T>
-class WaveGenerator : public WaveGeneratorImpl<T>
-{
-public:
-	virtual void setPcmData(IPcmData* pcmData) override { m_pcmData = pcmData; }
-
-protected:
-	IPcmData* m_pcmData;
-};
 
 /*
  * SquareWaveGenerator class derived from WaveGenerator class.
@@ -126,62 +117,54 @@ class SquareWaveGenerator : public WaveGenerator<T>
 public:
 	SquareWaveGenerator(float duty) : m_duty(duty) {}
 
-	virtual void generate(T* cycleData, size_t cycleSize, float level) override;
+	virtual void generate(T* cycleData, size_t cycleSize, WORD channels, float level) override;
 
 protected:
 	float m_duty;
 };
 
 template<typename T>
-void SquareWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, float level)
+void SquareWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, WORD channels, float level)
 {
 	auto highValue = (T)(PcmData<T>::HighValue * level);
 	auto lowValue = (T)(PcmData<T>::LowValue * level);
 	size_t highDuration = (size_t)(cycleSize * m_duty);
 	size_t pos = 0;
-	for(; pos < highDuration; pos++) {
-		for(size_t ch = 0; ch < m_pcmData->getChannels(); ch++) {
+	for(; pos < highDuration; pos += channels) {
+		for(size_t ch = 0; ch < channels; ch++) {
 			cycleData[pos + ch] = highValue;
 		}
 	}
 	for(; pos < cycleSize; pos++) {
-		for(size_t ch = 0; ch < m_pcmData->getChannels(); ch++) {
+		for(size_t ch = 0; ch < channels; ch++) {
 			cycleData[pos + ch] = lowValue;
 		}
 	}
 }
 
-#if 0
 /*
- * SquareWaveGenerator class derived from WaveGenerator class.
+ * SineWaveGenerator class derived from WaveGenerator class.
  *
- * Override of WaveGenerator::generate() method generates Sign wave.
+ * Override of WaveGenerator::generate() method generates Sine wave.
  */
 template<typename T>
-class SignWaveGenerator : public WaveGenerator<T>
+class SineWaveGenerator : public WaveGenerator<T>
 {
 public:
-	SignWaveGenerator(WORD samplesPerSec, WORD channels) : WaveGenerator(samplesPerSec, channels) {}
-
-	virtual void generate(T* cycleData, size_t cycleSize, float level) override;
+	virtual void generate(T* cycleData, size_t cycleSize, WORD channels, float level) override;
 };
 
 template<typename T>
-void SignWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, float level)
+void SineWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, WORD channels, float level)
 {
-	auto value = HightValue - LowValue;
+	static const float pi = 3.141592f;
+	auto highValue = (T)((PcmData<T>::HighValue - PcmData<T>::ZeroValue) * level);
 
-	for(size_t pos = 0; pos < cycleSize; pos++) {
-//#error Not implemented
+	for(size_t pos = 0; pos < cycleSize; pos += channels) {
+		auto radian = 2 * pi * pos / cycleSize;
+		auto value = (T)((sin(radian) * highValue) + PcmData<T>::ZeroValue);
+		for(size_t ch = 0; ch < channels; ch++) {
+			cycleData[pos + ch] = value;
+		}
 	}
 }
-
-using Square8bpsWaveGenerator = SquareWaveGenerator<UINT8>;
-using Square16bpsWaveGenerator = SquareWaveGenerator<INT16>;
-using SquareFloatWaveGenerator = SquareWaveGenerator<float>;
-
-using Sign8bpsWaveGenerator = SignWaveGenerator<UINT8>;
-using Sign16bpsWaveGenerator = SignWaveGenerator<INT16>;
-using SignFloatWaveGenerator = SignWaveGenerator<float>;
-
-#endif

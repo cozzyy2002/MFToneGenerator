@@ -8,6 +8,8 @@ class IWaveGenerator;
 class IPcmData
 {
 public:
+	virtual ~IPcmData() {}
+
 	enum class SampleDataType {
 		_8bits,			// UINT8, WAVE_FORMAT_PCM
 		_16bits,		// INT16, WAVE_FORMAT_PCM
@@ -16,6 +18,8 @@ public:
 
 	static IPcmData* create(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
 	static IWaveGenerator* createSquareWaveGenerator(SampleDataType sampleDataType, float duty = 0.5f);
+	static IWaveGenerator* createSineWaveGenerator(SampleDataType sampleDataType);
+	static IWaveGenerator* createTriangleWaveGenerator(SampleDataType sampleDataType, float peakPosition = 0.5f);
 
 	// Generates 1-cycle PCM data
 	// Data to be generated depends on IWaveGenerator object passed to the create() static method.

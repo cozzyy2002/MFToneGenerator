@@ -5,14 +5,6 @@
 
 #include <math.h>
 
-class IWaveGenerator
-{
-public:
-	virtual ~IWaveGenerator() {}
-
-	virtual IPcmData::SampleDataType getSampleDatatype() const = 0;
-};
-
 template<typename T>
 class WaveGenerator : public IWaveGenerator
 {
@@ -39,8 +31,9 @@ template<typename T>
 class PcmData : public IPcmData
 {
 public:
-	PcmData(WORD samplesPerSec, WORD channels, WaveGenerator<T>* waveGenerator)
-		: m_samplesPerSec(samplesPerSec), m_channels(channels), m_waveGenerator(waveGenerator)
+	PcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
+		: m_samplesPerSec(samplesPerSec), m_channels(channels)
+		, m_waveGenerator((WaveGenerator<T>*)waveGenerator)
 		, m_cycleSize(0), m_currentPosition(0) {}
 
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) override;

@@ -32,11 +32,11 @@ template<> const float PcmData<float>::LowValue = -0.5f;
 
 	switch(waveGenerator->getSampleDatatype()) {
 	case SampleDataType::_8bits:
-		return new PcmData<UINT8>(samplesPerSec, channels, (WaveGenerator<UINT8>*)waveGenerator);
+		return new PcmData<UINT8>(samplesPerSec, channels, waveGenerator);
 	case SampleDataType::_16bits:
-		return new PcmData<INT16>(samplesPerSec, channels, (WaveGenerator<INT16>*)waveGenerator);
+		return new PcmData<INT16>(samplesPerSec, channels, waveGenerator);
 	case SampleDataType::IEEE_Float:
-		return new PcmData<float>(samplesPerSec, channels, (WaveGenerator<float>*)waveGenerator);
+		return new PcmData<float>(samplesPerSec, channels, waveGenerator);
 	default:
 		return nullptr;
 	}

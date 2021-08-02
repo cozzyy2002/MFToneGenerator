@@ -36,3 +36,11 @@ public:
 	virtual WORD getChannels() const = 0;
 	virtual size_t getSampleBufferSize(size_t duration) const = 0;
 };
+
+class IWaveGenerator
+{
+public:
+	virtual ~IWaveGenerator() {}
+
+	virtual IPcmData::SampleDataType getSampleDatatype() const = 0;
+};

@@ -47,11 +47,6 @@ HRESULT Context::shutdown()
     return HR_EXPECT_OK(BaseClass::shutdown());
 }
 
-HRESULT Context::setKey(float key)
-{
-    return HR_EXPECT_OK(triggerEvent(new SetKeyEvent(key)));
-}
-
 HRESULT Context::startStop()
 {
     return HR_EXPECT_OK(triggerEvent(new Event(Event::Type::StartStop)));
@@ -78,9 +73,9 @@ HRESULT Context::setupSession()
     // Media Session should not be created yet.
     HR_ASSERT(!m_session, E_ILLEGAL_METHOD_CALL);
 
-    if(m_audioFileName.empty()) {
-        m_source = new ToneMediaSource();
-    } else {
+    if(m_pcmData) {
+        m_source = new ToneMediaSource(m_pcmData);
+    } else if(!m_audioFileName.empty()) {
         CComPtr<IMFSourceResolver> resolver;
         HR_ASSERT_OK(MFCreateSourceResolver(&resolver));
 
@@ -96,6 +91,9 @@ HRESULT Context::setupSession()
             return hr;
         }
         HR_ASSERT_OK(unk->QueryInterface(&m_source));
+    } else {
+        // IPcmData nor Audio Filename is not specified.
+        return E_UNEXPECTED;
     }
     print(m_source);
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IContext.h"
+#include "ToneMediaSource/PcmData.h"
 #include "Utils.h"
 #include <functional>
 
@@ -15,19 +16,28 @@ public:
 	Context(HWND hWnd, UINT msg);
 	~Context();
 
-	virtual void setCallback(ICallback* callback) override { m_callback = callback; }
-	virtual ICallback* getCallback() override { return m_callback; }
-
 	void callback(std::function<void(ICallback*)> func);
 	IMFMediaSession* getSession() { return m_session; }
 
-	virtual void setAudioFileName(LPCTSTR value) override { m_audioFileName = value; }
+#pragma region Implementation of IContext
+	virtual void setCallback(ICallback* callback) override { m_callback = callback; }
+	virtual ICallback* getCallback() override { return m_callback; }
+
+	virtual void setPcmData(IPcmData* pcmData) override
+	{
+		m_pcmData = pcmData;
+		m_audioFileName.clear();
+	}
+	virtual IPcmData* getPcmData() const override { return m_pcmData; }
+	virtual void setAudioFileName(LPCTSTR value) override
+	{
+		m_pcmData.Release();
+		m_audioFileName = value;
+	}
 	virtual LPCTSTR getAudioFileName() const override { return m_audioFileName.c_str(); }
 
-#pragma region Implementation of IContext
 	virtual HRESULT setup() override;
 	virtual HRESULT shutdown() override;
-	virtual HRESULT setKey(float key) override;
 	virtual HRESULT startStop() override;
 	virtual HRESULT pauseResume() override;
 #pragma endregion
@@ -46,6 +56,7 @@ public:
 protected:
 	using BaseClass = tsm::AsyncContext<Event, State>;
 	ICallback* m_callback;
+	CComPtr<IPcmData> m_pcmData;
 	std::tstring m_audioFileName;
 	CComPtr<IMFMediaSource> m_source;
 	CComPtr<IMFMediaSession> m_session;

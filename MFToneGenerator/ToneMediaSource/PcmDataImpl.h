@@ -34,7 +34,8 @@ public:
 	PcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
 		: m_samplesPerSec(samplesPerSec), m_channels(channels)
 		, m_waveGenerator((WaveGenerator<T>*)waveGenerator)
-		, m_cycleSize(0), m_currentPosition(0) {}
+		, m_cycleSize(0), m_currentPosition(0)
+		, m_unknownImpl(this) {}
 
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) override;
 	virtual void generate(float key, float level = DefaultLevel) override;
@@ -60,6 +61,18 @@ protected:
 	std::unique_ptr<T[]> m_cycleData;
 	std::unique_ptr<WaveGenerator<T>> m_waveGenerator;
 	CriticalSection::Object m_cycleDataLock;
+
+#pragma region Implementation of IUnknown
+public:
+	virtual HRESULT STDMETHODCALLTYPE QueryInterface(
+		/* [in] */ REFIID riid,
+		/* [iid_is][out] */ _COM_Outptr_ void __RPC_FAR* __RPC_FAR* ppvObject) override { return m_unknownImpl.QueryInterface(riid, ppvObject); }
+	virtual ULONG STDMETHODCALLTYPE AddRef(void) override { return m_unknownImpl.AddRef(); }
+	virtual ULONG STDMETHODCALLTYPE Release(void) override { return m_unknownImpl.Release(); }
+
+protected:
+	tsm::UnknownImpl<PcmData<T>> m_unknownImpl;
+#pragma endregion
 };
 
 template<typename T>

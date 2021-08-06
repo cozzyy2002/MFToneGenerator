@@ -244,7 +244,7 @@ void CMFToneGeneratorDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 void CMFToneGeneratorDlg::OnBnClickedButtonE()
 {
 	OutputDebugString(_T("OnBnClickedButtonE()\n"));
-	m_context->setKey(300);
+	m_pcmData->generate(300);
 }
 
 

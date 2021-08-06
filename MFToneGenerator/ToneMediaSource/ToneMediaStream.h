@@ -12,7 +12,7 @@ class ToneMediaSource;
 class ToneMediaStream : public IMFMediaStream, DoNotCopy
 {
 public:
-    ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd);
+    ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, IPcmData* pcmData);
 
     HRESULT start();
     HRESULT stop();
@@ -25,7 +25,7 @@ protected:
     float m_key;
 
     // PCM data generator.
-    std::unique_ptr<IPcmData> m_pcmData;
+    CComPtr<IPcmData> m_pcmData;
 
 #pragma region Implementation of IMFMediaStream
 public:

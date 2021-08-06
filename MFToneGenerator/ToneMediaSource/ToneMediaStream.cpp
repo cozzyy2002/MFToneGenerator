@@ -6,8 +6,8 @@
 
 #pragma region Implementation of IMFMediaEventGenerator
 
-ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd)
-	: m_mediaSource(mediaSource), m_sd(sd), m_sampleTime(0), m_key(220), m_unknownImpl(this)
+ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, IPcmData* pcmData)
+	: m_mediaSource(mediaSource), m_sd(sd), m_sampleTime(0), m_pcmData(pcmData), m_unknownImpl(this)
 {
 }
 
@@ -23,10 +23,6 @@ HRESULT ToneMediaStream::start()
 	CComHeapPtr<WAVEFORMATEX> pWaveFormat;
 	UINT32 size;
 	HR_ASSERT_OK(MFCreateWaveFormatExFromMFMediaType(mediaType, &pWaveFormat, &size, MFWaveFormatExConvertFlag_Normal));
-
-	auto waveGenerator = IPcmData::createSineWaveGenerator(IPcmData::SampleDataType::_16bits);
-	m_pcmData.reset(IPcmData::create((WORD)pWaveFormat->nSamplesPerSec, pWaveFormat->nChannels, waveGenerator));
-	m_pcmData->generate(m_key, 0.5f);
 
 	// Check WAVEFORMATEX retrieved from Stream Desctiptor whether it matches properties of Wave Generator.
 	HR_ASSERT(pWaveFormat->wFormatTag == m_pcmData->getFormatTag(), MF_E_NOT_AVAILABLE);
@@ -44,7 +40,7 @@ HRESULT ToneMediaStream::stop()
 
 HRESULT ToneMediaStream::shutdown()
 {
-	m_pcmData.release();
+	m_pcmData.Release();
 	m_eventGenerator.shutdown();
 
 	return S_OK;

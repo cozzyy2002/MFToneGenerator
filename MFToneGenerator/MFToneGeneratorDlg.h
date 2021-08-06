@@ -5,6 +5,7 @@
 #pragma once
 
 #include "StateMachine/IContext.h"
+#include "ToneMediaSource/PcmData.h"
 
 #include <memory>
 
@@ -51,6 +52,8 @@ public:
 
 protected:
 	std::unique_ptr<statemachine::IContext> m_context;
+	CComPtr<IPcmData> m_pcmData;
+
 public:
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButtonStartStop();

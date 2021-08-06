@@ -5,7 +5,7 @@ class IWaveGenerator;
 /*
  * IPcmData interface.
  */
-class IPcmData
+class IPcmData : public IUnknown
 {
 public:
 	virtual ~IPcmData() {}

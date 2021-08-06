@@ -3,8 +3,8 @@
 #include "ToneMediaSource.h"
 #include "ToneMediaStream.h"
 
-ToneMediaSource::ToneMediaSource()
-	: m_unknownImpl(this)
+ToneMediaSource::ToneMediaSource(IPcmData* pcmData)
+	: m_pcmData(pcmData), m_unknownImpl(this)
 {
 }
 
@@ -77,7 +77,7 @@ HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor
 	HR_ASSERT_OK(pPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &sd));
 	HR_ASSERT(selected, E_UNEXPECTED);
 
-	m_mediaStream = new ToneMediaStream(this, sd);
+	m_mediaStream = new ToneMediaStream(this, sd, m_pcmData);
 
 	PROPVARIANT value = { VT_UNKNOWN };
 	HR_ASSERT_OK(m_mediaStream.QueryInterface(&value.punkVal));

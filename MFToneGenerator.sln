@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MFToneGenerator", "MFToneGenerator\MFToneGenerator.vcxproj", "{E876AF04-0B68-4F96-93BA-54C511260575}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PcmDataTest", "PcmDataTest\PcmDataTest.vcxproj", "{96FA8AA9-3537-4CE8-A3DC-5211CAED6474}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E876AF04-0B68-4F96-93BA-54C511260575} = {E876AF04-0B68-4F96-93BA-54C511260575}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

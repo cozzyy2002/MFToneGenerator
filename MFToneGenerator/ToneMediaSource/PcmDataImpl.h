@@ -115,7 +115,7 @@ void PcmData<T>::generate(float key, float level)
  * SquareWaveGenerator class derived from WaveGenerator class.
  * 
  * Override of WaveGenerator::generate() method generates Square wave.
- * This class exposes generate() method that has duty parameter along with above.
+ * This class exposes constructor that has duty parameter.
  */
 template<typename T>
 class SquareWaveGenerator : public WaveGenerator<T>
@@ -171,6 +171,47 @@ void SineWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, WORD channel
 		auto value = (T)((sin(radian) * highValue) + PcmData<T>::ZeroValue);
 		for(size_t ch = 0; ch < channels; ch++) {
 			cycleData[pos + ch] = value;
+		}
+	}
+}
+/*
+ * TriangleWaveGenerator class derived from WaveGenerator class.
+ *
+ * Override of WaveGenerator::generate() method generates Triangle wave.
+ * This class exposes constructor that has peakPosition parameter.
+ */
+template<typename T>
+class TriangleWaveGenerator : public WaveGenerator<T>
+{
+public:
+	TriangleWaveGenerator(float peakposition) : m_peakPosition(peakposition) {}
+
+	virtual void generate(T* cycleData, size_t cycleSize, WORD channels, float level) override;
+
+protected:
+	float m_peakPosition;
+};
+
+template<typename T>
+void TriangleWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, WORD channels, float level)
+{
+	auto highValue = (T)(PcmData<T>::HighValue * level);
+	auto lowValue = (T)(PcmData<T>::LowValue * level);
+	size_t upDuration = (size_t)(cycleSize * m_peakPosition);
+	size_t pos = 0;
+	T delta = (T)((highValue - lowValue) / upDuration);
+	T value = lowValue;
+	for(; pos < upDuration; pos += channels) {
+		for(size_t ch = 0; ch < channels; ch++) {
+			cycleData[pos + ch] = value;
+			value += delta;
+		}
+	}
+	delta = (T)((highValue - lowValue) / (cycleSize - upDuration));
+	for(; pos < cycleSize; pos++) {
+		for(size_t ch = 0; ch < channels; ch++) {
+			cycleData[pos + ch] = value;
+			value -= delta;
 		}
 	}
 }

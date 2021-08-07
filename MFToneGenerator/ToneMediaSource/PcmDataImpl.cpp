@@ -70,7 +70,16 @@ template<> const float PcmData<float>::LowValue = -0.5f;
 	}
 }
 
-/*static*/ IWaveGenerator* IPcmData::createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakposition)
+/*static*/ IWaveGenerator* IPcmData::createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition)
 {
-	return nullptr;
+	switch(sampleDataType) {
+	case IPcmData::SampleDataType::_8bits:
+		return new TriangleWaveGenerator<UINT8>(peakPosition);
+	case IPcmData::SampleDataType::_16bits:
+		return new TriangleWaveGenerator<INT16>(peakPosition);
+	case IPcmData::SampleDataType::IEEE_Float:
+		return new TriangleWaveGenerator<float>(peakPosition);
+	default:
+		return nullptr;
+	}
 }

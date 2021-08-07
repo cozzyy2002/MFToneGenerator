@@ -5,6 +5,7 @@
 #include <PcmData.h>
 #include <PcmDataImpl.h>
 
+#include <vector>
 #include <iostream>
 
 template<typename T>
@@ -38,20 +39,25 @@ std::string TestPcmData<float>::str(size_t pos)
 int main()
 {
 	using SampleType = float;
-	static const DWORD SamplePerSecond = 44100;
+	static const WORD SamplePerSecond = 44100;
 	static const WORD key = 440;
 
-	CComPtr<TestPcmData<SampleType>> squareData(new TestPcmData<SampleType>(SamplePerSecond, new SquareWaveGenerator<SampleType>(0.5)));
-	squareData->generate(key, 1);
-	CComPtr<TestPcmData<SampleType>> sineData(new TestPcmData<SampleType>(SamplePerSecond, new SineWaveGenerator<SampleType>()));
-	sineData->generate(key, 1);
+	std::vector<std::unique_ptr<TestPcmData<SampleType>>> pcmDataList;
+	pcmDataList.push_back(std::make_unique<TestPcmData<SampleType>>(SamplePerSecond, new SquareWaveGenerator<SampleType>(0.5)));
+	pcmDataList.push_back(std::make_unique<TestPcmData<SampleType>>(SamplePerSecond, new SineWaveGenerator<SampleType>()));
+	pcmDataList.push_back(std::make_unique<TestPcmData<SampleType>>(SamplePerSecond, new TriangleWaveGenerator<SampleType>(0.5)));
+	for(auto& x : pcmDataList) {
+		x->generate(key, 1);
+	}
 
-	std::cout << "pos\tSquare\tSine\n";
-	for(size_t pos = 0; pos < sineData->m_cycleSize; pos++) {
-		std::cout << pos
-			<< "\t" << squareData->str(pos)
-			<< "\t" << sineData->str(pos)
-			<< std::endl;
+	auto cycleSize = pcmDataList[0]->m_cycleSize;
+	std::cout << "pos\tSquare\tSine\tTriangle\n";
+	for(size_t pos = 0; pos < cycleSize; pos++) {
+		std::cout << pos;
+		for(auto& x : pcmDataList) {
+			std::cout << "\t" << x->str(pos);
+		}
+		std::cout << std::endl;
 	}
 
 	return 0;

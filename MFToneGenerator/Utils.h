@@ -26,7 +26,7 @@ public:
 class Logger : public StringFormatter
 {
 public:
-	Logger::Logger() : m_writer(tsm::Assert::defaultAssertFailedWriter) {}
+	Logger() : m_writer(tsm::Assert::defaultAssertFailedWriter) {}
 
 	void log(LPCTSTR fmt, ...) const;
 

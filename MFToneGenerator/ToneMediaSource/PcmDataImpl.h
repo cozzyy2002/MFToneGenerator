@@ -38,7 +38,7 @@ public:
 		, m_unknownImpl(this) {}
 
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) override;
-	virtual void generate(float key, float level = DefaultLevel) override;
+	virtual void generate(float key, float level) override;
 
 	virtual WORD getFormatTag() const { return FormatTag; }
 	// Returns byte size of the minimum atomic unit of data to be generated.

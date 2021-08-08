@@ -13,7 +13,7 @@ class ITestPcmData
 public:
 	virtual ~ITestPcmData() {}
 
-	virtual void generate() = 0;
+	virtual void generate(float key) = 0;
 	virtual size_t getCycleSize() = 0;
 	virtual std::string str(size_t pos) = 0;
 };
@@ -22,15 +22,13 @@ template<typename T>
 class TestPcmData : public ITestPcmData, public PcmData<T>
 {
 public:
-	TestPcmData(IWaveGenerator* waveGenerator)
-		: PcmData<T>(SamplesPerSecond, 1 /*channels*/, waveGenerator) {}
+	TestPcmData(WORD samplesPerSecond, IWaveGenerator* waveGenerator)
+		: PcmData<T>(samplesPerSecond, 1 /*channels*/, waveGenerator) {}
 
-	virtual void generate() override { PcmData<T>::generate(Key, 1 /*level*/); }
+	virtual void generate(float key) override { PcmData<T>::generate(key, 1 /*level*/); }
 	virtual size_t getCycleSize() override { return PcmData<T>::m_cycleSize; }
 	virtual std::string str(size_t pos) override;
 
-	static const WORD SamplesPerSecond = 44100;
-	static const WORD Key = 440;
 };
 
 template<typename T> 
@@ -48,23 +46,37 @@ std::string TestPcmData<float>::str(size_t pos)
 	return s;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	static const auto duty = 0.5f;
-	static const auto peakPosition = 0.5f;
+	auto duty = 0.5f;
+	auto peakPosition = 0.5f;
+	WORD samplesPerSecond = 44100;
+	WORD key = 440;
+
+	float fVal;
+	int iVal;
+	for(int i = 1; i < argc; i++) {
+		if(sscanf_s(argv[i], "duty=%f", &fVal) == 1) { duty = fVal; continue; }
+		if(sscanf_s(argv[i], "peak=%f", &fVal) == 1) { peakPosition = fVal; continue; }
+		if(sscanf_s(argv[i], "sps=%d", &iVal) == 1) { samplesPerSecond = iVal; continue; }
+		if(sscanf_s(argv[i], "key=%d", &iVal) == 1) { key = iVal; continue; }
+
+		printf_s("Usage: PcmDataTest [duty=Duty] [peak=PeakPosition] [sps=SamplesPerSecond] [key=Key]\n");
+		return 0;
+	}
 
 	std::vector<std::unique_ptr<ITestPcmData>> pcmDataList;
-	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(new SquareWaveGenerator<UINT8>(duty)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(new SineWaveGenerator<UINT8>()));
-	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(new TriangleWaveGenerator<UINT8>(peakPosition)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<INT16>>(new SquareWaveGenerator<INT16>(duty)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<INT16>>(new SineWaveGenerator<INT16>()));
-	pcmDataList.push_back(std::make_unique<TestPcmData<INT16>>(new TriangleWaveGenerator<INT16>(peakPosition)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(new SquareWaveGenerator<float>(duty)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(new SineWaveGenerator<float>()));
-	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(new TriangleWaveGenerator<float>(peakPosition)));
+	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(samplesPerSecond, new SquareWaveGenerator<UINT8>(duty)));
+	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(samplesPerSecond, new SineWaveGenerator<UINT8>()));
+	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(samplesPerSecond, new TriangleWaveGenerator<UINT8>(peakPosition)));
+	pcmDataList.push_back(std::make_unique<TestPcmData<INT16>>(samplesPerSecond, new SquareWaveGenerator<INT16>(duty)));
+	pcmDataList.push_back(std::make_unique<TestPcmData<INT16>>(samplesPerSecond, new SineWaveGenerator<INT16>()));
+	pcmDataList.push_back(std::make_unique<TestPcmData<INT16>>(samplesPerSecond, new TriangleWaveGenerator<INT16>(peakPosition)));
+	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, new SquareWaveGenerator<float>(duty)));
+	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, new SineWaveGenerator<float>()));
+	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, new TriangleWaveGenerator<float>(peakPosition)));
 	for(auto& x : pcmDataList) {
-		x->generate();
+		x->generate(key);
 	}
 
 	auto cycleSize = pcmDataList[0]->getCycleSize();

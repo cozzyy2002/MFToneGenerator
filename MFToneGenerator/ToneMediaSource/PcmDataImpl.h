@@ -179,12 +179,18 @@ void SineWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, WORD channel
  *
  * Override of WaveGenerator::generate() method generates Triangle wave.
  * This class exposes constructor that has peakPosition parameter.
+ * If ((peakPosition <= 0.0f) || ( 1.0f <= peakPosition)), generate() method generates Sawtooth wave.
  */
 template<typename T>
 class TriangleWaveGenerator : public WaveGenerator<T>
 {
 public:
-	TriangleWaveGenerator(float peakposition) : m_peakPosition(peakposition) {}
+	TriangleWaveGenerator(float peakPosition)
+	{
+		if(peakPosition < 0) { m_peakPosition = 0; }
+		else if(1 < peakPosition) { m_peakPosition = 1; }
+		else { m_peakPosition = peakPosition; }
+	}
 
 	virtual void generate(T* cycleData, size_t cycleSize, WORD channels, float level) override;
 
@@ -195,26 +201,32 @@ protected:
 template<typename T>
 void TriangleWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, WORD channels, float level)
 {
-	auto highValue = (T)(PcmData<T>::HighValue * level);
-	auto lowValue = (T)(PcmData<T>::LowValue * level);
+	float highValue = PcmData<T>::HighValue * level;
+	float lowValue = PcmData<T>::LowValue * level;
+	float height = highValue - lowValue;
 	size_t upDuration = (size_t)(cycleSize * m_peakPosition);
 	size_t pos = 0;
-	T delta = (T)((highValue - lowValue) / upDuration);
-	T value = lowValue;
-	for(; pos < upDuration; pos += channels) {
-		for(size_t ch = 0; ch < channels; ch++) {
-			cycleData[pos + ch] = value;
-			value += delta;
+	float value = lowValue;
+	if(0 < upDuration) {
+		auto delta = (float)height / upDuration;
+		for(; pos < upDuration; pos += channels) {
+			for(size_t ch = 0; ch < channels; ch++) {
+				cycleData[pos + ch] = (T)value;
+				value += delta;
+			}
 		}
+	} else {
+		value = highValue;
 	}
 
-	if(cycleSize <= upDuration) { return; }
-	size_t downDuration = cycleSize - upDuration;
-	delta = (T)((highValue - lowValue) / downDuration);
-	for(; pos < cycleSize; pos++) {
-		for(size_t ch = 0; ch < channels; ch++) {
-			cycleData[pos + ch] = value;
-			value -= delta;
+	if(upDuration < cycleSize) {
+		size_t downDuration = cycleSize - upDuration;
+		auto delta = (float)height / downDuration;
+		for(; pos < cycleSize; pos++) {
+			for(size_t ch = 0; ch < channels; ch++) {
+				cycleData[pos + ch] = (T)value;
+				value -= delta;
+			}
 		}
 	}
 }

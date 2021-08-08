@@ -208,24 +208,25 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t cycleSize, WORD cha
 	size_t pos = 0;
 	float value = lowValue;
 	if(0 < upDuration) {
-		auto delta = (float)height / upDuration;
+		auto delta = height / upDuration;
 		for(; pos < upDuration; pos += channels) {
 			for(size_t ch = 0; ch < channels; ch++) {
 				cycleData[pos + ch] = (T)value;
-				value += delta;
 			}
+			value += delta;
 		}
-	} else {
-		value = highValue;
+		// Revert value to the last.
+		value -= delta;
 	}
 
 	if(upDuration < cycleSize) {
 		size_t downDuration = cycleSize - upDuration;
-		auto delta = (float)height / downDuration;
+		auto delta = height / downDuration;
+		if(value == lowValue) { value = highValue + delta; }
 		for(; pos < cycleSize; pos++) {
+			value -= delta;
 			for(size_t ch = 0; ch < channels; ch++) {
 				cycleData[pos + ch] = (T)value;
-				value -= delta;
 			}
 		}
 	}

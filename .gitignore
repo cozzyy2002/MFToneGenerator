@@ -363,5 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 /VSOutput.txt
 *.BAK
-*.ods
+*.ods*
 *.txt
+*.csv

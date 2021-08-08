@@ -63,6 +63,7 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	// Create PcmData objects associate with all kind of WaveGenerator.
 	std::vector<std::unique_ptr<ITestPcmData>> pcmDataList;
 	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(samplesPerSecond, new SquareWaveGenerator<UINT8>(duty)));
 	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(samplesPerSecond, new SineWaveGenerator<UINT8>()));
@@ -73,9 +74,24 @@ int main(int argc, char* argv[])
 	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, new SquareWaveGenerator<float>(duty)));
 	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, new SineWaveGenerator<float>()));
 	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, new TriangleWaveGenerator<float>(peakPosition)));
+
+	// Generate PCM data and show properties of each PcmData object.
+	std::cout << ",Wave form,Sample type,Bits per sample,Block align,Samples in cycle,Byte size of cycle\n";
+	int i = 0;
 	for(auto& x : pcmDataList) {
-		x->getPcmData()->generate(key, 1 /*level*/);
+		auto pcmData = x->getPcmData();
+		pcmData->generate(key, 1 /*level*/);
+
+		std::cout << i++
+			<< "," << pcmData->getWaveForm()
+			<< "," << pcmData->getSampleTypeName()
+			<< "," << pcmData->getBitsPerSample()
+			<< "," << pcmData->getBlockAlign()
+			<< "," << pcmData->getSampleCountInCycle()
+			<< "," << pcmData->getBlockAlign() * pcmData->getSampleCountInCycle()
+			<< std::endl;
 	}
+	std::cout << std::endl;
 
 	auto sampleCountInCycle = pcmDataList[0]->getPcmData()->getSampleCountInCycle();
 	std::cout << ",UINT8,,,INT16,,,float\n";

@@ -30,12 +30,13 @@ public:
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) = 0;
 
 	virtual WORD getFormatTag() const = 0;
+	virtual const char* getWaveForm() const = 0;
 	virtual size_t getBlockAlign() const = 0;
 	virtual size_t getBitsPerSample() const = 0;
 	virtual WORD getSamplesPerSec() const = 0;
 	virtual WORD getChannels() const = 0;
 	virtual const char* getSampleTypeName() const = 0;
-	virtual size_t getSampleCountInCycle() const = 0;
+	virtual size_t getSampleCountInCycle() const = 0;		// Available after generate() method is called.
 	virtual size_t getSampleBufferSize(size_t duration) const = 0;
 };
 

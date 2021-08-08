@@ -13,6 +13,7 @@ public:
 
 	virtual IPcmData::SampleDataType getSampleDatatype() const override { return SampleDataType; }
 
+	virtual const char* getWaveForm() const = 0;
 	virtual void generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level) = 0;
 
 protected:
@@ -40,7 +41,8 @@ public:
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) override;
 	virtual void generate(float key, float level) override;
 
-	virtual WORD getFormatTag() const { return FormatTag; }
+	virtual WORD getFormatTag() const override { return FormatTag; }
+	virtual const char* getWaveForm() const override { return m_waveGenerator->getWaveForm(); }
 	// Returns byte size of the minimum atomic unit of data to be generated.
 	virtual size_t getBlockAlign() const override { return m_channels * sizeof(T); }
 	virtual size_t getBitsPerSample() const override { return sizeof(T) * 8; }
@@ -98,8 +100,6 @@ void PcmData<T>::generate(float key, float level)
 {
 	auto sampleCountInCycle = (size_t)(m_channels * m_samplesPerSec / key);
 	auto blockAlign = getBlockAlign();
-	// Round up buffer size to block align boundary
-	sampleCountInCycle = ((sampleCountInCycle / blockAlign) + ((sampleCountInCycle % blockAlign) ? 1 : 0)) * blockAlign;
 	std::unique_ptr<T[]> cycleData(new T[sampleCountInCycle]);
 	m_waveGenerator->generate(cycleData.get(), sampleCountInCycle, m_channels, level);
 
@@ -125,6 +125,7 @@ class SquareWaveGenerator : public WaveGenerator<T>
 public:
 	SquareWaveGenerator(float duty) : m_duty(duty) {}
 
+	virtual const char* getWaveForm() const override { return "Square Wave"; }
 	virtual void generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level) override;
 
 protected:
@@ -159,6 +160,7 @@ template<typename T>
 class SineWaveGenerator : public WaveGenerator<T>
 {
 public:
+	virtual const char* getWaveForm() const override { return "Sine Wave"; }
 	virtual void generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level) override;
 };
 
@@ -194,6 +196,7 @@ public:
 		else { m_peakPosition = peakPosition; }
 	}
 
+	virtual const char* getWaveForm() const override { return "Triangle Wave"; }
 	virtual void generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level) override;
 
 protected:

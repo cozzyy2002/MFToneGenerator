@@ -42,42 +42,42 @@ template<> const float PcmData<float>::LowValue = -0.5f;
 	}
 }
 
-/*static*/ IWaveGenerator* IPcmData::createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty)
+/*static*/ IWaveGenerator* IPcmData::createSquareWaveGenerator(SampleDataType sampleDataType, float duty)
 {
 	switch(sampleDataType) {
-	case IPcmData::SampleDataType::_8bits:
+	case SampleDataType::_8bits:
 		return new SquareWaveGenerator<UINT8>(duty);
-	case IPcmData::SampleDataType::_16bits:
+	case SampleDataType::_16bits:
 		return new SquareWaveGenerator<INT16>(duty);
-	case IPcmData::SampleDataType::IEEE_Float:
+	case SampleDataType::IEEE_Float:
 		return new SquareWaveGenerator<float>(duty);
 	default:
 		return nullptr;
 	}
 }
 
-/*static*/ IWaveGenerator* IPcmData::createSineWaveGenerator(IPcmData::SampleDataType sampleDataType)
+/*static*/ IWaveGenerator* IPcmData::createSineWaveGenerator(SampleDataType sampleDataType)
 {
 	switch(sampleDataType) {
-	case IPcmData::SampleDataType::_8bits:
+	case SampleDataType::_8bits:
 		return new SineWaveGenerator<UINT8>();
-	case IPcmData::SampleDataType::_16bits:
+	case SampleDataType::_16bits:
 		return new SineWaveGenerator<INT16>();
-	case IPcmData::SampleDataType::IEEE_Float:
+	case SampleDataType::IEEE_Float:
 		return new SineWaveGenerator<float>();
 	default:
 		return nullptr;
 	}
 }
 
-/*static*/ IWaveGenerator* IPcmData::createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition)
+/*static*/ IWaveGenerator* IPcmData::createTriangleWaveGenerator(SampleDataType sampleDataType, float peakPosition)
 {
 	switch(sampleDataType) {
-	case IPcmData::SampleDataType::_8bits:
+	case SampleDataType::_8bits:
 		return new TriangleWaveGenerator<UINT8>(peakPosition);
-	case IPcmData::SampleDataType::_16bits:
+	case SampleDataType::_16bits:
 		return new TriangleWaveGenerator<INT16>(peakPosition);
-	case IPcmData::SampleDataType::IEEE_Float:
+	case SampleDataType::IEEE_Float:
 		return new TriangleWaveGenerator<float>(peakPosition);
 	default:
 		return nullptr;

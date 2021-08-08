@@ -13,8 +13,7 @@ class ITestPcmData
 public:
 	virtual ~ITestPcmData() {}
 
-	virtual void generate(float key) = 0;
-	virtual size_t getCycleSize() = 0;
+	virtual IPcmData* getPcmData() = 0;
 	virtual std::string str(size_t pos) = 0;
 };
 
@@ -25,8 +24,7 @@ public:
 	TestPcmData(WORD samplesPerSecond, IWaveGenerator* waveGenerator)
 		: PcmData<T>(samplesPerSecond, 1 /*channels*/, waveGenerator) {}
 
-	virtual void generate(float key) override { PcmData<T>::generate(key, 1 /*level*/); }
-	virtual size_t getCycleSize() override { return PcmData<T>::m_cycleSize; }
+	virtual IPcmData* getPcmData() override { return this; }
 	virtual std::string str(size_t pos) override;
 
 };
@@ -76,13 +74,13 @@ int main(int argc, char* argv[])
 	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, new SineWaveGenerator<float>()));
 	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, new TriangleWaveGenerator<float>(peakPosition)));
 	for(auto& x : pcmDataList) {
-		x->generate(key);
+		x->getPcmData()->generate(key, 1 /*level*/);
 	}
 
-	auto cycleSize = pcmDataList[0]->getCycleSize();
+	auto sampleCountInCycle = pcmDataList[0]->getPcmData()->getSampleCountInCycle();
 	std::cout << ",UINT8,,,INT16,,,float\n";
 	std::cout << "pos,Square,Sine,Triangle,Square,Sine,Triangle,Square,Sine,Triangle\n";
-	for(size_t pos = 0; pos < cycleSize; pos++) {
+	for(size_t pos = 0; pos < sampleCountInCycle; pos++) {
 		std::cout << pos;
 		for(auto& x : pcmDataList) {
 			std::cout << "," << x->str(pos);

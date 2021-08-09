@@ -32,9 +32,9 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 
 	if(!m_pd) {
 		// Create MediaType
-		static const WORD nChannels = 1;			// Mono
-		static const DWORD nSamplesPerSec = 44100;	// 44.1kHz
-		static const WORD wBitsPerSample = 16;		// 16bit/Sample
+		static const WORD nChannels = m_pcmData->getChannels();
+		static const DWORD nSamplesPerSec = m_pcmData->getSamplesPerSec();
+		static const WORD wBitsPerSample = m_pcmData->getBitsPerSample();
 		WAVEFORMATEX waveFormat = {
 			WAVE_FORMAT_PCM,
 			nChannels,											// nChannels

@@ -259,9 +259,15 @@ void CMFToneGeneratorDlg::OnClose()
 void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 {
 	UpdateData();
-	CString fileName;
-	m_audioFileName.GetWindowText(fileName);
-	m_context->setAudioFileName(fileName);
+	//CString fileName;
+	//m_audioFileName.GetWindowText(fileName);
+	//m_context->setAudioFileName(fileName);
+	if(!m_pcmData) {
+		auto generator = IPcmData::createSineWaveGenerator(IPcmData::SampleDataType::_16bits);
+		m_pcmData = IPcmData::create(44100, 2, generator);
+		m_pcmData->generate(440, 0.5f, 0.5f);
+		m_context->setPcmData(m_pcmData);
+	}
 	m_context->startStop();
 }
 

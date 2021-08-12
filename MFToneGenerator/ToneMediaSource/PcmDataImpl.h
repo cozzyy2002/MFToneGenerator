@@ -232,8 +232,8 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle,
 		value = zeroValue;
 	} else {
 		if(m_peakPosition < 0.5f) {
-			upDelta = height / (sampleCountInCycle / 2 * m_peakPosition);
-			downDelta = height / (sampleCountInCycle / 2 * (0.5f - m_peakPosition));
+			upDelta = height / (sampleCountInCycle * m_peakPosition * 2);
+			downDelta = height / (sampleCountInCycle * (0.5f - m_peakPosition) * 2);
 			up = true;
 		} else {
 			upDelta = height / (sampleCountInCycle * (m_peakPosition - 0.5f) * 2);

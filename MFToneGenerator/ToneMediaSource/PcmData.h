@@ -19,7 +19,7 @@ public:
 	static IPcmData* create(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
 	static IWaveGenerator* createSquareWaveGenerator(SampleDataType sampleDataType, float duty = 0.5f);
 	static IWaveGenerator* createSineWaveGenerator(SampleDataType sampleDataType);
-	static IWaveGenerator* createTriangleWaveGenerator(SampleDataType sampleDataType, float peakPosition = 0.5f);
+	static IWaveGenerator* createTriangleWaveGenerator(SampleDataType sampleDataType, float peakPosition = 0.25f);
 
 	// Generates 1-cycle PCM data
 	// Data to be generated depends on IWaveGenerator object passed to the create() static method.

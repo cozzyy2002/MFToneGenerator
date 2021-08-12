@@ -21,12 +21,10 @@ protected:
 };
 
 /*
- * WaveGenerator template abstract class
+ * WaveGenerator template class
  * Type parameter T is data type of wave sample data.
  *   Such as T=INT16 for 16 bit per sample per channel.
  *   This case, minimum atomic unit of 2-channel sample is 16 / 8 * 2 byte.
- * 
- * IWaveGenerator::generate() and getFormatTag() methods should be implemented by derived class.
  */
 template<typename T>
 class PcmData : public IPcmData
@@ -212,27 +210,57 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle,
 {
 	float highValue = PcmData<T>::HighValue * level;
 	float lowValue = PcmData<T>::LowValue * level;
+	float zeroValue = PcmData<T>::ZeroValue * level;
 	float height = highValue - lowValue;
-	size_t upDuration = (size_t)(sampleCountInCycle * m_peakPosition);
-	size_t pos = 0;
-	float value = lowValue;
-	if(0 < upDuration) {
-		auto delta = height / upDuration;
-		for(; pos < upDuration; pos += channels) {
-			cycleData[pos] = (T)value;
-			value += delta;
+	float upDelta, downDelta;
+	bool up;
+	float value;
+	if(m_peakPosition == 0.0f) {
+		upDelta = height;
+		downDelta = height / sampleCountInCycle;
+		up = false;
+		value = highValue;
+	} else if(m_peakPosition == 1.0f) {
+		upDelta = height / sampleCountInCycle;
+		downDelta = height;
+		up = true;
+		value = lowValue;
+	} else if(m_peakPosition == 0.5f) {
+		upDelta = height / sampleCountInCycle;
+		downDelta = height;
+		up = true;
+		value = zeroValue;
+	} else {
+		if(m_peakPosition < 0.5f) {
+			upDelta = height / (sampleCountInCycle / 2 * m_peakPosition);
+			downDelta = height / (sampleCountInCycle / 2 * (0.5f - m_peakPosition));
+			up = true;
+		} else {
+			upDelta = height / (sampleCountInCycle * (m_peakPosition - 0.5f) * 2);
+			downDelta = height / (sampleCountInCycle * m_peakPosition * 2);
+			up = false;
 		}
-		// Revert value to the last.
-		value -= delta;
+		value = zeroValue;
 	}
 
-	if(upDuration < sampleCountInCycle) {
-		size_t downDuration = sampleCountInCycle - upDuration;
-		auto delta = height / downDuration;
-		if(value == lowValue) { value = highValue + delta; }
-		for(; pos < sampleCountInCycle; pos++) {
-			value -= delta;
-			cycleData[pos] = (T)value;
+	if((lowValue + upDelta) > highValue) { upDelta = height; }
+	if((highValue - downDelta) < lowValue) { downDelta = height; }
+
+	for(size_t pos = 0; pos < sampleCountInCycle; pos += channels) {
+		cycleData[pos] = (T)value;
+		if(up) {
+			value += upDelta;
+			if(highValue < value) {
+				value = highValue;
+				up = false;
+			}
+		}
+		else {
+			value -= downDelta;
+			if(value < lowValue) {
+				value = lowValue;
+				up = true;
+			}
 		}
 	}
 }

@@ -18,6 +18,8 @@ public:
 
 protected:
 	static const IPcmData::SampleDataType SampleDataType;
+
+	void adjustLevel(float level, T* pHighValue = nullptr, T* pLowValue = nullptr, T* pZeroValue = nullptr) const;
 };
 
 /*
@@ -121,6 +123,20 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 }
 
 
+template<typename T>
+void WaveGenerator<T>::adjustLevel(float level, T* pHighValue, T* pLowValue, T* pZeroValue) const
+{
+	if(pHighValue) {
+		*pHighValue = (T)(((PcmData<T>::HighValue - PcmData<T>::ZeroValue) * level) + PcmData<T>::ZeroValue);
+	}
+	if(pLowValue) {
+		*pLowValue = (T)(PcmData<T>::ZeroValue - ((PcmData<T>::ZeroValue - PcmData<T>::LowValue) * level));
+	}
+	if(pZeroValue) {
+		*pZeroValue = PcmData<T>::ZeroValue;
+	}
+}
+
 /*
  * SquareWaveGenerator class derived from WaveGenerator class.
  * 
@@ -143,8 +159,8 @@ protected:
 template<typename T>
 void SquareWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level)
 {
-	auto highValue = (T)(PcmData<T>::HighValue * level);
-	auto lowValue = (T)(PcmData<T>::LowValue * level);
+	T highValue, lowValue;
+	WaveGenerator<T>::adjustLevel(level, &highValue, &lowValue);
 	size_t highDuration = (size_t)(sampleCountInCycle * m_duty);
 	size_t pos = 0;
 	for(; pos < highDuration; pos += channels) {
@@ -172,12 +188,13 @@ template<typename T>
 void SineWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level)
 {
 	static const float pi = 3.141592f;
-	auto highValue = (T)((PcmData<T>::HighValue - PcmData<T>::ZeroValue) * level);
+	T highValue, zeroValue;
+	WaveGenerator<T>::adjustLevel(level, &highValue, nullptr, &zeroValue);
+	auto height = highValue - zeroValue;
 
 	for(size_t pos = 0; pos < sampleCountInCycle; pos += channels) {
 		auto radian = 2 * pi * pos / sampleCountInCycle;
-		auto value = (T)((sin(radian) * highValue) + PcmData<T>::ZeroValue);
-		cycleData[pos] = value;
+		cycleData[pos] = (T)((sin(radian) * height) + zeroValue);
 	}
 }
 /*
@@ -208,10 +225,9 @@ protected:
 template<typename T>
 void TriangleWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level)
 {
-	float highValue = PcmData<T>::HighValue * level;
-	float lowValue = PcmData<T>::LowValue * level;
-	float zeroValue = PcmData<T>::ZeroValue * level;
-	float height = highValue - lowValue;
+	T highValue, lowValue, zeroValue;
+	WaveGenerator<T>::adjustLevel(level, &highValue, &lowValue, &zeroValue);
+	float height = (float)(highValue - lowValue);
 	float upDelta, downDelta;
 	bool up;
 	float value;

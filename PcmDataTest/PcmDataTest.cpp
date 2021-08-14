@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
 				<< ",Square" << comma << ",Sine" << comma << ",Triangle" << comma
 				<< ",Square" << comma << ",Sine" << comma << ",Triangle\n";
 	for(size_t pos = 0; pos < sampleCountInCycle; pos += channels) {
-		std::cout << pos;
+		std::cout << (pos / channels);
 		for(auto& x : pcmDataList) {
 			for(WORD ch = 0; ch < channels; ch++) {
 				std::cout << "," << x->str(pos + ch);

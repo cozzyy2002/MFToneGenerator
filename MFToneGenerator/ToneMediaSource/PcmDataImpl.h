@@ -87,9 +87,10 @@ HRESULT PcmData<T>::copyTo(BYTE* destBuffer, size_t destSize)
 	// Assert that data has been generated.
 	HR_ASSERT(m_cycleData, E_ILLEGAL_METHOD_CALL);
 
+	destSize = (destSize / sizeof(T)) * sizeof(T);
 	for(DWORD destPosition = 0; destPosition < destSize; destPosition += sizeof(T)) {
 		*(T*)(&destBuffer[destPosition]) = m_cycleData[m_currentPosition++];
-		if(m_sampleCountInCycle < m_currentPosition) { m_currentPosition = 0; }
+		if(m_sampleCountInCycle <= m_currentPosition) { m_currentPosition = 0; }
 	}
 
 	return S_OK;
@@ -105,12 +106,13 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 	m_waveGenerator->generate(cycleData.get(), sampleCountInCycle, m_channels, level);
 
 	// Copy first channel to another channel shifting phase.
-	auto shiftDelta = (size_t)((sampleCountInCycle * phaseShift) * m_channels);
+	auto shiftDelta = (size_t)(sampleCountInCycle * m_channels * phaseShift);
+	auto shift = shiftDelta;
 	for(WORD channel = 1; channel < m_channels; channel++) {
-		auto shift = shiftDelta * channel;
 		for(size_t pos = 0; pos < sampleCountInCycle; pos += m_channels) {
 			cycleData[pos + channel] = cycleData[(pos + shift) % sampleCountInCycle];
 		}
+		shift += shiftDelta;
 	}
 
 	// Update member variables in the Critical Section.
@@ -127,10 +129,10 @@ template<typename T>
 void WaveGenerator<T>::adjustLevel(float level, T* pHighValue, T* pLowValue, T* pZeroValue) const
 {
 	if(pHighValue) {
-		*pHighValue = (T)(((PcmData<T>::HighValue - PcmData<T>::ZeroValue) * level) + PcmData<T>::ZeroValue);
+		*pHighValue = (T)((PcmData<T>::HighValue - PcmData<T>::ZeroValue) * level) + PcmData<T>::ZeroValue;
 	}
 	if(pLowValue) {
-		*pLowValue = (T)(PcmData<T>::ZeroValue - ((PcmData<T>::ZeroValue - PcmData<T>::LowValue) * level));
+		*pLowValue = PcmData<T>::ZeroValue - (T)((PcmData<T>::ZeroValue - PcmData<T>::LowValue) * level);
 	}
 	if(pZeroValue) {
 		*pZeroValue = PcmData<T>::ZeroValue;
@@ -229,31 +231,29 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle,
 	WaveGenerator<T>::adjustLevel(level, &highValue, &lowValue, &zeroValue);
 	float height = (float)(highValue - lowValue);
 	float upDelta, downDelta;
+	upDelta = downDelta = height * channels / sampleCountInCycle;
 	bool up;
 	float value;
 	if(m_peakPosition == 0.0f) {
-		upDelta = height;
-		downDelta = height / sampleCountInCycle;
+		upDelta = height * channels;
 		up = false;
 		value = highValue;
 	} else if(m_peakPosition == 1.0f) {
-		upDelta = height / sampleCountInCycle;
-		downDelta = height;
+		downDelta = height * channels;
 		up = true;
 		value = lowValue;
 	} else if(m_peakPosition == 0.5f) {
-		upDelta = height / sampleCountInCycle;
-		downDelta = height;
+		downDelta = height * channels;
 		up = true;
 		value = zeroValue;
 	} else {
 		if(m_peakPosition < 0.5f) {
-			upDelta = height / (sampleCountInCycle * m_peakPosition * 2);
-			downDelta = height / (sampleCountInCycle * (0.5f - m_peakPosition) * 2);
+			upDelta /= (m_peakPosition * 2);
+			downDelta /= ((0.5f - m_peakPosition) * 2);
 			up = true;
 		} else {
-			upDelta = height / (sampleCountInCycle * (m_peakPosition - 0.5f) * 2);
-			downDelta = height / (sampleCountInCycle * m_peakPosition * 2);
+			upDelta /= ((m_peakPosition - 0.5f) * 2);
+			downDelta /= (m_peakPosition * 2);
 			up = false;
 		}
 		value = zeroValue;

@@ -15,6 +15,8 @@ public:
 
 	virtual IPcmData* getPcmData() = 0;
 	virtual std::string str(size_t pos) = 0;
+	virtual ULONG STDMETHODCALLTYPE AddRef(void) = 0;
+	virtual ULONG STDMETHODCALLTYPE Release() = 0;
 };
 
 template<typename T>
@@ -26,7 +28,8 @@ public:
 
 	virtual IPcmData* getPcmData() override { return this; }
 	virtual std::string str(size_t pos) override;
-
+	virtual ULONG STDMETHODCALLTYPE AddRef(void) override { return PcmData<T>::AddRef(); }
+	virtual ULONG STDMETHODCALLTYPE Release() override { return PcmData<T>::Release(); }
 };
 
 template<typename T> 
@@ -65,21 +68,31 @@ int main(int argc, char* argv[])
 		if(sscanf_s(argv[i], "lvl=%f", &fVal) == 1) { level = fVal; continue; }
 		if(sscanf_s(argv[i], "sft=%f", &fVal) == 1) { phaseShift = fVal; continue; }
 
-		printf_s("Usage: PcmDataTest [duty=Duty] [peak=PeakPosition] [sps=SamplesPerSecond] [ch=Channels] [key=Key] [lvl=Level] [sft=PhaseSift]\n");
+		std::cout << "Usage: PcmDataTest [duty=Duty] [peak=PeakPosition] [sps=SamplesPerSecond] [ch=Channels] [key=Key] [lvl=Level] [sft=PhaseSift]\n";
 		return 0;
 	}
 
-	// Create PcmData objects associate with all kind of WaveGenerator.
-	std::vector<std::unique_ptr<ITestPcmData>> pcmDataList;
-	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(samplesPerSecond, channels, new SquareWaveGenerator<UINT8>(duty)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(samplesPerSecond, channels, new SineWaveGenerator<UINT8>()));
-	pcmDataList.push_back(std::make_unique<TestPcmData<UINT8>>(samplesPerSecond, channels, new TriangleWaveGenerator<UINT8>(peakPosition)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<INT16>>(samplesPerSecond, channels, new SquareWaveGenerator<INT16>(duty)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<INT16>>(samplesPerSecond, channels, new SineWaveGenerator<INT16>()));
-	pcmDataList.push_back(std::make_unique<TestPcmData<INT16>>(samplesPerSecond, channels, new TriangleWaveGenerator<INT16>(peakPosition)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, channels, new SquareWaveGenerator<float>(duty)));
-	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, channels, new SineWaveGenerator<float>()));
-	pcmDataList.push_back(std::make_unique<TestPcmData<float>>(samplesPerSecond, channels, new TriangleWaveGenerator<float>(peakPosition)));
+	std::cout << "Command Line Parameters"
+		<< "\nDuty," << duty
+		<< "\nPeak Position," << peakPosition
+		<< "\nSamples Per Second," << samplesPerSecond
+		<< "\nChannels," << channels
+		<< "\nKey," << key
+		<< "\nLevel," << level
+		<< "\nPhase Shift," << phaseShift
+		<< "\n\n";
+
+	// Create PcmData objects associate with all kinds of WaveGenerator.
+	std::vector<CComPtr<ITestPcmData>> pcmDataList;
+	pcmDataList.push_back(new TestPcmData<UINT8>(samplesPerSecond, channels, new SquareWaveGenerator<UINT8>(duty)));
+	pcmDataList.push_back(new TestPcmData<UINT8>(samplesPerSecond, channels, new SineWaveGenerator<UINT8>()));
+	pcmDataList.push_back(new TestPcmData<UINT8>(samplesPerSecond, channels, new TriangleWaveGenerator<UINT8>(peakPosition)));
+	pcmDataList.push_back(new TestPcmData<INT16>(samplesPerSecond, channels, new SquareWaveGenerator<INT16>(duty)));
+	pcmDataList.push_back(new TestPcmData<INT16>(samplesPerSecond, channels, new SineWaveGenerator<INT16>()));
+	pcmDataList.push_back(new TestPcmData<INT16>(samplesPerSecond, channels, new TriangleWaveGenerator<INT16>(peakPosition)));
+	pcmDataList.push_back(new TestPcmData<float>(samplesPerSecond, channels, new SquareWaveGenerator<float>(duty)));
+	pcmDataList.push_back(new TestPcmData<float>(samplesPerSecond, channels, new SineWaveGenerator<float>()));
+	pcmDataList.push_back(new TestPcmData<float>(samplesPerSecond, channels, new TriangleWaveGenerator<float>(peakPosition)));
 
 	// Generate PCM data and show properties of each PcmData object.
 	std::cout << ",Wave form,Sample type,Bits per sample,Channels,Block align,Samples in cycle,Byte size of cycle\n";

@@ -107,13 +107,13 @@ int main(int argc, char* argv[])
 			<< "," << pcmData->getBitsPerSample()
 			<< "," << pcmData->getChannels()
 			<< "," << pcmData->getBlockAlign()
-			<< "," << pcmData->getSampleCountInCycle()
-			<< "," << pcmData->getBlockAlign() * pcmData->getSampleCountInCycle()
+			<< "," << pcmData->getSamplesPerCycle()
+			<< "," << pcmData->getBlockAlign() * pcmData->getSamplesPerCycle()
 			<< std::endl;
 	}
 	std::cout << std::endl;
 
-	auto sampleCountInCycle = pcmDataList[0]->getPcmData()->getSampleCountInCycle();
+	auto sampleCountInCycle = pcmDataList[0]->getPcmData()->getSamplesPerCycle();
 	auto comma = std::string(",,,,").substr(0, channels - 1);
 	std::cout << ",UINT8" << comma << "," << comma << "," << comma << ",INT16" << comma << "," << comma << "," << comma << ",float\n";
 	std::cout << "pos,Square" << comma << ",Sine" << comma << ",Triangle" << comma

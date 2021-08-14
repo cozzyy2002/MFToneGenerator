@@ -14,7 +14,7 @@ public:
 	virtual IPcmData::SampleDataType getSampleDatatype() const override { return SampleDataType; }
 
 	virtual const char* getWaveForm() const = 0;
-	virtual void generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level) = 0;
+	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) = 0;
 
 protected:
 	static const IPcmData::SampleDataType SampleDataType;
@@ -35,7 +35,7 @@ public:
 	PcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
 		: m_samplesPerSec(samplesPerSec), m_channels(channels)
 		, m_waveGenerator((WaveGenerator<T>*)waveGenerator)
-		, m_sampleCountInCycle(0), m_currentPosition(0)
+		, m_samplesPerCycle(0), m_currentPosition(0)
 		, m_unknownImpl(this) {}
 
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) override;
@@ -49,7 +49,7 @@ public:
 	virtual WORD getSamplesPerSec() const override { return m_samplesPerSec; }
 	virtual WORD getChannels() const override { return m_channels; }
 	virtual const char* getSampleTypeName() const { return typeid(T).name(); }
-	virtual size_t getSampleCountInCycle() const { return m_sampleCountInCycle; }
+	virtual size_t getSamplesPerCycle() const { return m_samplesPerCycle; }
 	virtual size_t getSampleBufferSize(size_t duration) const { return m_samplesPerSec * getBlockAlign() * duration / 1000; }
 
 	static const WORD FormatTag;
@@ -60,7 +60,7 @@ public:
 protected:
 	const WORD m_samplesPerSec;
 	const WORD m_channels;
-	size_t m_sampleCountInCycle;
+	size_t m_samplesPerCycle;
 	size_t m_currentPosition;
 	std::unique_ptr<T[]> m_cycleData;
 	std::unique_ptr<WaveGenerator<T>> m_waveGenerator;
@@ -90,7 +90,7 @@ HRESULT PcmData<T>::copyTo(BYTE* destBuffer, size_t destSize)
 	destSize = (destSize / sizeof(T)) * sizeof(T);
 	for(DWORD destPosition = 0; destPosition < destSize; destPosition += sizeof(T)) {
 		*(T*)(&destBuffer[destPosition]) = m_cycleData[m_currentPosition++];
-		if(m_sampleCountInCycle <= m_currentPosition) { m_currentPosition = 0; }
+		if(m_samplesPerCycle <= m_currentPosition) { m_currentPosition = 0; }
 	}
 
 	return S_OK;
@@ -100,17 +100,17 @@ template<typename T>
 void PcmData<T>::generate(float key, float level, float phaseShift)
 {
 	// Generate PCM data for first channel using WaveGenerator.
-	auto sampleCountInCycle = (size_t)(m_channels * m_samplesPerSec / key);
+	auto samplesPerCycle = (size_t)(m_channels * m_samplesPerSec / key);
 	auto blockAlign = getBlockAlign();
-	std::unique_ptr<T[]> cycleData(new T[sampleCountInCycle]);
-	m_waveGenerator->generate(cycleData.get(), sampleCountInCycle, m_channels, level);
+	std::unique_ptr<T[]> cycleData(new T[samplesPerCycle]);
+	m_waveGenerator->generate(cycleData.get(), samplesPerCycle, m_channels, level);
 
 	// Copy first channel to another channel shifting phase.
-	auto shiftDelta = (size_t)(sampleCountInCycle * m_channels * phaseShift);
+	auto shiftDelta = (size_t)(samplesPerCycle * m_channels * phaseShift);
 	auto shift = shiftDelta;
 	for(WORD channel = 1; channel < m_channels; channel++) {
-		for(size_t pos = 0; pos < sampleCountInCycle; pos += m_channels) {
-			cycleData[pos + channel] = cycleData[(pos + shift) % sampleCountInCycle];
+		for(size_t pos = 0; pos < samplesPerCycle; pos += m_channels) {
+			cycleData[pos + channel] = cycleData[(pos + shift) % samplesPerCycle];
 		}
 		shift += shiftDelta;
 	}
@@ -119,7 +119,7 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 	{
 		CriticalSection lock(m_cycleDataLock);
 		m_cycleData = std::move(cycleData);
-		m_sampleCountInCycle = sampleCountInCycle;
+		m_samplesPerCycle = samplesPerCycle;
 		m_currentPosition = 0;
 	}
 }
@@ -152,23 +152,23 @@ public:
 	SquareWaveGenerator(float duty) : m_duty(duty) {}
 
 	virtual const char* getWaveForm() const override { return "Square Wave"; }
-	virtual void generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level) override;
+	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 
 protected:
 	float m_duty;
 };
 
 template<typename T>
-void SquareWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level)
+void SquareWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level)
 {
 	T highValue, lowValue;
 	WaveGenerator<T>::adjustLevel(level, &highValue, &lowValue);
-	size_t highDuration = (size_t)(sampleCountInCycle * m_duty);
+	size_t highDuration = (size_t)(samplesPerCycle * m_duty);
 	size_t pos = 0;
 	for(; pos < highDuration; pos += channels) {
 		cycleData[pos] = highValue;
 	}
-	for(; pos < sampleCountInCycle; pos++) {
+	for(; pos < samplesPerCycle; pos++) {
 		cycleData[pos] = lowValue;
 	}
 }
@@ -183,19 +183,19 @@ class SineWaveGenerator : public WaveGenerator<T>
 {
 public:
 	virtual const char* getWaveForm() const override { return "Sine Wave"; }
-	virtual void generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level) override;
+	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 };
 
 template<typename T>
-void SineWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level)
+void SineWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level)
 {
 	static const float pi = 3.141592f;
 	T highValue, zeroValue;
 	WaveGenerator<T>::adjustLevel(level, &highValue, nullptr, &zeroValue);
 	auto height = highValue - zeroValue;
 
-	for(size_t pos = 0; pos < sampleCountInCycle; pos += channels) {
-		auto radian = 2 * pi * pos / sampleCountInCycle;
+	for(size_t pos = 0; pos < samplesPerCycle; pos += channels) {
+		auto radian = 2 * pi * pos / samplesPerCycle;
 		cycleData[pos] = (T)((sin(radian) * height) + zeroValue);
 	}
 }
@@ -218,20 +218,20 @@ public:
 	}
 
 	virtual const char* getWaveForm() const override { return "Triangle Wave"; }
-	virtual void generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level) override;
+	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 
 protected:
 	float m_peakPosition;
 };
 
 template<typename T>
-void TriangleWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle, WORD channels, float level)
+void TriangleWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level)
 {
 	T highValue, lowValue, zeroValue;
 	WaveGenerator<T>::adjustLevel(level, &highValue, &lowValue, &zeroValue);
 	float height = (float)(highValue - lowValue);
 	float upDelta, downDelta;
-	upDelta = downDelta = height * channels / sampleCountInCycle;
+	upDelta = downDelta = height * channels / samplesPerCycle;
 	bool up;
 	float value;
 	if(m_peakPosition == 0.0f) {
@@ -262,7 +262,7 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t sampleCountInCycle,
 	if((lowValue + upDelta) > highValue) { upDelta = height; }
 	if((highValue - downDelta) < lowValue) { downDelta = height; }
 
-	for(size_t pos = 0; pos < sampleCountInCycle; pos += channels) {
+	for(size_t pos = 0; pos < samplesPerCycle; pos += channels) {
 		cycleData[pos] = (T)value;
 		if(up) {
 			value += upDelta;

@@ -8,15 +8,13 @@
 #include <vector>
 #include <iostream>
 
-class ITestPcmData
+class ITestPcmData : public IUnknown
 {
 public:
 	virtual ~ITestPcmData() {}
 
 	virtual IPcmData* getPcmData() = 0;
 	virtual std::string str(size_t pos) = 0;
-	virtual ULONG STDMETHODCALLTYPE AddRef(void) = 0;
-	virtual ULONG STDMETHODCALLTYPE Release() = 0;
 };
 
 template<typename T>
@@ -28,8 +26,10 @@ public:
 
 	virtual IPcmData* getPcmData() override { return this; }
 	virtual std::string str(size_t pos) override;
-	virtual ULONG STDMETHODCALLTYPE AddRef(void) override { return PcmData<T>::AddRef(); }
-	virtual ULONG STDMETHODCALLTYPE Release() override { return PcmData<T>::Release(); }
+
+	virtual HRESULT STDMETHODCALLTYPE IUnknown::QueryInterface(REFIID riid, void** ppvObject) override { return PcmData<T>::QueryInterface(riid, ppvObject); }
+	virtual ULONG STDMETHODCALLTYPE IUnknown::AddRef(void) override { return PcmData<T>::AddRef(); }
+	virtual ULONG STDMETHODCALLTYPE IUnknown::Release() override { return PcmData<T>::Release(); }
 };
 
 template<typename T> 

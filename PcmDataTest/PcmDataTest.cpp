@@ -50,7 +50,7 @@ std::string TestPcmData<float>::str(size_t pos)
 int main(int argc, char* argv[])
 {
 	auto duty = 0.5f;
-	auto peakPosition = 0.25f;
+	auto peakPosition = 0.5f;
 	WORD samplesPerSecond = 44100;
 	WORD channels = 1;
 	WORD key = 440;

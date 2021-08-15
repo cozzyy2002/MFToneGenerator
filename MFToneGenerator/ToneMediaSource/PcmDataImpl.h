@@ -110,7 +110,7 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 	auto shift = shiftDelta;
 	for(WORD channel = 1; channel < m_channels; channel++) {
 		for(size_t pos = 0; pos < samplesPerCycle; pos += m_channels) {
-			cycleData[pos + channel] = cycleData[(pos + shift) % samplesPerCycle];
+			cycleData[pos + channel] = cycleData[(pos + samplesPerCycle - shift) % samplesPerCycle];
 		}
 		shift += shiftDelta;
 	}

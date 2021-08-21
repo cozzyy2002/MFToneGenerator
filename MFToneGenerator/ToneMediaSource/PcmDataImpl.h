@@ -87,7 +87,9 @@ HRESULT PcmData<T>::copyTo(BYTE* destBuffer, size_t destSize)
 	// Assert that data has been generated.
 	HR_ASSERT(m_cycleData, E_ILLEGAL_METHOD_CALL);
 
-	destSize = (destSize / sizeof(T)) * sizeof(T);
+	HR_ASSERT(destBuffer, E_POINTER);
+	HR_ASSERT((destSize % sizeof(T)) == 0, E_BOUNDS);
+
 	for(DWORD destPosition = 0; destPosition < destSize; destPosition += sizeof(T)) {
 		*(T*)(&destBuffer[destPosition]) = m_cycleData[m_currentPosition++];
 		if(m_samplesPerCycle <= m_currentPosition) { m_currentPosition = 0; }

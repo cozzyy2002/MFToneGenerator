@@ -5,6 +5,14 @@
 
 #include <math.h>
 
+class IWaveGenerator
+{
+public:
+	virtual ~IWaveGenerator() {}
+
+	virtual IPcmData::SampleDataType getSampleDatatype() const = 0;
+};
+
 template<typename T>
 class WaveGenerator : public IWaveGenerator
 {
@@ -103,7 +111,6 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 {
 	// Generate PCM data for first channel using WaveGenerator.
 	auto samplesPerCycle = (size_t)(m_channels * m_samplesPerSec / key);
-	auto blockAlign = getBlockAlign();
 	std::unique_ptr<T[]> cycleData(new T[samplesPerCycle]);
 	m_waveGenerator->generate(cycleData.get(), samplesPerCycle, m_channels, level);
 

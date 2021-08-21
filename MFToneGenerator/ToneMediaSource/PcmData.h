@@ -39,11 +39,3 @@ public:
 	virtual size_t getSamplesPerCycle() const = 0;		// Available after generate() method is called.
 	virtual size_t getSampleBufferSize(size_t duration) const = 0;
 };
-
-class IWaveGenerator
-{
-public:
-	virtual ~IWaveGenerator() {}
-
-	virtual IPcmData::SampleDataType getSampleDatatype() const = 0;
-};

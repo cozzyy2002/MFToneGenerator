@@ -83,16 +83,17 @@ int main(int argc, char* argv[])
 		<< "\n\n";
 
 	// Create PcmData objects associate with all kinds of WaveGenerator.
-	std::vector<CComPtr<ITestPcmData>> pcmDataList;
-	pcmDataList.push_back(new TestPcmData<UINT8>(samplesPerSecond, channels, new SquareWaveGenerator<UINT8>(duty)));
-	pcmDataList.push_back(new TestPcmData<UINT8>(samplesPerSecond, channels, new SineWaveGenerator<UINT8>()));
-	pcmDataList.push_back(new TestPcmData<UINT8>(samplesPerSecond, channels, new TriangleWaveGenerator<UINT8>(peakPosition)));
-	pcmDataList.push_back(new TestPcmData<INT16>(samplesPerSecond, channels, new SquareWaveGenerator<INT16>(duty)));
-	pcmDataList.push_back(new TestPcmData<INT16>(samplesPerSecond, channels, new SineWaveGenerator<INT16>()));
-	pcmDataList.push_back(new TestPcmData<INT16>(samplesPerSecond, channels, new TriangleWaveGenerator<INT16>(peakPosition)));
-	pcmDataList.push_back(new TestPcmData<float>(samplesPerSecond, channels, new SquareWaveGenerator<float>(duty)));
-	pcmDataList.push_back(new TestPcmData<float>(samplesPerSecond, channels, new SineWaveGenerator<float>()));
-	pcmDataList.push_back(new TestPcmData<float>(samplesPerSecond, channels, new TriangleWaveGenerator<float>(peakPosition)));
+	std::vector<CComPtr<ITestPcmData>> pcmDataList = {
+		new TestPcmData<UINT8>(samplesPerSecond, channels, new SquareWaveGenerator<UINT8>(duty)),
+		new TestPcmData<UINT8>(samplesPerSecond, channels, new SineWaveGenerator<UINT8>()),
+		new TestPcmData<UINT8>(samplesPerSecond, channels, new TriangleWaveGenerator<UINT8>(peakPosition)),
+		new TestPcmData<INT16>(samplesPerSecond, channels, new SquareWaveGenerator<INT16>(duty)),
+		new TestPcmData<INT16>(samplesPerSecond, channels, new SineWaveGenerator<INT16>()),
+		new TestPcmData<INT16>(samplesPerSecond, channels, new TriangleWaveGenerator<INT16>(peakPosition)),
+		new TestPcmData<float>(samplesPerSecond, channels, new SquareWaveGenerator<float>(duty)),
+		new TestPcmData<float>(samplesPerSecond, channels, new SineWaveGenerator<float>()),
+		new TestPcmData<float>(samplesPerSecond, channels, new TriangleWaveGenerator<float>(peakPosition)),
+	};
 
 	// Generate PCM data and show properties of each PcmData object.
 	std::cout << ",Wave form,Sample type,Bits per sample,Channels,Block align,Samples in cycle,Byte size of cycle\n";

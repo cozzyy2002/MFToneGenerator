@@ -3,49 +3,67 @@
 
 #include "pch.h"
 #include <PcmData.h>
-#include <PcmDataImpl.h>
 
-#include <vector>
 #include <iostream>
 
-class ITestPcmData : public IUnknown
-{
-public:
-	virtual ~ITestPcmData() {}
-
-	virtual IPcmData* getPcmData() = 0;
-	virtual std::string str(size_t pos) = 0;
-};
-
+// template function to be called by handler::str() method.
+// Returns string converted from type T number value.
+// Parameter pos must be position of type T not BYTE.
 template<typename T>
-class TestPcmData : public ITestPcmData, public PcmData<T>
-{
-public:
-	TestPcmData(WORD samplesPerSecond, WORD channels, IWaveGenerator* waveGenerator)
-		: PcmData<T>(samplesPerSecond, channels, waveGenerator) {}
-
-	virtual IPcmData* getPcmData() override { return this; }
-	virtual std::string str(size_t pos) override;
-
-	virtual HRESULT STDMETHODCALLTYPE IUnknown::QueryInterface(REFIID riid, void** ppvObject) override { return PcmData<T>::QueryInterface(riid, ppvObject); }
-	virtual ULONG STDMETHODCALLTYPE IUnknown::AddRef(void) override { return PcmData<T>::AddRef(); }
-	virtual ULONG STDMETHODCALLTYPE IUnknown::Release() override { return PcmData<T>::Release(); }
-};
+std::string str_func(LPCVOID cycleData, size_t pos);
 
 template<typename T> 
-std::string TestPcmData<T>::str(size_t pos)
+std::string str_func<T>(LPCVOID cycleData, size_t pos)
 {
 	char s[30];
-	_itoa_s(PcmData<T>::m_cycleData[pos], s, 10);
+	_itoa_s(((T*)cycleData)[pos], s, 10);
 	return s;
 }
 
 template<>
-std::string TestPcmData<float>::str(size_t pos)
+std::string str_func<float>(LPCVOID cycleData, size_t pos)
 {	char s[20];
-	_gcvt_s(s, PcmData<float>::m_cycleData[pos], 8);
+	_gcvt_s(s, ((float*)cycleData)[pos], 8);
 	return s;
 }
+
+class Handler {
+public:
+	Handler(IPcmData* pcmData) : m_pcmData(pcmData), m_cycleDataSize(0)
+	{
+		switch(pcmData->getSampleDataType())
+		{
+		case IPcmData::SampleDataType::PCM_8bits: m_str_func = str_func<UINT8>; break;
+		case IPcmData::SampleDataType::PCM_16bits: m_str_func = str_func<INT16>; break;
+		case IPcmData::SampleDataType::IEEE_Float: m_str_func = str_func<float>; break;
+		default:
+			m_str_func = [](LPCVOID cycleData, size_t pos) { return std::string("?type?"); };
+			break;
+		}
+	}
+
+	void generate(float key, float level, float phaseShift)
+	{
+		m_pcmData->generate(key, level, phaseShift);
+		m_cycleDataSize = m_pcmData->getSamplesPerCycle() * m_pcmData->getBlockAlign();
+		m_cycleData = std::make_unique<BYTE[]>(m_cycleDataSize);
+		m_pcmData->copyTo(m_cycleData.get(), m_cycleDataSize);
+	}
+
+	std::string str(size_t pos)
+	{
+		return m_cycleData ? m_str_func(m_cycleData.get(), pos) : "?null?";
+	}
+
+	IPcmData* getPcmData() { return m_pcmData.get(); }
+
+protected:
+	std::unique_ptr<IPcmData> m_pcmData;
+	std::unique_ptr<BYTE[]> m_cycleData;
+	size_t m_cycleDataSize;
+	using str_func_t = std::string (*)(LPCVOID cycleData, size_t pos);
+	str_func_t m_str_func;
+};
 
 int main(int argc, char* argv[])
 {
@@ -83,24 +101,24 @@ int main(int argc, char* argv[])
 		<< "\n\n";
 
 	// Create PcmData objects associate with all kinds of WaveGenerator.
-	std::vector<CComPtr<ITestPcmData>> pcmDataList = {
-		new TestPcmData<UINT8>(samplesPerSecond, channels, new SquareWaveGenerator<UINT8>(duty)),
-		new TestPcmData<UINT8>(samplesPerSecond, channels, new SineWaveGenerator<UINT8>()),
-		new TestPcmData<UINT8>(samplesPerSecond, channels, new TriangleWaveGenerator<UINT8>(peakPosition)),
-		new TestPcmData<INT16>(samplesPerSecond, channels, new SquareWaveGenerator<INT16>(duty)),
-		new TestPcmData<INT16>(samplesPerSecond, channels, new SineWaveGenerator<INT16>()),
-		new TestPcmData<INT16>(samplesPerSecond, channels, new TriangleWaveGenerator<INT16>(peakPosition)),
-		new TestPcmData<float>(samplesPerSecond, channels, new SquareWaveGenerator<float>(duty)),
-		new TestPcmData<float>(samplesPerSecond, channels, new SineWaveGenerator<float>()),
-		new TestPcmData<float>(samplesPerSecond, channels, new TriangleWaveGenerator<float>(peakPosition)),
+	std::unique_ptr<Handler> handlers[] = {
+		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSquareWaveGenerator(IPcmData::SampleDataType::PCM_8bits, duty))),
+		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSineWaveGenerator(IPcmData::SampleDataType::PCM_8bits))),
+		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_8bits, peakPosition))),
+		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSquareWaveGenerator(IPcmData::SampleDataType::PCM_16bits, duty))),
+		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSineWaveGenerator(IPcmData::SampleDataType::PCM_16bits))),
+		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_16bits, peakPosition))),
+		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSquareWaveGenerator(IPcmData::SampleDataType::IEEE_Float, duty))),
+		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSineWaveGenerator(IPcmData::SampleDataType::IEEE_Float))),
+		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createTriangleWaveGenerator(IPcmData::SampleDataType::IEEE_Float, peakPosition))),
 	};
 
 	// Generate PCM data and show properties of each PcmData object.
 	std::cout << ",Wave form,Sample type,Bits per sample,Channels,Block align,Samples in cycle,Byte size of cycle\n";
 	int i = 0;
-	for(auto& x : pcmDataList) {
-		auto pcmData = x->getPcmData();
-		pcmData->generate(key, level, phaseShift);
+	for(auto& handler : handlers) {
+		auto pcmData = handler->getPcmData();
+		handler->generate(key, level, phaseShift);
 
 		std::cout << i++
 			<< "," << pcmData->getWaveForm()
@@ -109,12 +127,12 @@ int main(int argc, char* argv[])
 			<< "," << pcmData->getChannels()
 			<< "," << pcmData->getBlockAlign()
 			<< "," << pcmData->getSamplesPerCycle()
-			<< "," << pcmData->getBlockAlign() * pcmData->getSamplesPerCycle()
+			<< "," << pcmData->getSamplesPerCycle() * pcmData->getBlockAlign()
 			<< std::endl;
 	}
 	std::cout << std::endl;
 
-	auto sampleCountInCycle = pcmDataList[0]->getPcmData()->getSamplesPerCycle();
+	auto sampleCountInCycle = handlers[0]->getPcmData()->getSamplesPerCycle();
 	auto comma = std::string(",,,,").substr(0, channels - 1);
 	std::cout << ",UINT8" << comma << "," << comma << "," << comma << ",INT16" << comma << "," << comma << "," << comma << ",float\n";
 	std::cout << "pos,Square" << comma << ",Sine" << comma << ",Triangle" << comma
@@ -122,9 +140,9 @@ int main(int argc, char* argv[])
 				<< ",Square" << comma << ",Sine" << comma << ",Triangle\n";
 	for(size_t pos = 0; pos < sampleCountInCycle; pos += channels) {
 		std::cout << (pos / channels);
-		for(auto& x : pcmDataList) {
+		for(auto& handler : handlers) {
 			for(WORD ch = 0; ch < channels; ch++) {
-				std::cout << "," << x->str(pos + ch);
+				std::cout << "," << handler->str(pos + ch);
 			}
 		}
 		std::cout << std::endl;

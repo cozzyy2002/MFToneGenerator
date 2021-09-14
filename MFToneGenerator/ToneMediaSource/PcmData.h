@@ -29,6 +29,7 @@ public:
 	// Pass value returned by getSampleBufferSize() method as destSize parameter.
 	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) = 0;
 
+	virtual SampleDataType getSampleDataType() const = 0;
 	virtual WORD getFormatTag() const = 0;
 	virtual const char* getWaveForm() const = 0;
 	virtual WORD getBlockAlign() const = 0;

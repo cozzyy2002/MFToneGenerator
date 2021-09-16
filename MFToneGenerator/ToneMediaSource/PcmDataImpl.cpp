@@ -26,58 +26,58 @@ template<> const float PcmData<float>::LowValue = -0.5f;
 
 #pragma endregion
 
-/*static*/ IPcmData* IPcmData::create(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
+IPcmData* createPcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
 {
 	if(!waveGenerator) { return nullptr; }
 
 	switch(waveGenerator->getSampleDataType()) {
-	case SampleDataType::PCM_8bits:
+	case IPcmData::SampleDataType::PCM_8bits:
 		return new PcmData<UINT8>(samplesPerSec, channels, waveGenerator);
-	case SampleDataType::PCM_16bits:
+	case IPcmData::SampleDataType::PCM_16bits:
 		return new PcmData<INT16>(samplesPerSec, channels, waveGenerator);
-	case SampleDataType::IEEE_Float:
+	case IPcmData::SampleDataType::IEEE_Float:
 		return new PcmData<float>(samplesPerSec, channels, waveGenerator);
 	default:
 		return nullptr;
 	}
 }
 
-/*static*/ IWaveGenerator* IPcmData::createSquareWaveGenerator(SampleDataType sampleDataType, float duty)
+IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty)
 {
 	switch(sampleDataType) {
-	case SampleDataType::PCM_8bits:
+	case IPcmData::SampleDataType::PCM_8bits:
 		return new SquareWaveGenerator<UINT8>(duty);
-	case SampleDataType::PCM_16bits:
+	case IPcmData::SampleDataType::PCM_16bits:
 		return new SquareWaveGenerator<INT16>(duty);
-	case SampleDataType::IEEE_Float:
+	case IPcmData::SampleDataType::IEEE_Float:
 		return new SquareWaveGenerator<float>(duty);
 	default:
 		return nullptr;
 	}
 }
 
-/*static*/ IWaveGenerator* IPcmData::createSineWaveGenerator(SampleDataType sampleDataType)
+IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType)
 {
 	switch(sampleDataType) {
-	case SampleDataType::PCM_8bits:
+	case IPcmData::SampleDataType::PCM_8bits:
 		return new SineWaveGenerator<UINT8>();
-	case SampleDataType::PCM_16bits:
+	case IPcmData::SampleDataType::PCM_16bits:
 		return new SineWaveGenerator<INT16>();
-	case SampleDataType::IEEE_Float:
+	case IPcmData::SampleDataType::IEEE_Float:
 		return new SineWaveGenerator<float>();
 	default:
 		return nullptr;
 	}
 }
 
-/*static*/ IWaveGenerator* IPcmData::createTriangleWaveGenerator(SampleDataType sampleDataType, float peakPosition)
+IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition)
 {
 	switch(sampleDataType) {
-	case SampleDataType::PCM_8bits:
+	case IPcmData::SampleDataType::PCM_8bits:
 		return new TriangleWaveGenerator<UINT8>(peakPosition);
-	case SampleDataType::PCM_16bits:
+	case IPcmData::SampleDataType::PCM_16bits:
 		return new TriangleWaveGenerator<INT16>(peakPosition);
-	case SampleDataType::IEEE_Float:
+	case IPcmData::SampleDataType::IEEE_Float:
 		return new TriangleWaveGenerator<float>(peakPosition);
 	default:
 		return nullptr;

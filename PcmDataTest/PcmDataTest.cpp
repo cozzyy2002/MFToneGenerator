@@ -101,15 +101,15 @@ int main(int argc, char* argv[])
 
 	// Create PcmData objects associate with all kinds of WaveGenerator.
 	std::unique_ptr<Handler> handlers[] = {
-		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSquareWaveGenerator(IPcmData::SampleDataType::PCM_8bits, duty))),
-		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSineWaveGenerator(IPcmData::SampleDataType::PCM_8bits))),
-		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_8bits, peakPosition))),
-		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSquareWaveGenerator(IPcmData::SampleDataType::PCM_16bits, duty))),
-		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSineWaveGenerator(IPcmData::SampleDataType::PCM_16bits))),
-		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_16bits, peakPosition))),
-		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSquareWaveGenerator(IPcmData::SampleDataType::IEEE_Float, duty))),
-		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createSineWaveGenerator(IPcmData::SampleDataType::IEEE_Float))),
-		std::make_unique<Handler>(IPcmData::create(samplesPerSecond, channels, IPcmData::createTriangleWaveGenerator(IPcmData::SampleDataType::IEEE_Float, peakPosition))),
+		std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, createSquareWaveGenerator(IPcmData::SampleDataType::PCM_8bits, duty))),
+		std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, createSineWaveGenerator(IPcmData::SampleDataType::PCM_8bits))),
+		std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_8bits, peakPosition))),
+		std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, createSquareWaveGenerator(IPcmData::SampleDataType::PCM_16bits, duty))),
+		std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, createSineWaveGenerator(IPcmData::SampleDataType::PCM_16bits))),
+		std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_16bits, peakPosition))),
+		std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, createSquareWaveGenerator(IPcmData::SampleDataType::IEEE_Float, duty))),
+		std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, createSineWaveGenerator(IPcmData::SampleDataType::IEEE_Float))),
+		std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, createTriangleWaveGenerator(IPcmData::SampleDataType::IEEE_Float, peakPosition))),
 	};
 
 	// Generate PCM data and show properties of each PcmData object.

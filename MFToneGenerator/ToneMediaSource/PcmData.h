@@ -16,11 +16,6 @@ public:
 		IEEE_Float,		// float, WAVE_FORMAT_IEEE_FLOAT
 	};
 
-	static IPcmData* create(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
-	static IWaveGenerator* createSquareWaveGenerator(SampleDataType sampleDataType, float duty = 0.5f);
-	static IWaveGenerator* createSineWaveGenerator(SampleDataType sampleDataType);
-	static IWaveGenerator* createTriangleWaveGenerator(SampleDataType sampleDataType, float peakPosition = 0.5f);
-
 	// Generates 1-cycle PCM data
 	// Data to be generated depends on IWaveGenerator object passed to the create() static method.
 	virtual void generate(float key, float level = 0.2f, float phaseShift = 0) = 0;
@@ -40,3 +35,9 @@ public:
 	virtual size_t getSamplesPerCycle() const = 0;		// Available after generate() method is called.
 	virtual size_t getSampleBufferSize(size_t duration) const = 0;
 };
+
+// Factory functions.
+IPcmData* createPcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
+IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty = 0.5f);
+IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType);
+IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition = 0.5f);

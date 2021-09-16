@@ -29,7 +29,7 @@ std::string str_func<float>(LPCVOID cycleData, size_t pos)
 
 class Handler {
 public:
-	Handler(IPcmData* pcmData) : m_pcmData(pcmData), m_cycleDataSize(0)
+	Handler(IPcmData* pcmData) : m_pcmData(pcmData)
 	{
 		switch(pcmData->getSampleDataType())
 		{
@@ -45,9 +45,9 @@ public:
 	void generate(float key, float level, float phaseShift)
 	{
 		m_pcmData->generate(key, level, phaseShift);
-		m_cycleDataSize = m_pcmData->getSamplesPerCycle() * m_pcmData->getBlockAlign();
-		m_cycleData = std::make_unique<BYTE[]>(m_cycleDataSize);
-		m_pcmData->copyTo(m_cycleData.get(), m_cycleDataSize);
+		auto cycleDataSize = m_pcmData->getSamplesPerCycle() * m_pcmData->getBlockAlign();
+		m_cycleData = std::make_unique<BYTE[]>(cycleDataSize);
+		m_pcmData->copyTo(m_cycleData.get(), cycleDataSize);
 	}
 
 	std::string str(size_t pos)
@@ -60,7 +60,6 @@ public:
 protected:
 	std::unique_ptr<IPcmData> m_pcmData;
 	std::unique_ptr<BYTE[]> m_cycleData;
-	size_t m_cycleDataSize;
 	using str_func_t = std::string (*)(LPCVOID cycleData, size_t pos);
 	str_func_t m_str_func;
 };
@@ -117,9 +116,9 @@ int main(int argc, char* argv[])
 	std::cout << ",Wave form,Sample type,Bits per sample,Channels,Block align,Samples in cycle,Byte size of cycle\n";
 	int i = 0;
 	for(auto& handler : handlers) {
-		auto pcmData = handler->getPcmData();
 		handler->generate(key, level, phaseShift);
 
+		auto pcmData = handler->getPcmData();
 		std::cout << i++
 			<< "," << pcmData->getWaveForm()
 			<< "," << pcmData->getSampleTypeName()

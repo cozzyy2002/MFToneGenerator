@@ -34,15 +34,16 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 		// Create MediaType
 		static const WORD nChannels = m_pcmData->getChannels();
 		static const DWORD nSamplesPerSec = m_pcmData->getSamplesPerSec();
+		static const WORD nBlockAlign = m_pcmData->getBlockAlign();
 		static const WORD wBitsPerSample = m_pcmData->getBitsPerSample();
 		WAVEFORMATEX waveFormat = {
-			WAVE_FORMAT_PCM,
-			nChannels,											// nChannels
-			nSamplesPerSec,										// nSamplesPerSec
-			nChannels * nSamplesPerSec * wBitsPerSample / 8,	// nAvgBytesPerSec
-			nChannels * wBitsPerSample / 8,						// nBlockAlign
-			wBitsPerSample,										// wBitsPerSample
-			0,													// cbSize(No extra information)
+			m_pcmData->getFormatTag(),
+			nChannels,							// nChannels
+			nSamplesPerSec,						// nSamplesPerSec
+			nSamplesPerSec * nBlockAlign,		// nAvgBytesPerSec
+			nBlockAlign,						// nBlockAlign
+			wBitsPerSample,						// wBitsPerSample
+			0,									// cbSize(No extra information)
 		};
 
 		CComPtr<IMFMediaType> mediaType;

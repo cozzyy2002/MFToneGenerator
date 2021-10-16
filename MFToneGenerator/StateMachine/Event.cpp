@@ -8,9 +8,10 @@ static const Event::EventData eventDataList[] = {
     // UI Events
 #define EVENT_DATA0(x) { Event::Type::x, MEUnknown, _T(#x) }
     EVENT_DATA0(Unknown),
-    EVENT_DATA0(StartStop),
+    EVENT_DATA0(StartTone),
+    EVENT_DATA0(StartFile),
+    EVENT_DATA0(Stop),
     EVENT_DATA0(PauseResume),
-    EVENT_DATA0(SetKey),
 #undef EVENT_DATA0
 
     // Media Session Events

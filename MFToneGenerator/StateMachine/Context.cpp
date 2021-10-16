@@ -47,25 +47,24 @@ HRESULT Context::shutdown()
     return HR_EXPECT_OK(BaseClass::shutdown());
 }
 
-HRESULT Context::startStop()
+HRESULT Context::startTone(IPcmData* pcmData)
 {
-    return HR_EXPECT_OK(triggerEvent(new Event(Event::Type::StartStop)));
+    return HR_EXPECT_OK(triggerEvent(new StartToneEvent(pcmData)));
+}
+
+HRESULT Context::startFile(LPCTSTR fileName)
+{
+    return HR_EXPECT_OK(triggerEvent(new StartFileEvent(fileName)));
+}
+
+HRESULT Context::stop()
+{
+    return HR_EXPECT_OK(triggerEvent(new Event(Event::Type::Stop)));
 }
 
 HRESULT Context::pauseResume()
 {
     return HR_EXPECT_OK(triggerEvent(new Event(Event::Type::PauseResume)));
-}
-
-HRESULT Context::setKey(Event* event)
-{
-    if(event->type == Event::Type::SetKey) {
-        auto ev = (SetKeyEvent*)event;
-        ev->key;
-        return S_OK;
-    } else {
-        return E_UNEXPECTED;
-    }
 }
 
 HRESULT Context::setupSession()

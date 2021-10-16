@@ -12,7 +12,6 @@
 #define new DEBUG_NEW
 #endif
 
-
 // CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialogEx
@@ -48,10 +47,36 @@ END_MESSAGE_MAP()
 
 // CMFToneGeneratorDlg dialog
 
+struct SampleType
+{
+	LPCTSTR name;
+	IPcmData::SampleDataType type;
+};
 
+static const SampleType sampleTypeList[] = {
+#define SAMPLE_TYPE_ITEM(x) { _T(#x), IPcmData::SampleDataType::x }
+	SAMPLE_TYPE_ITEM(PCM_8bits),
+	SAMPLE_TYPE_ITEM(PCM_16bits),
+	SAMPLE_TYPE_ITEM(IEEE_Float),
+#undef SAMPLE_TYPE_ITEM
+};
+
+using WaveGeneratorFactory = IWaveGenerator* (*)(IPcmData::SampleDataType);
+struct WaveForm
+{
+	LPCTSTR name;
+	WaveGeneratorFactory factory;
+};
+
+static const WaveForm waveFormList[] = {
+	{_T("Square Wave"), [](IPcmData::SampleDataType type) { return createSquareWaveGenerator(type); } },
+	{_T("Sine Wave"), [](IPcmData::SampleDataType type) { return createSineWaveGenerator(type); } },
+	{_T("Triangle Wave"), [](IPcmData::SampleDataType type) { return createTriangleWaveGenerator(type); } },
+};
 
 CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFTONEGENERATOR_DIALOG, pParent)
+	, m_status(Status::Stopped)
 	, m_statusMessage(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -60,40 +85,58 @@ CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 void CMFToneGeneratorDlg::onStarted(bool canPause)
 {
 	DragAcceptFiles(FALSE);
-	m_audioFileName.EnableWindow(FALSE);
+	//m_audioFileName.EnableWindow(FALSE);
 	m_startStopButton.SetWindowText(_T("Stop"));
 	if(canPause) {
 		m_pauseResumeButton.SetWindowText(_T("Pause"));
 		m_pauseResumeButton.EnableWindow(TRUE);
 	}
-	showStatus(_T("Playing"));
+	showStatus(Status::Playing);
 }
 
 void CMFToneGeneratorDlg::onStopped()
 {
 	DragAcceptFiles(TRUE);
-	m_audioFileName.EnableWindow(TRUE);
+	//m_audioFileName.EnableWindow(TRUE);
 	m_startStopButton.SetWindowText(_T("Start"));
 	m_pauseResumeButton.SetWindowText(_T("Pause"));
 	m_pauseResumeButton.EnableWindow(FALSE);
-	showStatus(_T("Stopped"));
+	showStatus(Status::Stopped);
 }
 
 void CMFToneGeneratorDlg::onPaused()
 {
 	m_pauseResumeButton.SetWindowText(_T("Resume"));
-	showStatus(_T("Paused"));
+	showStatus(Status::Paused);
 }
 
 void CMFToneGeneratorDlg::onResumed()
 {
 	m_pauseResumeButton.SetWindowText(_T("Pause"));
-	showStatus(_T("Playing"));
+	showStatus(Status::Playing);
 }
 
 void CMFToneGeneratorDlg::onError(LPCTSTR source, HRESULT hr, LPCTSTR message)
 {
 	showStatus(_T("%s failed. Error 0x%p: %s"), source, hr, message);
+}
+
+void CMFToneGeneratorDlg::showStatus(Status status)
+{
+	switch(status)
+	{
+#define SHOW_STATUS(x) case Status::x: showStatus(_T(#x)); break;
+	SHOW_STATUS(Stopped);
+	SHOW_STATUS(Playing);
+	SHOW_STATUS(Paused);
+#undef SHOW_STATUS
+
+	default:
+		showStatus(_T("Unknown Status: %d"), status);
+		return;
+	}
+
+	m_status = status;
 }
 
 void CMFToneGeneratorDlg::showStatus(LPCTSTR msg, ...)
@@ -111,10 +154,11 @@ void CMFToneGeneratorDlg::showStatus(LPCTSTR msg, ...)
 void CMFToneGeneratorDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_EDIT_AUDIO_FILE_NAME, m_audioFileName);
 	DDX_Control(pDX, IDC_BUTTON_START_STOP, m_startStopButton);
 	DDX_Control(pDX, IDC_BUTTON_PAUSE_RESUME, m_pauseResumeButton);
 	DDX_Text(pDX, IDC_STATIC_STATUS, m_statusMessage);
+	DDX_Control(pDX, IDC_COMBO_SAMPLE_TYPE, m_sampleType);
+	DDX_Control(pDX, IDC_COMBO_WAVE_FORM, m_waveForm);
 }
 
 BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
@@ -123,11 +167,16 @@ BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_WM_CHAR()
 	ON_WM_KEYDOWN()
-	ON_BN_CLICKED(IDC_BUTTON_E, &CMFToneGeneratorDlg::OnBnClickedButtonE)
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDC_BUTTON_START_STOP, &CMFToneGeneratorDlg::OnBnClickedButtonStartStop)
 	ON_BN_CLICKED(IDC_BUTTON_PAUSE_RESUME, &CMFToneGeneratorDlg::OnBnClickedButtonPauseResume)
 	ON_WM_DROPFILES()
+	ON_BN_CLICKED(IDC_BUTTON_E4, &CMFToneGeneratorDlg::OnBnClickedButtonE4)
+	ON_BN_CLICKED(IDC_BUTTON_B3, &CMFToneGeneratorDlg::OnBnClickedButtonB3)
+	ON_BN_CLICKED(IDC_BUTTON_G3, &CMFToneGeneratorDlg::OnBnClickedButtonG3)
+	ON_BN_CLICKED(IDC_BUTTON_D3, &CMFToneGeneratorDlg::OnBnClickedButtonD3)
+	ON_BN_CLICKED(IDC_BUTTON_A2, &CMFToneGeneratorDlg::OnBnClickedButtonA2)
+	ON_BN_CLICKED(IDC_BUTTON_E2, &CMFToneGeneratorDlg::OnBnClickedButtonE2)
 END_MESSAGE_MAP()
 
 
@@ -163,6 +212,16 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	for(auto& x : sampleTypeList) {
+		m_sampleType.AddString(x.name);
+	}
+	m_sampleType.SetCurSel(0);
+
+	for(auto& x : waveFormList) {
+		m_waveForm.AddString(x.name);
+	}
+	m_waveForm.SetCurSel(0);
+
 	m_context.reset(statemachine::IContext::create(m_hWnd, WM_USER));
 	m_context->setCallback(this);
 	m_context->setup();
@@ -221,31 +280,24 @@ HCURSOR CMFToneGeneratorDlg::OnQueryDragIcon()
 
 
 
-void CMFToneGeneratorDlg::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
-{
-	// TODO: Add your message handler code here and/or call default
-	TCHAR msg[1000];
-	_stprintf_s(msg, _T("OnChar(%c, %d, 0x%08x)\n"), nChar, nRepCnt, nFlags);
-	OutputDebugString(msg);
-	//CDialogEx::OnChar(nChar, nRepCnt, nFlags);
-}
+//void CMFToneGeneratorDlg::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//	TCHAR msg[1000];
+//	_stprintf_s(msg, _T("OnChar(%c, %d, 0x%08x)\n"), nChar, nRepCnt, nFlags);
+//	OutputDebugString(msg);
+//	//CDialogEx::OnChar(nChar, nRepCnt, nFlags);
+//}
 
 
-void CMFToneGeneratorDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
-{
-	// TODO: Add your message handler code here and/or call default
-	TCHAR msg[1000];
-	_stprintf_s(msg, _T("OnKeyDown(%c, %d, 0x%08x)\n"), nChar, nRepCnt, nFlags);
-	OutputDebugString(msg);
-	CDialogEx::OnKeyDown(nChar, nRepCnt, nFlags);
-}
-
-
-void CMFToneGeneratorDlg::OnBnClickedButtonE()
-{
-	OutputDebugString(_T("OnBnClickedButtonE()\n"));
-	m_pcmData->generate(300);
-}
+//void CMFToneGeneratorDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//	TCHAR msg[1000];
+//	_stprintf_s(msg, _T("OnKeyDown(%c, %d, 0x%08x)\n"), nChar, nRepCnt, nFlags);
+//	OutputDebugString(msg);
+//	CDialogEx::OnKeyDown(nChar, nRepCnt, nFlags);
+//}
 
 
 void CMFToneGeneratorDlg::OnClose()
@@ -258,17 +310,22 @@ void CMFToneGeneratorDlg::OnClose()
 
 void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 {
-	UpdateData();
-	//CString fileName;
-	//m_audioFileName.GetWindowText(fileName);
-	//m_context->setAudioFileName(fileName);
-	if(!m_pcmData) {
-		auto generator = IPcmData::createSineWaveGenerator(IPcmData::SampleDataType::_16bits);
-		m_pcmData = IPcmData::create(44100, 2, generator);
-		m_pcmData->generate(440, 0.5f, 0.5f);
-		m_context->setPcmData(m_pcmData);
+	switch(m_status)
+	{
+	case Status::Stopped:
+	{
+		CFileDialog dlg(TRUE);
+		if(dlg.DoModal() == IDOK) {
+			auto fileName = dlg.GetPathName();
+			m_context->startFile(fileName.GetString());
+		}
 	}
-	m_context->startStop();
+		break;
+
+	case Status::Playing:
+		m_context->stop();
+		break;
+	}
 }
 
 
@@ -285,7 +342,59 @@ void CMFToneGeneratorDlg::OnDropFiles(HDROP hDropInfo)
 		size++;
 		std::unique_ptr<TCHAR[]> fileName(new TCHAR[size]);
 		DragQueryFile(hDropInfo, 0, fileName.get(), size);
-		m_audioFileName.SetWindowText(fileName.get());
+		//m_audioFileName.SetWindowText(fileName.get());
 		UpdateData(FALSE);
 	}
+}
+
+
+void CMFToneGeneratorDlg::OnBnClickedButton(float key)
+{
+	if(!m_pcmData) {
+		UpdateData();
+		auto sampleType = sampleTypeList[m_sampleType.GetCurSel()].type;
+		auto factory = waveFormList[m_waveForm.GetCurSel()].factory;
+		auto generator = factory(sampleType);
+		m_pcmData = createPcmData(44100, 2, generator);
+	}
+	m_pcmData->generate(key, 0.5f, 0.5f);
+
+	if(m_status == Status::Stopped) {
+		m_context->startTone(m_pcmData);
+	}
+}
+
+void CMFToneGeneratorDlg::OnBnClickedButtonE4()
+{
+	OnBnClickedButton(82.407f);
+}
+
+
+void CMFToneGeneratorDlg::OnBnClickedButtonB3()
+{
+	OnBnClickedButton(110.0f);
+}
+
+
+void CMFToneGeneratorDlg::OnBnClickedButtonG3()
+{
+	OnBnClickedButton(146.832f);
+}
+
+
+void CMFToneGeneratorDlg::OnBnClickedButtonD3()
+{
+	OnBnClickedButton(195.998f);
+}
+
+
+void CMFToneGeneratorDlg::OnBnClickedButtonA2()
+{
+	OnBnClickedButton(246.942f);
+}
+
+
+void CMFToneGeneratorDlg::OnBnClickedButtonE2()
+{
+	OnBnClickedButton(329.628f);
 }

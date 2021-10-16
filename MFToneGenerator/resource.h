@@ -7,19 +7,29 @@
 #define IDS_ABOUTBOX                    101
 #define IDD_MFTONEGENERATOR_DIALOG      102
 #define IDR_MAINFRAME                   128
-#define IDC_BUTTON_E                    1000
 #define IDC_BUTTON_START_STOP           1001
 #define IDC_BUTTON_PAUSE_RESUME         1002
-#define IDC_EDIT_AUDIO_FILE_NAME        1003
 #define IDC_STATIC_STATUS               1004
+#define IDC_TAB1                        1005
+#define IDC_TAB_SOURCE                  1005
+#define IDC_BUTTON1                     1006
+#define IDC_BUTTON_E4                   1006
+#define IDC_BUTTON_B3                   1007
+#define IDC_BUTTON_G3                   1008
+#define IDC_COMBO_SAMPLE_TYPE           1009
+#define IDC_COMBO_WAVE_FORM             1010
+#define IDC_BUTTON_D3                   1011
+#define IDC_BUTTON_A                    1012
+#define IDC_BUTTON_A2                   1012
+#define IDC_BUTTON_E2                   1013
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        130
+#define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1005
+#define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

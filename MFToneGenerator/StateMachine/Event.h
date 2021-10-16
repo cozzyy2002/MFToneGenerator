@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ToneMediaSource/PcmData.h"
 #include "Utils.h"
 
 namespace statemachine {
@@ -15,9 +16,10 @@ public:
 		Unknown,
 
 		// Control Events from UI.
-		StartStop,
+		StartTone,
+		StartFile,
+		Stop,
 		PauseResume,
-		SetKey,
 
 		// Media Session Events.
 		MEEndOfPresentation,
@@ -54,12 +56,20 @@ protected:
 	mutable std::tstring m_string;
 };
 
-class SetKeyEvent : public Event
+class StartToneEvent : public Event
 {
 public:
-	SetKeyEvent(float key) : Event(Type::SetKey), key(key) {}
+	StartToneEvent(IPcmData* pcmData) : Event(Type::StartTone), pcmData(pcmData) {}
 
-	const float key;
+	CComPtr<IPcmData> pcmData;
+};
+
+class StartFileEvent : public Event
+{
+public:
+	StartFileEvent(LPCTSTR fileName) : Event(Type::StartFile), fileName(fileName) {}
+
+	const std::tstring fileName;
 };
 
 class SessionEvent : public Event

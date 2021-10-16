@@ -9,13 +9,20 @@ namespace statemachine {
 HRESULT StoppedState::handleEvent(Context* context, Event* event, State** nextState)
 {
     switch(event->type) {
-    case Event::Type::StartStop:
+    case Event::Type::StartTone:
+        {
+            auto ev = (StartToneEvent*)event;
+            context->setPcmData(ev->pcmData);
+        }
         HR_EXPECT_OK(context->setupSession());
         break;
-    case Event::Type::SetKey:
-        HR_ASSERT_OK(context->setKey(event));
-        HR_EXPECT_OK(context->setupSession());
-        break;
+    case Event::Type::StartFile:
+    {
+        auto ev = (StartFileEvent*)event;
+        context->setAudioFileName(ev->fileName.c_str());
+    }
+    HR_EXPECT_OK(context->setupSession());
+    break;
     case Event::Type::MESessionTopologySet:
         HR_ASSERT_OK(context->startSession());
         break;
@@ -44,7 +51,7 @@ HRESULT PlayingState::exit(Context* context, Event* event, State* nextState)
 HRESULT PlayingState::handleEvent(Context* context, Event* event, State** nextState)
 {
     switch(event->type) {
-    case Event::Type::StartStop:
+    case Event::Type::Stop:
         HR_ASSERT_OK(context->stopSession());
         break;
     case Event::Type::MESessionStopped:
@@ -60,9 +67,6 @@ HRESULT PlayingState::handleEvent(Context* context, Event* event, State** nextSt
         break;
     case Event::Type::MESessionPaused:
         *nextState = new PausedState(this);
-        break;
-    case Event::Type::SetKey:
-        HR_ASSERT_OK(context->setKey(event));
         break;
     }
     return S_OK;

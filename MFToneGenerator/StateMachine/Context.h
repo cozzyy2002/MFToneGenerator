@@ -23,26 +23,24 @@ public:
 	virtual void setCallback(ICallback* callback) override { m_callback = callback; }
 	virtual ICallback* getCallback() override { return m_callback; }
 
-	virtual void setPcmData(IPcmData* pcmData) override
+	virtual HRESULT setup() override;
+	virtual HRESULT shutdown() override;
+	virtual HRESULT startTone(IPcmData* pcmData) override;
+	virtual HRESULT startFile(LPCTSTR fileName) override;
+	virtual HRESULT stop() override;
+	virtual HRESULT pauseResume() override;
+#pragma endregion
+
+	void setPcmData(IPcmData* pcmData)
 	{
 		m_pcmData = pcmData;
 		m_audioFileName.clear();
 	}
-	virtual IPcmData* getPcmData() const override { return m_pcmData; }
-	virtual void setAudioFileName(LPCTSTR value) override
+	void setAudioFileName(LPCTSTR fileName)
 	{
 		m_pcmData.Release();
-		m_audioFileName = value;
+		m_audioFileName = fileName;
 	}
-	virtual LPCTSTR getAudioFileName() const override { return m_audioFileName.c_str(); }
-
-	virtual HRESULT setup() override;
-	virtual HRESULT shutdown() override;
-	virtual HRESULT startStop() override;
-	virtual HRESULT pauseResume() override;
-#pragma endregion
-
-	HRESULT setKey(Event* event);
 	HRESULT setupSession();
 	HRESULT startSession();
 	HRESULT stopSession();

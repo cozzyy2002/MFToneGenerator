@@ -9,6 +9,8 @@
 
 #include <memory>
 
+class IPcmData;
+
 // CMFToneGeneratorDlg dialog
 class CMFToneGeneratorDlg : public CDialogEx, public statemachine::IContext::ICallback
 {
@@ -29,8 +31,6 @@ public:
 	virtual void onError(LPCTSTR source, HRESULT hr, LPCTSTR message) override;
 #pragma endregion
 
-	void showStatus(LPCTSTR msg, ...);
-
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
@@ -46,21 +46,42 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnBnClickedButtonE();
+//	afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
+//	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 
 protected:
 	std::unique_ptr<statemachine::IContext> m_context;
 	CComPtr<IPcmData> m_pcmData;
 
+	enum class Status
+	{
+		Stopped,
+		Playing,
+		Paused,
+	};
+
+	Status m_status;
+
+	void showStatus(Status status);
+	void showStatus(LPCTSTR msg, ...);
+
 public:
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButtonStartStop();
 	afx_msg void OnBnClickedButtonPauseResume();
-	CEdit m_audioFileName;
 	CButton m_startStopButton;
 	CButton m_pauseResumeButton;
 	CString m_statusMessage;
 	afx_msg void OnDropFiles(HDROP hDropInfo);
+protected:
+	CComboBox m_sampleType;
+	CComboBox m_waveForm;
+	void OnBnClickedButton(float key);
+public:
+	afx_msg void OnBnClickedButtonE4();
+	afx_msg void OnBnClickedButtonB3();
+	afx_msg void OnBnClickedButtonG3();
+	afx_msg void OnBnClickedButtonD3();
+	afx_msg void OnBnClickedButtonA2();
+	afx_msg void OnBnClickedButtonE2();
 };

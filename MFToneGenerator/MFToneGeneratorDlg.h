@@ -76,7 +76,7 @@ public:
 protected:
 	CComboBox m_sampleType;
 	CComboBox m_waveForm;
-	void OnBnClickedButton(float key);
+	void OnKeyButtonClicked(float key);
 public:
 	afx_msg void OnBnClickedButtonE4();
 	afx_msg void OnBnClickedButtonB3();

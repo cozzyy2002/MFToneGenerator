@@ -348,7 +348,7 @@ void CMFToneGeneratorDlg::OnDropFiles(HDROP hDropInfo)
 }
 
 
-void CMFToneGeneratorDlg::OnBnClickedButton(float key)
+void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 {
 	if(!m_pcmData) {
 		UpdateData();
@@ -366,35 +366,35 @@ void CMFToneGeneratorDlg::OnBnClickedButton(float key)
 
 void CMFToneGeneratorDlg::OnBnClickedButtonE4()
 {
-	OnBnClickedButton(82.407f);
+	OnKeyButtonClicked(82.407f);
 }
 
 
 void CMFToneGeneratorDlg::OnBnClickedButtonB3()
 {
-	OnBnClickedButton(110.0f);
+	OnKeyButtonClicked(110.0f);
 }
 
 
 void CMFToneGeneratorDlg::OnBnClickedButtonG3()
 {
-	OnBnClickedButton(146.832f);
+	OnKeyButtonClicked(146.832f);
 }
 
 
 void CMFToneGeneratorDlg::OnBnClickedButtonD3()
 {
-	OnBnClickedButton(195.998f);
+	OnKeyButtonClicked(195.998f);
 }
 
 
 void CMFToneGeneratorDlg::OnBnClickedButtonA2()
 {
-	OnBnClickedButton(246.942f);
+	OnKeyButtonClicked(246.942f);
 }
 
 
 void CMFToneGeneratorDlg::OnBnClickedButtonE2()
 {
-	OnBnClickedButton(329.628f);
+	OnKeyButtonClicked(329.628f);
 }

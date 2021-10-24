@@ -47,6 +47,8 @@ END_MESSAGE_MAP()
 
 // CMFToneGeneratorDlg dialog
 
+static const int SliderMaxValue = 100;
+
 struct SampleType
 {
 	LPCTSTR name;
@@ -61,17 +63,24 @@ static const SampleType sampleTypeList[] = {
 #undef SAMPLE_TYPE_ITEM
 };
 
+enum class WaveFormParam {
+	None,
+	Duty,
+	PeakPosition,
+};
+
 using WaveGeneratorFactory = IWaveGenerator* (*)(IPcmData::SampleDataType);
 struct WaveForm
 {
 	LPCTSTR name;
 	WaveGeneratorFactory factory;
+	WaveFormParam param;
 };
 
 static const WaveForm waveFormList[] = {
-	{_T("Square Wave"), [](IPcmData::SampleDataType type) { return createSquareWaveGenerator(type); } },
-	{_T("Sine Wave"), [](IPcmData::SampleDataType type) { return createSineWaveGenerator(type); } },
-	{_T("Triangle Wave"), [](IPcmData::SampleDataType type) { return createTriangleWaveGenerator(type); } },
+	{_T("Square Wave"), [](IPcmData::SampleDataType type) { return createSquareWaveGenerator(type); }, WaveFormParam::Duty },
+	{_T("Sine Wave"), [](IPcmData::SampleDataType type) { return createSineWaveGenerator(type); }, WaveFormParam::None },
+	{_T("Triangle Wave"), [](IPcmData::SampleDataType type) { return createTriangleWaveGenerator(type); }, WaveFormParam::PeakPosition },
 };
 
 CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
@@ -159,6 +168,12 @@ void CMFToneGeneratorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_STATIC_STATUS, m_statusMessage);
 	DDX_Control(pDX, IDC_COMBO_SAMPLE_TYPE, m_sampleType);
 	DDX_Control(pDX, IDC_COMBO_WAVE_FORM, m_waveForm);
+	DDX_Control(pDX, IDC_COMBO_SAMPLES_PER_SEC, m_SamplesPerSecond);
+	DDX_Control(pDX, IDC_COMBO_CHANNELS, m_channels);
+	DDX_Control(pDX, IDC_SLIDER_DUTY, m_duty);
+	DDX_Control(pDX, IDC_SLIDER_PEAK_POSITION, m_peakPosition);
+	DDX_Control(pDX, IDC_SLIDER_LEVEL, m_level);
+	DDX_Control(pDX, IDC_SLIDER_PHASE_SHIFT, m_phaseShift);
 }
 
 BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
@@ -177,6 +192,7 @@ BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_D3, &CMFToneGeneratorDlg::OnBnClickedButtonD3)
 	ON_BN_CLICKED(IDC_BUTTON_A2, &CMFToneGeneratorDlg::OnBnClickedButtonA2)
 	ON_BN_CLICKED(IDC_BUTTON_E2, &CMFToneGeneratorDlg::OnBnClickedButtonE2)
+	ON_CBN_SELCHANGE(IDC_COMBO_WAVE_FORM, &CMFToneGeneratorDlg::OnCbnSelchangeComboWaveForm)
 END_MESSAGE_MAP()
 
 
@@ -221,6 +237,17 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 		m_waveForm.AddString(x.name);
 	}
 	m_waveForm.SetCurSel(0);
+	OnCbnSelchangeComboWaveForm();
+
+	CSliderCtrl* sliders[] = {
+		&m_duty, &m_peakPosition, &m_level, &m_phaseShift
+	};
+
+	for(auto p : sliders) {
+		p->SetRange(0, SliderMaxValue, FALSE);
+		p->SetTicFreq(SliderMaxValue / 10);
+		p->SetPos(SliderMaxValue / 2);
+	}
 
 	m_context.reset(statemachine::IContext::create(m_hWnd, WM_USER));
 	m_context->setCallback(this);
@@ -357,7 +384,7 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 		auto generator = factory(sampleType);
 		m_pcmData = createPcmData(44100, 2, generator);
 	}
-	m_pcmData->generate(key, 0.5f, 0.5f);
+	m_pcmData->generate(key, 0.1f, 0.5f);
 
 	if(m_status == Status::Stopped) {
 		m_context->startTone(m_pcmData);
@@ -397,4 +424,13 @@ void CMFToneGeneratorDlg::OnBnClickedButtonA2()
 void CMFToneGeneratorDlg::OnBnClickedButtonE2()
 {
 	OnKeyButtonClicked(329.628f);
+}
+
+
+void CMFToneGeneratorDlg::OnCbnSelchangeComboWaveForm()
+{
+	auto sel = m_waveForm.GetCurSel();
+	auto& waveForm = waveFormList[sel];
+	m_duty.EnableWindow((waveForm.param == WaveFormParam::Duty) ? TRUE : FALSE);
+	m_peakPosition.EnableWindow((waveForm.param == WaveFormParam::PeakPosition) ? TRUE : FALSE);
 }

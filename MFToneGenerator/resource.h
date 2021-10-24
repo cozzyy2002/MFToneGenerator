@@ -22,6 +22,13 @@
 #define IDC_BUTTON_A                    1012
 #define IDC_BUTTON_A2                   1012
 #define IDC_BUTTON_E2                   1013
+#define IDC_SLIDER_DUTY                 1014
+#define IDC_SLIDER_PEAK_POSITION        1015
+#define IDC_COMBO_SAMPLES_PER_SEC       1016
+#define IDC_COMBO_CHANNELS              1017
+#define IDC_SLIDER_LEVEL                1018
+#define IDC_SLIDER_PEAK_POSITION2       1019
+#define IDC_SLIDER_PHASE_SHIFT          1019
 
 // Next default values for new objects
 // 
@@ -29,7 +36,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1010
+#define _APS_NEXT_CONTROL_VALUE         1015
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

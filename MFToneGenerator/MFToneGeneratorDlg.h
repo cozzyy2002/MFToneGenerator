@@ -84,4 +84,11 @@ public:
 	afx_msg void OnBnClickedButtonD3();
 	afx_msg void OnBnClickedButtonA2();
 	afx_msg void OnBnClickedButtonE2();
+	CComboBox m_SamplesPerSecond;
+	CComboBox m_channels;
+	CSliderCtrl m_duty;
+	CSliderCtrl m_peakPosition;
+	CSliderCtrl m_level;
+	CSliderCtrl m_phaseShift;
+	afx_msg void OnCbnSelchangeComboWaveForm();
 };

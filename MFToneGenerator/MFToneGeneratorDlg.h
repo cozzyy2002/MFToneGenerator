@@ -6,6 +6,7 @@
 
 #include "StateMachine/IContext.h"
 #include "ToneMediaSource/PcmData.h"
+#include "Utils.h"
 
 #include <memory>
 
@@ -64,6 +65,7 @@ protected:
 
 	void showStatus(Status status);
 	void showStatus(LPCTSTR msg, ...);
+	Logger logger;
 
 public:
 	afx_msg void OnClose();

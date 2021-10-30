@@ -8,6 +8,8 @@
 #include "MFToneGeneratorDlg.h"
 #include "afxdialogex.h"
 
+#include <utility>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -49,13 +51,16 @@ END_MESSAGE_MAP()
 
 static const int SliderMaxValue = 100;
 
-struct SampleType
+template<typename T>
+struct TNameValue : std::pair<LPCTSTR, T>
 {
-	LPCTSTR name;
-	IPcmData::SampleDataType type;
+	TNameValue(first_type name, second_type value)
+		: std::pair<LPCTSTR, T>(name, value), name(name), value(second) {}
+	first_type name;
+	second_type& value;
 };
 
-static const SampleType sampleTypeList[] = {
+static const TNameValue<IPcmData::SampleDataType> sampleTypeList[] = {
 #define SAMPLE_TYPE_ITEM(x) { _T(#x), IPcmData::SampleDataType::x }
 	SAMPLE_TYPE_ITEM(PCM_8bits),
 	SAMPLE_TYPE_ITEM(PCM_16bits),
@@ -65,11 +70,11 @@ static const SampleType sampleTypeList[] = {
 
 enum class WaveFormParam {
 	None,
-	Duty,
-	PeakPosition,
+	Duty,				// SquareWaveGenerator
+	PeakPosition,		// TriangleWaveGenerator
 };
 
-using WaveGeneratorFactory = IWaveGenerator* (*)(IPcmData::SampleDataType);
+using WaveGeneratorFactory = IWaveGenerator* (*)(IPcmData::SampleDataType, float param);
 struct WaveForm
 {
 	LPCTSTR name;
@@ -78,9 +83,24 @@ struct WaveForm
 };
 
 static const WaveForm waveFormList[] = {
-	{_T("Square Wave"), [](IPcmData::SampleDataType type) { return createSquareWaveGenerator(type); }, WaveFormParam::Duty },
-	{_T("Sine Wave"), [](IPcmData::SampleDataType type) { return createSineWaveGenerator(type); }, WaveFormParam::None },
-	{_T("Triangle Wave"), [](IPcmData::SampleDataType type) { return createTriangleWaveGenerator(type); }, WaveFormParam::PeakPosition },
+	{_T("Square Wave"), [](IPcmData::SampleDataType type, float duty) { return createSquareWaveGenerator(type, duty); }, WaveFormParam::Duty },
+	{_T("Sine Wave"), [](IPcmData::SampleDataType type, float) { return createSineWaveGenerator(type); }, WaveFormParam::None },
+	{_T("Triangle Wave"), [](IPcmData::SampleDataType type, float peakPosition) { return createTriangleWaveGenerator(type, peakPosition); }, WaveFormParam::PeakPosition },
+};
+
+static const TNameValue<WORD> samplesPerSecondList[] = {
+	{_T("44.1Khz"), 44100},
+	{_T("22.05Khz"), 22050},
+	{_T("16Khz"), 16000},
+	{_T("32Khz"), 32000},
+	{_T("48Khz"), 48000},
+};
+
+static const TNameValue<WORD> channelsList[] = {
+	{_T("1ch"), 1},
+	{_T("2ch"), 2},
+	{_T("4ch"), 4},
+	{_T("5.1ch"), 6},
 };
 
 CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
@@ -239,6 +259,16 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 	m_waveForm.SetCurSel(0);
 	OnCbnSelchangeComboWaveForm();
 
+	for(auto& x : samplesPerSecondList) {
+		m_SamplesPerSecond.AddString(x.name);
+	}
+	m_SamplesPerSecond.SetCurSel(0);
+
+	for(auto& x : channelsList) {
+		m_channels.AddString(x.name);
+	}
+	m_channels.SetCurSel(0);
+
 	CSliderCtrl* sliders[] = {
 		&m_duty, &m_peakPosition, &m_level, &m_phaseShift
 	};
@@ -307,26 +337,6 @@ HCURSOR CMFToneGeneratorDlg::OnQueryDragIcon()
 
 
 
-//void CMFToneGeneratorDlg::OnChar(UINT nChar, UINT nRepCnt, UINT nFlags)
-//{
-//	// TODO: Add your message handler code here and/or call default
-//	TCHAR msg[1000];
-//	_stprintf_s(msg, _T("OnChar(%c, %d, 0x%08x)\n"), nChar, nRepCnt, nFlags);
-//	OutputDebugString(msg);
-//	//CDialogEx::OnChar(nChar, nRepCnt, nFlags);
-//}
-
-
-//void CMFToneGeneratorDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
-//{
-//	// TODO: Add your message handler code here and/or call default
-//	TCHAR msg[1000];
-//	_stprintf_s(msg, _T("OnKeyDown(%c, %d, 0x%08x)\n"), nChar, nRepCnt, nFlags);
-//	OutputDebugString(msg);
-//	CDialogEx::OnKeyDown(nChar, nRepCnt, nFlags);
-//}
-
-
 void CMFToneGeneratorDlg::OnClose()
 {
 	m_context->shutdown();
@@ -377,12 +387,31 @@ void CMFToneGeneratorDlg::OnDropFiles(HDROP hDropInfo)
 
 void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 {
+	UpdateData();
 	if(!m_pcmData) {
-		UpdateData();
-		auto sampleType = sampleTypeList[m_sampleType.GetCurSel()].type;
-		auto factory = waveFormList[m_waveForm.GetCurSel()].factory;
-		auto generator = factory(sampleType);
-		m_pcmData = createPcmData(44100, 2, generator);
+		auto sampleType = sampleTypeList[m_sampleType.GetCurSel()].value;
+		auto& waveForm = waveFormList[m_waveForm.GetCurSel()];
+		float param = 0.0f;
+		switch(waveForm.param) {
+		case WaveFormParam::Duty:
+			param = (float)m_duty.GetPos() / SliderMaxValue;
+			break;
+		case WaveFormParam::PeakPosition:
+			param = (float)m_peakPosition.GetPos() / SliderMaxValue;
+			break;
+		}
+		auto generator = waveForm.factory(sampleType, param);
+		auto samplesPerSecond = samplesPerSecondList[m_SamplesPerSecond.GetCurSel()].value;
+		auto channels = channelsList[m_channels.GetCurSel()].value;
+		m_pcmData = createPcmData(samplesPerSecond, channels, generator);
+		if(m_pcmData) {
+			ATL::CA2T waveForm(m_pcmData->getWaveForm());
+			logger.log(_T("Created PcmData %s(%f) %d bps, %d Hz, %d channels")
+				, (LPCTSTR)waveForm, param, m_pcmData->getBitsPerSample(), m_pcmData->getSamplesPerSec(), m_pcmData->getChannels());
+		} else {
+			showStatus(_T("Failed to create PcmData for generator(0x%p)"), generator);
+			return;
+		}
 	}
 	m_pcmData->generate(key, 0.1f, 0.5f);
 

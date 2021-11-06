@@ -49,7 +49,10 @@ END_MESSAGE_MAP()
 
 // CMFToneGeneratorDlg dialog
 
-static const int SliderMaxValue = 100;
+// static declarations
+namespace {
+
+const int SliderMaxValue = 100;
 
 template<typename T>
 struct TNameValue : std::pair<LPCTSTR, T>
@@ -60,7 +63,7 @@ struct TNameValue : std::pair<LPCTSTR, T>
 	second_type& value;
 };
 
-static const TNameValue<IPcmData::SampleDataType> sampleTypeList[] = {
+const TNameValue<IPcmData::SampleDataType> sampleTypeList[] = {
 #define SAMPLE_TYPE_ITEM(x) { _T(#x), IPcmData::SampleDataType::x }
 	SAMPLE_TYPE_ITEM(PCM_8bits),
 	SAMPLE_TYPE_ITEM(PCM_16bits),
@@ -74,7 +77,7 @@ enum class WaveFormParam {
 	PeakPosition,		// TriangleWaveGenerator
 };
 
-using WaveGeneratorFactory = IWaveGenerator* (*)(IPcmData::SampleDataType, float param);
+using WaveGeneratorFactory = IWaveGenerator * (*)(IPcmData::SampleDataType, float param);
 struct WaveForm
 {
 	LPCTSTR name;
@@ -82,13 +85,13 @@ struct WaveForm
 	WaveFormParam param;
 };
 
-static const WaveForm waveFormList[] = {
+const WaveForm waveFormList[] = {
 	{_T("Square Wave"), [](IPcmData::SampleDataType type, float duty) { return createSquareWaveGenerator(type, duty); }, WaveFormParam::Duty },
 	{_T("Sine Wave"), [](IPcmData::SampleDataType type, float) { return createSineWaveGenerator(type); }, WaveFormParam::None },
 	{_T("Triangle Wave"), [](IPcmData::SampleDataType type, float peakPosition) { return createTriangleWaveGenerator(type, peakPosition); }, WaveFormParam::PeakPosition },
 };
 
-static const TNameValue<WORD> samplesPerSecondList[] = {
+const TNameValue<WORD> samplesPerSecondList[] = {
 	{_T("44.1Khz"), 44100},
 	{_T("22.05Khz"), 22050},
 	{_T("16Khz"), 16000},
@@ -96,12 +99,14 @@ static const TNameValue<WORD> samplesPerSecondList[] = {
 	{_T("48Khz"), 48000},
 };
 
-static const TNameValue<WORD> channelsList[] = {
+const TNameValue<WORD> channelsList[] = {
 	{_T("1ch"), 1},
 	{_T("2ch"), 2},
 	{_T("4ch"), 4},
 	{_T("5.1ch"), 6},
 };
+
+}
 
 CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFTONEGENERATOR_DIALOG, pParent)

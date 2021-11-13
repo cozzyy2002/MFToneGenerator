@@ -4,8 +4,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.31410.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MFToneGenerator", "MFToneGenerator\MFToneGenerator.vcxproj", "{E876AF04-0B68-4F96-93BA-54C511260575}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758} = {7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PcmDataTest", "PcmDataTest\PcmDataTest.vcxproj", "{96FA8AA9-3537-4CE8-A3DC-5211CAED6474}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758} = {7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PcmData", "PcmData\PcmData.vcxproj", "{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +39,14 @@ Global
 		{96FA8AA9-3537-4CE8-A3DC-5211CAED6474}.Release|x64.Build.0 = Release|x64
 		{96FA8AA9-3537-4CE8-A3DC-5211CAED6474}.Release|x86.ActiveCfg = Release|Win32
 		{96FA8AA9-3537-4CE8-A3DC-5211CAED6474}.Release|x86.Build.0 = Release|Win32
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}.Debug|x64.ActiveCfg = Debug|x64
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}.Debug|x64.Build.0 = Debug|x64
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}.Debug|x86.ActiveCfg = Debug|Win32
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}.Debug|x86.Build.0 = Debug|Win32
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}.Release|x64.ActiveCfg = Release|x64
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}.Release|x64.Build.0 = Release|x64
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}.Release|x86.ActiveCfg = Release|Win32
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

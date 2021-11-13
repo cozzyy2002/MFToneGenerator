@@ -1,5 +1,8 @@
 #pragma once
 
+#include "framework.h"
+#include <Unknwn.h>
+
 class IWaveGenerator;
 
 /*
@@ -41,3 +44,36 @@ IPcmData* createPcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveG
 IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty = 0.5f);
 IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType);
 IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition = 0.5f);
+
+
+class DoNotCopy
+{
+public:
+	DoNotCopy() {}
+	DoNotCopy(const DoNotCopy&) = delete;
+	DoNotCopy& operator=(const DoNotCopy&) = delete;
+
+	virtual ~DoNotCopy() {}
+};
+
+class CriticalSection : DoNotCopy
+{
+public:
+	class Object : DoNotCopy
+	{
+		friend class CriticalSection;
+	public:
+		Object() { InitializeCriticalSection(&m_criticalSection); }
+		~Object() { DeleteCriticalSection(&m_criticalSection); }
+
+	protected:
+		CRITICAL_SECTION* get() { return &m_criticalSection; }
+		CRITICAL_SECTION m_criticalSection;
+	};
+
+	CriticalSection(Object& object) : m_object(object) { EnterCriticalSection(m_object.get()); }
+	~CriticalSection() { LeaveCriticalSection(m_object.get()); }
+
+protected:
+	Object& m_object;
+};

@@ -1,9 +1,14 @@
 #pragma once
 
 #include "PcmData.h"
-#include "Utils.h"
+#include <StateMachine/stdafx.h>
+#include <StateMachine/Unknown.h>
+#include <StateMachine/Assert.h>
 
+#include <memory>
 #include <math.h>
+#include <Windows.h>
+#include <mmreg.h>
 
 class IWaveGenerator
 {

@@ -123,7 +123,7 @@
       </Message>
     </PostBuildEvent>
     <PreLinkEvent>
-      <Command>xcopy /Y /D "$(StateMachineDir)\lib\$(Configuration)\StateMachine.*" "$(OutDir)"</Command>
+      <Command>xcopy /Y /D "$(StateMachineDir)\lib\$(Configuration)\StateMachine.???" "$(OutDir)"</Command>
     </PreLinkEvent>
     <PreLinkEvent>
       <Message>Copy dependendies.</Message>
@@ -196,7 +196,7 @@
       </Message>
     </PostBuildEvent>
     <PreLinkEvent>
-      <Command>xcopy /Y /D "$(StateMachineDir)\lib\$(Configuration)\StateMachine.*" "$(OutDir)"</Command>
+      <Command>xcopy /Y /D "$(StateMachineDir)\lib\$(Configuration)\StateMachine.???" "$(OutDir)"</Command>
     </PreLinkEvent>
     <PreLinkEvent>
       <Message>Copy dependendies.</Message>

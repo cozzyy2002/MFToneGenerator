@@ -119,7 +119,6 @@ CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 void CMFToneGeneratorDlg::onStarted(bool canPause)
 {
 	DragAcceptFiles(FALSE);
-	//m_audioFileName.EnableWindow(FALSE);
 	m_startStopButton.SetWindowText(_T("Stop"));
 	if(canPause) {
 		m_pauseResumeButton.SetWindowText(_T("Pause"));
@@ -130,8 +129,9 @@ void CMFToneGeneratorDlg::onStarted(bool canPause)
 
 void CMFToneGeneratorDlg::onStopped()
 {
+	m_pcmData.Release();
+
 	DragAcceptFiles(TRUE);
-	//m_audioFileName.EnableWindow(TRUE);
 	m_startStopButton.SetWindowText(_T("Start"));
 	m_pauseResumeButton.SetWindowText(_T("Pause"));
 	m_pauseResumeButton.EnableWindow(FALSE);
@@ -418,7 +418,10 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 			return;
 		}
 	}
-	m_pcmData->generate(key, 0.1f, 0.5f);
+
+	auto level = (float)m_level.GetPos() / SliderMaxValue;
+	auto phaseShift = (float)m_phaseShift.GetPos() / SliderMaxValue;
+	m_pcmData->generate(key, level, phaseShift);
 
 	if(m_status == Status::Stopped) {
 		m_context->startTone(m_pcmData);

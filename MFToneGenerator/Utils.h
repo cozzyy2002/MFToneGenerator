@@ -34,35 +34,3 @@ protected:
 	using Writer = void (*)(LPCTSTR);
 	Writer m_writer;
 };
-
-class DoNotCopy
-{
-public:
-    DoNotCopy() {}
-    DoNotCopy(const DoNotCopy&) = delete;
-    DoNotCopy& operator=(const DoNotCopy&) = delete;
-
-    virtual ~DoNotCopy() {}
-};
-
-class CriticalSection : DoNotCopy
-{
-public:
-    class Object : DoNotCopy
-    {
-        friend class CriticalSection;
-    public:
-        Object() { InitializeCriticalSection(&m_criticalSection); }
-        ~Object() { DeleteCriticalSection(&m_criticalSection); }
-
-    protected:
-        CRITICAL_SECTION* get() { return &m_criticalSection; }
-        CRITICAL_SECTION m_criticalSection;
-    };
-
-    CriticalSection(Object& object) : m_object(object) { EnterCriticalSection(m_object.get()); }
-    ~CriticalSection() { LeaveCriticalSection(m_object.get()); }
-
-protected:
-    Object& m_object;
-};

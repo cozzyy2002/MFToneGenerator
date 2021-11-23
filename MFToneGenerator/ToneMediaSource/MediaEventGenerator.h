@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utils.h"
+#include <PcmData/PcmData.h>
 
 /**
  * Custom MediaEvntGenerator implementation.

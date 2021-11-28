@@ -16,6 +16,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PcmData", "PcmData\PcmData.vcxproj", "{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "makeWAV", "makeWAV\makeWAV.vcxproj", "{BFA54211-4C6B-43B4-843F-B19488FBF4ED}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7D11C11F-B6A2-41B4-8BA4-B3D1E3845758} = {7D11C11F-B6A2-41B4-8BA4-B3D1E3845758}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -10,4 +10,8 @@
 // add headers that you want to pre-compile here
 #include <PcmData/PcmData.h>
 
+#define tsm_STATE_MACHINE_EXPORT
+#include <StateMachine/Assert.h>
+
+#include <atlbase.h>
 #endif //PCH_H

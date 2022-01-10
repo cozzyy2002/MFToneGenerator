@@ -7,41 +7,133 @@
 #include <fstream>
 #include <memory>
 
+struct WaveGeneratorFactory
+{
+	const char* name;
+
+	using func_t = IWaveGenerator* (*)(IPcmData::SampleDataType sampleDataType);
+	func_t func;
+};
+
+struct SampleDataType
+{
+	const char* name;
+	IPcmData::SampleDataType type;
+};
+
+namespace
+{
+auto duty = 0.5f;
+auto peakPosition = 0.5f;
+WORD samplesPerSecond = 44100;
+WORD channels = 1;
+WORD key = 440;
+float level = 1.0f;
+float phaseShift = 0;
+WORD sec = 10;
+WaveGeneratorFactory::func_t waveGeneratorFactoryFunc = nullptr;
+IPcmData::SampleDataType sampleDataType = IPcmData::SampleDataType::Unknown;
+std::string wavFileName;
+
+const WaveGeneratorFactory factories[] = {
+	{"Square", [](IPcmData::SampleDataType sampleDataType)
+	{
+		std::cout << "Creating SquareWaveGenerator(duty=" << duty << ")\n";
+		return createSquareWaveGenerator(sampleDataType, duty);
+	}},
+	{"Sine", [](IPcmData::SampleDataType sampleDataType)
+	{
+		std::cout << "Creating SineWaveGenerator\n";
+		return createSineWaveGenerator(sampleDataType);
+	}},
+	{"Triangle", [](IPcmData::SampleDataType sampleDataType)
+	{
+		std::cout << "Creating TriangleWaveGenerator(peakPosition=" << peakPosition << ")\n";
+		return createTriangleWaveGenerator(sampleDataType, peakPosition);
+	}},
+};
+
+const SampleDataType sampleDataTypes[] = {
+	{ "8", IPcmData::SampleDataType::PCM_8bits},
+	{ "16", IPcmData::SampleDataType::PCM_16bits},
+	{ "32", IPcmData::SampleDataType::IEEE_Float},
+};
+}
+
 int main(int argc, char* argv[])
 {
-	auto duty = 0.5f;
-	auto peakPosition = 0.5f;
-	WORD samplesPerSecond = 44100;
-	WORD channels = 1;
-	WORD key = 440;
-	float level = 1.0f;
-	float phaseShift = 0;
-	WORD sec = 10;
-	IPcmData::SampleDataType type = IPcmData::SampleDataType::IEEE_Float;
-	std::string wavFileName;
-
 	float fVal;
 	int iVal;
+	int argIndex = 0;
+	bool argError = false;
 	for(int i = 1; i < argc; i++) {
-		if(sscanf_s(argv[i], "duty=%f", &fVal) == 1) { duty = fVal; continue; }
-		if(sscanf_s(argv[i], "peak=%f", &fVal) == 1) { peakPosition = fVal; continue; }
-		if(sscanf_s(argv[i], "sps=%d", &iVal) == 1) { samplesPerSecond = iVal; continue; }
-		if(sscanf_s(argv[i], "ch=%d", &iVal) == 1) { channels = iVal; continue; }
-		if(sscanf_s(argv[i], "key=%d", &iVal) == 1) { key = iVal; continue; }
-		if(sscanf_s(argv[i], "lvl=%f", &fVal) == 1) { level = fVal; continue; }
-		if(sscanf_s(argv[i], "sft=%f", &fVal) == 1) { phaseShift = fVal; continue; }
-		if(sscanf_s(argv[i], "sec=%d", &iVal) == 1) { sec = iVal; continue; }
-		wavFileName = argv[i];
-	}
-	if(wavFileName.empty()) {
-		std::cout << "Usage: makeWAV [duty=Duty] [peak=PeakPosition] [sps=SamplesPerSecond] [ch=Channels] [key=Key] [lvl=Level] [sft=PhaseSift] [sec=Second] WAVFileName\n";
-		return 0;
+		auto arg = argv[i];
+		if(strchr(arg, '=')) {
+			if(sscanf_s(arg, "duty=%f", &fVal) == 1) { duty = fVal; }
+			else if(sscanf_s(arg, "peak=%f", &fVal) == 1) { peakPosition = fVal; }
+			else if(sscanf_s(arg, "sps=%d", &iVal) == 1) { samplesPerSecond = iVal; }
+			else if(sscanf_s(arg, "ch=%d", &iVal) == 1) { channels = iVal; }
+			else if(sscanf_s(arg, "key=%d", &iVal) == 1) { key = iVal; }
+			else if(sscanf_s(arg, "lvl=%f", &fVal) == 1) { level = fVal; }
+			else if(sscanf_s(arg, "sft=%f", &fVal) == 1) { phaseShift = fVal; }
+			else if(sscanf_s(arg, "sec=%d", &iVal) == 1) { sec = iVal; }
+			else {
+				std::cerr << "Unknown argument: " << arg << std::endl;
+				argError = true;
+			}
+		} else {
+			switch(argIndex++) {
+			case 0:
+				// Wave form
+				for(auto& f : factories) {
+					if(_strnicmp(f.name, arg, strlen(arg)) == 0) {
+						waveGeneratorFactoryFunc = f.func;
+						break;
+					}
+				}
+				if(!waveGeneratorFactoryFunc) {
+					std::cerr << "Unknown wave form: " << arg << std::endl;
+					argError = true;
+				}
+				break;
+			case 1:
+				// Sample data type
+				for(auto& s : sampleDataTypes) {
+					if(_strnicmp(s.name, arg, strlen(arg)) == 0) {
+						sampleDataType = s.type;
+						break;
+					}
+				}
+				if(sampleDataType == IPcmData::SampleDataType::Unknown) {
+					std::cerr << "Unknown sample data type: " << arg << std::endl;
+					argError = true;
+				}
+				break;
+			case 2:
+				// File name to be genarated.
+				wavFileName = arg;
+				break;
+			default:
+				std::cerr << "Too many arguments: " << arg << std::endl;
+				argError = true;
+				break;
+			}
+		}
 	}
 
-	std::cout << "Generating " << wavFileName
-		<< "\n  Duty=" << duty
-		<< ", Peak Position=" << peakPosition
-		<< ", Samples Per Second=" << samplesPerSecond
+	if(argError || !waveGeneratorFactoryFunc || (sampleDataType == IPcmData::SampleDataType::Unknown) || wavFileName.empty()) {
+		std::cout << "Usage:"
+			" makeWAV [duty=Duty] [peak=PeakPosition] [sps=SamplesPerSecond] [ch=Channels] [key=Key] [lvl=Level] [sft=PhaseSift] [sec=Second]"
+			" WaveForm SampleDataType WAVFileName"
+			"\n";
+		return 1;
+	}
+
+	auto gen = waveGeneratorFactoryFunc(sampleDataType);
+	CComPtr<IPcmData> pcmData(createPcmData(samplesPerSecond, channels, gen));
+
+	std::cout << "Generating " << pcmData->getWaveForm() << "(" << pcmData->getSampleDataTypeName() << ") to " << wavFileName
+		<< "\nSamples Per Second=" << samplesPerSecond
 		<< ", Channels=" << channels
 		<< ", Key=" << key
 		<< ", Level=" << level
@@ -51,8 +143,6 @@ int main(int argc, char* argv[])
 
 	std::ofstream wavFile(wavFileName);
 
-	auto gen = createSineWaveGenerator(type);
-	CComPtr<IPcmData> pcmData(createPcmData(samplesPerSecond, channels, gen));
 	pcmData->generate(key, level, phaseShift);
 	const size_t duration = 1;
 	auto bufferSize = pcmData->getSampleBufferSize(duration * 1000);

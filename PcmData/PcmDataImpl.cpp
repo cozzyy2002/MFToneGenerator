@@ -7,6 +7,10 @@ template<> const IPcmData::SampleDataType WaveGenerator<UINT8>::SampleDataType =
 template<> const IPcmData::SampleDataType WaveGenerator<INT16>::SampleDataType = IPcmData::SampleDataType::PCM_16bits;
 template<> const IPcmData::SampleDataType WaveGenerator<float>::SampleDataType = IPcmData::SampleDataType::IEEE_Float;
 
+template<> const char* WaveGenerator<UINT8>::SampleDataTypeName = "PCM 8bit";
+template<> const char* WaveGenerator<INT16>::SampleDataTypeName = "PCM 16bit";
+template<> const char* WaveGenerator<float>::SampleDataTypeName = "IEEE float 32bit";
+
 template<> const WORD PcmData<UINT8>::FormatTag = WAVE_FORMAT_PCM;
 template<> const UINT8 PcmData<UINT8>::HighValue = 0xc0;
 template<> const UINT8 PcmData<UINT8>::ZeroValue = 0x80;

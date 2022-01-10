@@ -16,6 +16,7 @@ public:
 	virtual ~IWaveGenerator() {}
 
 	virtual IPcmData::SampleDataType getSampleDataType() const = 0;
+	virtual const char* getSampleDataTypeName() const = 0;
 };
 
 template<typename T>
@@ -25,12 +26,14 @@ public:
 	virtual ~WaveGenerator() {}
 
 	virtual IPcmData::SampleDataType getSampleDataType() const override { return SampleDataType; }
+	virtual const char* getSampleDataTypeName() const override { return SampleDataTypeName; }
 
 	virtual const char* getWaveForm() const = 0;
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) = 0;
 
 protected:
 	static const IPcmData::SampleDataType SampleDataType;
+	static const char* SampleDataTypeName;
 
 	void adjustLevel(float level, T* pHighValue = nullptr, T* pLowValue = nullptr, T* pZeroValue = nullptr) const;
 };
@@ -55,6 +58,8 @@ public:
 	virtual void generate(float key, float level, float phaseShift) override;
 
 	virtual SampleDataType getSampleDataType() const override { return m_waveGenerator->getSampleDataType(); }
+	virtual const char* getSampleDataTypeName() const override { return m_waveGenerator->getSampleDataTypeName(); }
+
 	virtual WORD getFormatTag() const override { return FormatTag; }
 	virtual const char* getWaveForm() const override { return m_waveGenerator->getWaveForm(); }
 	// Returns byte size of the minimum atomic unit of data to be generated.

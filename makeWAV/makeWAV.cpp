@@ -56,6 +56,7 @@ const WaveGeneratorFactory factories[] = {
 const SampleDataType sampleDataTypes[] = {
 	{ "8", IPcmData::SampleDataType::PCM_8bits},
 	{ "16", IPcmData::SampleDataType::PCM_16bits},
+	{ "24", IPcmData::SampleDataType::PCM_24bits},
 	{ "32", IPcmData::SampleDataType::IEEE_Float},
 };
 }

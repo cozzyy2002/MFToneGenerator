@@ -17,6 +17,7 @@ public:
 		Unknown,
 		PCM_8bits,		// UINT8, WAVE_FORMAT_PCM
 		PCM_16bits,		// INT16, WAVE_FORMAT_PCM
+		PCM_24bits,		// INT24, WAVE_FORMAT_PCM
 		IEEE_Float,		// float, WAVE_FORMAT_IEEE_FLOAT
 	};
 

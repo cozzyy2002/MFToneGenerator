@@ -24,12 +24,18 @@
     <ClInclude Include="PcmDataImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="INT24.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PcmData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PcmDataImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="INT24.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

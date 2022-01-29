@@ -158,10 +158,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="INT24.h" />
     <ClInclude Include="PcmData.h" />
     <ClInclude Include="PcmDataImpl.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="INT24.cpp" />
     <ClCompile Include="PcmData.cpp" />
     <ClCompile Include="PcmDataImpl.cpp" />
   </ItemGroup>

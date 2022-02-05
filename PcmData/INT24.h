@@ -3,27 +3,21 @@
 class INT24
 {
 public:
-	INT24() : value({0}) {}
+	INT24() { construct(0); }
 	INT24(INT32 value) { construct(value); }
 	INT24(float value) { construct((INT32)value); }
 
 	operator float() const;
 
-	bool operator<(INT32) const;
-	bool operator<(float) const;
-	bool operator>(INT32) const;
-	bool operator>(float) const;
+	static const INT32 MaxValue = +8388607;
+	static const INT32 MinValue = -8388608;
 
 protected:
 	void construct(INT32);
 
-	// 24bit internal type and value.
-	struct value_t
-	{
-		UINT16 lower;
-		INT8 upper;
-	};
-	value_t value;
+	// 24bit internal value.
+	// Note: Do not define this value in struct, or sizeof(INT24) can not be 3.
+	INT8 value[3];
 };
 
 INT24 operator+(const INT24&, const INT24&);

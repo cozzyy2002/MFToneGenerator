@@ -1,7 +1,5 @@
 #include "INT24.h"
 
-#include <stdlib.h>
-
 void INT24::construct(INT32 value)
 {
 	this->value[0] = (BYTE)value;
@@ -11,8 +9,14 @@ void INT24::construct(INT32 value)
 
 INT24::operator float() const
 {
-	float fval = (float)(value[0] + (value[1] << 8) + (abs(value[2]) << 16));
-	return fval * ((value[2] < 0) ? -1 : 1);
+	static const BYTE sign = 0x80;
+	BYTE bytes[4] = {
+		value[0],
+		value[1],
+		value[2],
+		(BYTE)((value[2] & sign) ? 0xff : 0)
+	};
+	return (float)*((INT32*)bytes);
 }
 
 INT24 operator+(const INT24& a, const INT24& b) { return INT24((float)a + (float)b); }

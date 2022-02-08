@@ -17,7 +17,7 @@ protected:
 
 	// 24bit internal value.
 	// Note: Do not define this value in struct, or sizeof(INT24) can not be 3.
-	INT8 value[3];
+	BYTE value[3];
 };
 
 INT24 operator+(const INT24&, const INT24&);

@@ -7,7 +7,7 @@ public:
 	INT24(INT32 value) { construct(value); }
 	INT24(float value) { construct((INT32)value); }
 
-	operator float() const;
+	operator INT32() const;
 
 	static const INT32 MaxValue = +8388607;
 	static const INT32 MinValue = -8388608;

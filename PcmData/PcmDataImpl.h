@@ -257,16 +257,16 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WO
 	if(m_peakPosition == 0.0f) {
 		upDelta = height * channels;
 		up = false;
-		value = highValue;
+		value = (float)highValue;
 	} else if(m_peakPosition == 1.0f) {
 		downDelta = height * channels;
 		up = true;
-		value = lowValue;
+		value = (float)lowValue;
 	} else {
 		upDelta /= m_peakPosition;
 		downDelta /= (1.0f - m_peakPosition);
 		up = true;
-		value = zeroValue;
+		value = (float)zeroValue;
 	}
 
 	if((lowValue + upDelta) > highValue) { upDelta = height; }
@@ -277,14 +277,14 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WO
 		if(up) {
 			value += upDelta;
 			if(highValue < value) {
-				value = highValue;
+				value = (float)highValue;
 				up = false;
 			}
 		}
 		else {
 			value -= downDelta;
 			if(value < lowValue) {
-				value = lowValue;
+				value = (float)lowValue;
 				up = true;
 			}
 		}

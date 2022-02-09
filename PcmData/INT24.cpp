@@ -7,7 +7,7 @@ void INT24::construct(INT32 value)
 	this->value[2] = (BYTE)(abs(value >> 16) * ((value < 0) ? -1 : 1));
 }
 
-INT24::operator float() const
+INT24::operator INT32() const
 {
 	static const BYTE sign = 0x80;
 	BYTE bytes[4] = {
@@ -16,7 +16,7 @@ INT24::operator float() const
 		value[2],
 		(BYTE)((value[2] & sign) ? 0xff : 0)
 	};
-	return (float)*((INT32*)bytes);
+	return *((INT32*)bytes);
 }
 
 INT24 operator+(const INT24& a, const INT24& b) { return INT24((float)a + (float)b); }

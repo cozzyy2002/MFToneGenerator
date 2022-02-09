@@ -90,3 +90,29 @@ INSTANTIATE_TEST_SUITE_P(_, INT24ConstructorUnitTest, Values(
 	std::make_tuple(0x010203, 0x01, 0x02, 0x03),
 	std::make_tuple(-0x010203, 0xfe, 0xfd, 0xfd)
 ));
+
+class INT24BinaryOperatorUnitTest : public INT24UnitTest, public WithParamInterface<std::tuple<INT32, INT32>> {};
+
+TEST_P(INT24BinaryOperatorUnitTest, _)
+{
+	auto& params = GetParam();
+	auto a = std::get<0>(params);
+	auto b = std::get<1>(params);
+
+	EXPECT_EQ(INT24(a) + INT24(b), a + b);
+	EXPECT_EQ(INT24(a) + float(b), a + b);
+	EXPECT_EQ(INT24(a) - INT24(b), a - b);
+	EXPECT_EQ(INT24(a) - float(b), a - b);
+	EXPECT_EQ(INT24(a) * float(b), a * b);
+	EXPECT_EQ(double(a) * INT24(b), a * b);
+}
+
+INSTANTIATE_TEST_SUITE_P(_, INT24BinaryOperatorUnitTest, Values(
+	std::make_tuple(1, 2),
+	std::make_tuple(-1, 2),
+	std::make_tuple(1, -2),
+	std::make_tuple(-1, -2),
+	std::make_tuple(0, 0),
+	std::make_tuple(0, 5),
+	std::make_tuple(5, 0)
+));

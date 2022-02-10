@@ -108,11 +108,12 @@ TEST_P(INT24BinaryOperatorUnitTest, _)
 }
 
 INSTANTIATE_TEST_SUITE_P(_, INT24BinaryOperatorUnitTest, Values(
-	std::make_tuple(1, 2),
-	std::make_tuple(-1, 2),
-	std::make_tuple(1, -2),
-	std::make_tuple(-1, -2),
+	// Note: 0x0123 * 0x4567 = 0x4ee415: does not exceed INT24::MaxValue.
+	std::make_tuple(0x0123, 0x4567),
+	std::make_tuple(-0x0123, 0x4567),
+	std::make_tuple(0x0123, -0x4567),
+	std::make_tuple(-0x0123, -0x4567),
 	std::make_tuple(0, 0),
-	std::make_tuple(0, 5),
-	std::make_tuple(5, 0)
+	std::make_tuple(0, 0x1234),
+	std::make_tuple(0x1234, 0)
 ));

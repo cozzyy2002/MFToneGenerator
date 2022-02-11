@@ -7,7 +7,7 @@ void INT24::construct(INT32 value)
 	BYTE* bytes = (BYTE*)&value;
 	this->value[0] = bytes[0];
 	this->value[1] = bytes[1];
-	this->value[2] = bytes[2] | ((value < 0) ? sign : 0);
+	this->value[2] = bytes[2] | (bytes[3] & sign);
 }
 
 INT24::operator INT32() const

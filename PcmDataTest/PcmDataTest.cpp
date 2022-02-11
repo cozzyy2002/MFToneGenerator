@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include <PcmData/PcmData.h>
+#include <PcmData/INT24.h>
 
 #include <vector>
 #include <iostream>
@@ -36,6 +37,7 @@ public:
 		{
 		case IPcmData::SampleDataType::PCM_8bits: m_str_func = str_func<UINT8>; break;
 		case IPcmData::SampleDataType::PCM_16bits: m_str_func = str_func<INT16>; break;
+		case IPcmData::SampleDataType::PCM_24bits: m_str_func = str_func<INT24>; break;
 		case IPcmData::SampleDataType::IEEE_Float: m_str_func = str_func<float>; break;
 		default:
 			m_str_func = [](LPCVOID cycleData, size_t pos) { return std::string("?type?"); };
@@ -108,6 +110,9 @@ int main(int argc, char* argv[])
 		createSquareWaveGenerator(IPcmData::SampleDataType::PCM_16bits, duty),
 		createSineWaveGenerator(IPcmData::SampleDataType::PCM_16bits),
 		createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_16bits, peakPosition),
+		createSquareWaveGenerator(IPcmData::SampleDataType::PCM_24bits, duty),
+		createSineWaveGenerator(IPcmData::SampleDataType::PCM_24bits),
+		createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_24bits, peakPosition),
 		createSquareWaveGenerator(IPcmData::SampleDataType::IEEE_Float, duty),
 		createSineWaveGenerator(IPcmData::SampleDataType::IEEE_Float),
 		createTriangleWaveGenerator(IPcmData::SampleDataType::IEEE_Float, peakPosition),
@@ -140,6 +145,7 @@ int main(int argc, char* argv[])
 	auto comma = std::string(",,,,").substr(0, channels - 1);
 	std::cout << ",UINT8" << comma << "," << comma << "," << comma << ",INT16" << comma << "," << comma << "," << comma << ",float\n";
 	std::cout << "pos,Square" << comma << ",Sine" << comma << ",Triangle" << comma
+				<< ",Square" << comma << ",Sine" << comma << ",Triangle" << comma
 				<< ",Square" << comma << ",Sine" << comma << ",Triangle" << comma
 				<< ",Square" << comma << ",Sine" << comma << ",Triangle\n";
 	for(size_t pos = 0; pos < sampleCountInCycle; pos += channels) {

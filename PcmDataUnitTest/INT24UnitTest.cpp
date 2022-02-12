@@ -40,8 +40,9 @@ public:
 		Testee() {}
 		Testee(INT32 value) : INT24(value) {}
 		Testee(float value) : INT24(value) {}
+		Testee(const INT24& other) : INT24(other) {}
 
-		bool checkValue(BYTE high, BYTE mid, BYTE low) {
+		bool checkValue(BYTE high = 0, BYTE mid = 0, BYTE low = 0) {
 			EXPECT_EQ(value[0], low);
 			EXPECT_EQ(value[1], mid);
 			EXPECT_EQ(value[2], high);
@@ -49,6 +50,23 @@ public:
 		}
 	};
 };
+
+TEST_F(INT24UnitTest, double_multi)
+{
+	Testee highValue, zeroValue;
+	static const Testee MaxValue = 0x7f00;
+	static const Testee ZeroValue = 0;
+	static const float level = 1.0f;
+	highValue = Testee((MaxValue - ZeroValue) * level) + ZeroValue;
+	EXPECT_TRUE(highValue.checkValue(0, 0x7f, 0));
+	zeroValue = ZeroValue;
+	EXPECT_TRUE(zeroValue.checkValue());
+	Testee height = highValue - zeroValue;
+	EXPECT_TRUE(height.checkValue(0, 0x7f, 0));
+
+	auto result = (Testee)(((double)0.5 * height) + zeroValue);
+	EXPECT_TRUE(result.checkValue(0, 0x3f, 0x80));
+}
 
 // Default constructor should create instance that has 0 value.
 TEST_F(INT24UnitTest, DefaultConstructor)

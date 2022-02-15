@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 
 	auto sampleCountInCycle = handlers[0]->getPcmData()->getSamplesPerCycle();
 	auto comma = std::string(",,,,").substr(0, channels - 1);
-	std::cout << ",UINT8" << comma << "," << comma << "," << comma << ",INT16" << comma << "," << comma << "," << comma << ",float\n";
+	std::cout << ",UINT8" << comma << "," << comma << "," << comma << ",INT16" << comma << "," << comma << "," << comma << ",INT24" << comma << "," << comma << "," << comma << ",float\n";
 	std::cout << "pos,Square" << comma << ",Sine" << comma << ",Triangle" << comma
 				<< ",Square" << comma << ",Sine" << comma << ",Triangle" << comma
 				<< ",Square" << comma << ",Sine" << comma << ",Triangle" << comma

@@ -24,9 +24,9 @@ template<> const INT16 PcmData<INT16>::ZeroValue = 0;
 template<> const INT16 PcmData<INT16>::LowValue = -8000;
 
 template<> const WORD PcmData<INT24>::FormatTag = WAVE_FORMAT_PCM;
-template<> const INT24 PcmData<INT24>::HighValue = 0x7f00;
+template<> const INT24 PcmData<INT24>::HighValue = 0x80000;
 template<> const INT24 PcmData<INT24>::ZeroValue = 0;
-template<> const INT24 PcmData<INT24>::LowValue = -0x7f00;
+template<> const INT24 PcmData<INT24>::LowValue = -0x80000;
 
 template<> const WORD PcmData<float>::FormatTag = WAVE_FORMAT_IEEE_FLOAT;
 template<> const float PcmData<float>::HighValue = 0.5f;

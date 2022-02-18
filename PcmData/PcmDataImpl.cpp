@@ -1,14 +1,16 @@
 #include "PcmDataImpl.h"
-
+#include "INT24.h"
 
 #pragma region Declaration for available T types.
 
 template<> const IPcmData::SampleDataType WaveGenerator<UINT8>::SampleDataType = IPcmData::SampleDataType::PCM_8bits;
 template<> const IPcmData::SampleDataType WaveGenerator<INT16>::SampleDataType = IPcmData::SampleDataType::PCM_16bits;
+template<> const IPcmData::SampleDataType WaveGenerator<INT24>::SampleDataType = IPcmData::SampleDataType::PCM_24bits;
 template<> const IPcmData::SampleDataType WaveGenerator<float>::SampleDataType = IPcmData::SampleDataType::IEEE_Float;
 
 template<> const char* WaveGenerator<UINT8>::SampleDataTypeName = "PCM 8bit";
 template<> const char* WaveGenerator<INT16>::SampleDataTypeName = "PCM 16bit";
+template<> const char* WaveGenerator<INT24>::SampleDataTypeName = "PCM 24bit";
 template<> const char* WaveGenerator<float>::SampleDataTypeName = "IEEE float 32bit";
 
 template<> const WORD PcmData<UINT8>::FormatTag = WAVE_FORMAT_PCM;
@@ -20,6 +22,11 @@ template<> const WORD PcmData<INT16>::FormatTag = WAVE_FORMAT_PCM;
 template<> const INT16 PcmData<INT16>::HighValue = 8000;
 template<> const INT16 PcmData<INT16>::ZeroValue = 0;
 template<> const INT16 PcmData<INT16>::LowValue = -8000;
+
+template<> const WORD PcmData<INT24>::FormatTag = WAVE_FORMAT_PCM;
+template<> const INT24 PcmData<INT24>::HighValue = 0x80000;
+template<> const INT24 PcmData<INT24>::ZeroValue = 0;
+template<> const INT24 PcmData<INT24>::LowValue = -0x80000;
 
 template<> const WORD PcmData<float>::FormatTag = WAVE_FORMAT_IEEE_FLOAT;
 template<> const float PcmData<float>::HighValue = 0.5f;
@@ -37,6 +44,8 @@ IPcmData* createPcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveG
 		return new PcmData<UINT8>(samplesPerSec, channels, waveGenerator);
 	case IPcmData::SampleDataType::PCM_16bits:
 		return new PcmData<INT16>(samplesPerSec, channels, waveGenerator);
+	case IPcmData::SampleDataType::PCM_24bits:
+		return new PcmData<INT24>(samplesPerSec, channels, waveGenerator);
 	case IPcmData::SampleDataType::IEEE_Float:
 		return new PcmData<float>(samplesPerSec, channels, waveGenerator);
 	default:
@@ -51,6 +60,8 @@ IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataTyp
 		return new SquareWaveGenerator<UINT8>(duty);
 	case IPcmData::SampleDataType::PCM_16bits:
 		return new SquareWaveGenerator<INT16>(duty);
+	case IPcmData::SampleDataType::PCM_24bits:
+		return new SquareWaveGenerator<INT24>(duty);
 	case IPcmData::SampleDataType::IEEE_Float:
 		return new SquareWaveGenerator<float>(duty);
 	default:
@@ -65,6 +76,8 @@ IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType)
 		return new SineWaveGenerator<UINT8>();
 	case IPcmData::SampleDataType::PCM_16bits:
 		return new SineWaveGenerator<INT16>();
+	case IPcmData::SampleDataType::PCM_24bits:
+		return new SineWaveGenerator<INT24>();
 	case IPcmData::SampleDataType::IEEE_Float:
 		return new SineWaveGenerator<float>();
 	default:
@@ -79,6 +92,8 @@ IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataT
 		return new TriangleWaveGenerator<UINT8>(peakPosition);
 	case IPcmData::SampleDataType::PCM_16bits:
 		return new TriangleWaveGenerator<INT16>(peakPosition);
+	case IPcmData::SampleDataType::PCM_24bits:
+		return new TriangleWaveGenerator<INT24>(peakPosition);
 	case IPcmData::SampleDataType::IEEE_Float:
 		return new TriangleWaveGenerator<float>(peakPosition);
 	default:

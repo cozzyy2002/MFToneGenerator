@@ -56,6 +56,7 @@ const WaveGeneratorFactory factories[] = {
 const SampleDataType sampleDataTypes[] = {
 	{ "8", IPcmData::SampleDataType::PCM_8bits},
 	{ "16", IPcmData::SampleDataType::PCM_16bits},
+	{ "24", IPcmData::SampleDataType::PCM_24bits},
 	{ "32", IPcmData::SampleDataType::IEEE_Float},
 };
 }
@@ -169,33 +170,34 @@ int main(int argc, char* argv[])
 	DWORD dataSize = bufferSize * sec / duration;
 	struct Header {
 		struct Riff {
-			char name[4];
+			DWORD chankTag;
 			DWORD size;
 		} riff;
 		struct Wave {
-			char name[4];
+			DWORD chankTag;
 			struct Fmt {
-				char name[4];
+				DWORD chankTag;
 				DWORD size;
 				PCMWAVEFORMAT format;
 			} fmt;
 			struct Data {
-				char name[4];
+				DWORD chankTag;
 				DWORD size;
 			} data;
 		} wave;
-	} header;
-	header.riff = { { 'R', 'I', 'F', 'F' }, sizeof(header.wave) + dataSize };
-	header.wave = { { 'W', 'A', 'V', 'E' } };
-	header.wave.fmt = {
-		{ 'f', 'm', 't', ' ' }, sizeof(header.wave.fmt.format),
-		{
-			pcmData->getFormatTag(), pcmData->getChannels(), pcmData->getSamplesPerSec(),
-			(DWORD)pcmData->getSamplesPerSec() * pcmData->getBlockAlign(),
-			pcmData->getBlockAlign(), pcmData->getBitsPerSample()
+	} header = {
+		{ *(DWORD*)"RIFF", sizeof(Header::Wave) + dataSize },
+		{ *(DWORD*)"WAVE" , {
+			*(DWORD*)"fmt ", sizeof(Header::Wave::Fmt::format), {
+					pcmData->getFormatTag(), pcmData->getChannels(), pcmData->getSamplesPerSec(),
+					(DWORD)pcmData->getSamplesPerSec() * pcmData->getBlockAlign(),
+					pcmData->getBlockAlign(), pcmData->getBitsPerSample()
+				},
+			},
+			{ *(DWORD*)"data", dataSize }
 		}
 	};
-	header.wave.data = { { 'd', 'a', 't', 'a' }, dataSize };
+
 	wavFile.write((const char*)&header, sizeof(header));
 
 	for(size_t totalSec = 0; totalSec < sec; totalSec += duration) {

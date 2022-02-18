@@ -185,18 +185,19 @@ int main(int argc, char* argv[])
 				DWORD size;
 			} data;
 		} wave;
-	} header;
-	header.riff = { *(DWORD*)"RIFF", sizeof(header.wave) + dataSize};
-	header.wave = { *(DWORD*)"WAVE" };
-	header.wave.fmt = {
-		*(DWORD*)"fmt ", sizeof(header.wave.fmt.format),
-		{
-			pcmData->getFormatTag(), pcmData->getChannels(), pcmData->getSamplesPerSec(),
-			(DWORD)pcmData->getSamplesPerSec() * pcmData->getBlockAlign(),
-			pcmData->getBlockAlign(), pcmData->getBitsPerSample()
+	} header = {
+		{ *(DWORD*)"RIFF", sizeof(Header::Wave) + dataSize },
+		{ *(DWORD*)"WAVE" , {
+			*(DWORD*)"fmt ", sizeof(Header::Wave::Fmt::format), {
+					pcmData->getFormatTag(), pcmData->getChannels(), pcmData->getSamplesPerSec(),
+					(DWORD)pcmData->getSamplesPerSec() * pcmData->getBlockAlign(),
+					pcmData->getBlockAlign(), pcmData->getBitsPerSample()
+				},
+			},
+			{ *(DWORD*)"data", dataSize }
 		}
 	};
-	header.wave.data = { *(DWORD*)"data", dataSize };
+
 	wavFile.write((const char*)&header, sizeof(header));
 
 	for(size_t totalSec = 0; totalSec < sec; totalSec += duration) {

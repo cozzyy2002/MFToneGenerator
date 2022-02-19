@@ -2,6 +2,7 @@
 
 #include "framework.h"
 #include <Unknwn.h>
+#include <vector>
 
 class IWaveGenerator;
 
@@ -19,6 +20,13 @@ public:
 		PCM_16bits,		// INT16, WAVE_FORMAT_PCM
 		PCM_24bits,		// INT24, WAVE_FORMAT_PCM
 		IEEE_Float,		// float, WAVE_FORMAT_IEEE_FLOAT
+	};
+
+	enum class WaveGeneratorType {
+		Unknown,
+		SquareWave,
+		SineWave,
+		TriangleWave,
 	};
 
 	// Generates 1-cycle PCM data
@@ -40,6 +48,35 @@ public:
 	virtual const char* getSampleTypeName() const = 0;
 	virtual size_t getSamplesPerCycle() const = 0;		// Available after generate() method is called.
 	virtual size_t getSampleBufferSize(size_t duration) const = 0;
+};
+
+class PcmDataEnumerator
+{
+public:
+	struct SampleDataTypeProperty {
+		IPcmData::SampleDataType type;
+		const char* name;
+		WORD formatTag;
+		WORD bitsPerSample;
+	};
+
+	enum class FactoryParameter {
+		None,
+		Duty,			// SquareWaveGenerator
+		PeakPosition,	// TriangleWaveGenerator
+	};
+
+	using Factory = IWaveGenerator* (*)(IPcmData::SampleDataType, float);
+
+	struct WaveGeneratorProperty {
+		IPcmData::WaveGeneratorType type;
+		const char* waveForm;
+		Factory factory;
+		FactoryParameter parameter;
+	};
+
+	static const std::vector<SampleDataTypeProperty>& getSampleDatatypeProperties();
+	static const std::vector<WaveGeneratorProperty>& getWaveGeneratorProperties();
 };
 
 // Factory functions.

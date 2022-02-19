@@ -17,6 +17,10 @@ public:
 
 	virtual IPcmData::SampleDataType getSampleDataType() const = 0;
 	virtual const char* getSampleDataTypeName() const = 0;
+
+	static const char* SquareWaveForm;
+	static const char* SineWaveForm;
+	static const char* TriangleWaveForm;
 };
 
 template<typename T>
@@ -171,7 +175,7 @@ class SquareWaveGenerator : public WaveGenerator<T>
 public:
 	SquareWaveGenerator(float duty) : m_duty(duty) {}
 
-	virtual const char* getWaveForm() const override { return "Square Wave"; }
+	virtual const char* getWaveForm() const override { return IWaveGenerator::SquareWaveForm; }
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 
 protected:
@@ -202,7 +206,7 @@ template<typename T>
 class SineWaveGenerator : public WaveGenerator<T>
 {
 public:
-	virtual const char* getWaveForm() const override { return "Sine Wave"; }
+	virtual const char* getWaveForm() const override { return IWaveGenerator::SineWaveForm; }
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 };
 
@@ -237,7 +241,7 @@ public:
 		else { m_peakPosition = peakPosition; }
 	}
 
-	virtual const char* getWaveForm() const override { return "Triangle Wave"; }
+	virtual const char* getWaveForm() const override { return IWaveGenerator::TriangleWaveForm; }
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 
 protected:

@@ -13,9 +13,9 @@ template<> const char* WaveGenerator<INT16>::SampleDataTypeName = "PCM 16bit";
 template<> const char* WaveGenerator<INT24>::SampleDataTypeName = "PCM 24bit";
 template<> const char* WaveGenerator<float>::SampleDataTypeName = "IEEE float 32bit";
 
-const char* IWaveGenerator::SquareWaveForm = "Square Wave";
-const char* IWaveGenerator::SineWaveForm = "Sine Wave";
-const char* IWaveGenerator::TriangleWaveForm = "Triangle Wave";
+const char* IWaveGenerator::SquareWaveFormTypeName = "Square Wave";
+const char* IWaveGenerator::SineWaveFormTypeName = "Sine Wave";
+const char* IWaveGenerator::TriangleWaveFormTypeName = "Triangle Wave";
 
 template<> const WORD PcmData<UINT8>::FormatTag = WAVE_FORMAT_PCM;
 template<> const UINT8 PcmData<UINT8>::HighValue = 0xc0;
@@ -55,10 +55,10 @@ static const PcmDataEnumerator::SampleDataTypeProperty sampleDataTypeProperties[
 	{ WaveGeneratorGetter<float>::SampleDataType, WaveGeneratorGetter<float>::SampleDataTypeName, PcmData<float>::FormatTag, sizeof(float) * 8 },
 };
 
-static const PcmDataEnumerator::WaveGeneratorProperty waveGeneratorProperties[] = {
-	{ IPcmData::WaveGeneratorType::SquareWave, IWaveGenerator::SquareWaveForm, createSquareWaveGenerator, PcmDataEnumerator::FactoryParameter::Duty },
-	{ IPcmData::WaveGeneratorType::SineWave, IWaveGenerator::SineWaveForm, [](IPcmData::SampleDataType type, float param) { return createSineWaveGenerator(type); }, PcmDataEnumerator::FactoryParameter::None },
-	{ IPcmData::WaveGeneratorType::TriangleWave, IWaveGenerator::TriangleWaveForm, createTriangleWaveGenerator, PcmDataEnumerator::FactoryParameter::PeakPosition },
+static const PcmDataEnumerator::WaveFormProperty waveGeneratorProperties[] = {
+	{ IPcmData::WaveFormType::SquareWave, IWaveGenerator::SquareWaveFormTypeName, createSquareWaveGenerator, PcmDataEnumerator::FactoryParameter::Duty },
+	{ IPcmData::WaveFormType::SineWave, IWaveGenerator::SineWaveFormTypeName, [](IPcmData::SampleDataType type, float param) { return createSineWaveGenerator(type); }, PcmDataEnumerator::FactoryParameter::None },
+	{ IPcmData::WaveFormType::TriangleWave, IWaveGenerator::TriangleWaveFormTypeName, createTriangleWaveGenerator, PcmDataEnumerator::FactoryParameter::PeakPosition },
 };
 
 /*static*/ const std::vector<PcmDataEnumerator::SampleDataTypeProperty>& PcmDataEnumerator::getSampleDatatypeProperties()
@@ -68,10 +68,10 @@ static const PcmDataEnumerator::WaveGeneratorProperty waveGeneratorProperties[] 
 	return ret;
 }
 
-/*static*/ const std::vector<PcmDataEnumerator::WaveGeneratorProperty>& PcmDataEnumerator::getWaveGeneratorProperties()
+/*static*/ const std::vector<PcmDataEnumerator::WaveFormProperty>& PcmDataEnumerator::getWaveFormProperties()
 {
 	auto& ar(waveGeneratorProperties);
-	static std::vector<WaveGeneratorProperty> ret(&ar[0], &ar[ARRAYSIZE(ar)]);
+	static std::vector<WaveFormProperty> ret(&ar[0], &ar[ARRAYSIZE(ar)]);
 	return ret;
 }
 #pragma endregion

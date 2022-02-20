@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
 
 		auto pcmData = handler->getPcmData();
 		std::cout << i++
-			<< "," << pcmData->getWaveForm()
+			<< "," << pcmData->getWaveFormTypeName()
 			<< "," << pcmData->getSampleTypeName()
 			<< "," << pcmData->getBitsPerSample()
 			<< "," << pcmData->getChannels()

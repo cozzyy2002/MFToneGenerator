@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
 	auto gen = waveGeneratorFactoryFunc(sampleDataType);
 	CComPtr<IPcmData> pcmData(createPcmData(samplesPerSecond, channels, gen));
 
-	std::cout << "Generating " << pcmData->getWaveForm() << "(" << pcmData->getSampleDataTypeName() << ") to " << wavFileName
+	std::cout << "Generating " << pcmData->getWaveFormTypeName() << "(" << pcmData->getSampleDataTypeName() << ") to " << wavFileName
 		<< "\nSamples Per Second=" << samplesPerSecond
 		<< ", Channels=" << channels
 		<< ", Key=" << key

@@ -410,7 +410,7 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 		auto channels = channelsList[m_channels.GetCurSel()].value;
 		m_pcmData = createPcmData(samplesPerSecond, channels, generator);
 		if(m_pcmData) {
-			ATL::CA2T waveForm(m_pcmData->getWaveForm());
+			ATL::CA2T waveForm(m_pcmData->getWaveFormTypeName());
 			logger.log(_T("Created PcmData %s(%f) %d bps, %d Hz, %d channels")
 				, (LPCTSTR)waveForm, param, m_pcmData->getBitsPerSample(), m_pcmData->getSamplesPerSec(), m_pcmData->getChannels());
 		} else {

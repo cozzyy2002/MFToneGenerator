@@ -22,7 +22,7 @@ public:
 		IEEE_Float,		// float, WAVE_FORMAT_IEEE_FLOAT
 	};
 
-	enum class WaveGeneratorType {
+	enum class WaveFormType {
 		Unknown,
 		SquareWave,
 		SineWave,
@@ -40,7 +40,8 @@ public:
 	virtual SampleDataType getSampleDataType() const = 0;
 	virtual const char* getSampleDataTypeName() const = 0;
 	virtual WORD getFormatTag() const = 0;
-	virtual const char* getWaveForm() const = 0;
+	virtual WaveFormType getWaveFormType() const = 0;
+	virtual const char* getWaveFormTypeName() const = 0;
 	virtual WORD getBlockAlign() const = 0;
 	virtual WORD getBitsPerSample() const = 0;
 	virtual WORD getSamplesPerSec() const = 0;
@@ -68,15 +69,15 @@ public:
 
 	using Factory = IWaveGenerator* (*)(IPcmData::SampleDataType, float);
 
-	struct WaveGeneratorProperty {
-		IPcmData::WaveGeneratorType type;
-		const char* waveForm;
+	struct WaveFormProperty {
+		IPcmData::WaveFormType type;
+		const char* name;
 		Factory factory;
 		FactoryParameter parameter;
 	};
 
 	static const std::vector<SampleDataTypeProperty>& getSampleDatatypeProperties();
-	static const std::vector<WaveGeneratorProperty>& getWaveGeneratorProperties();
+	static const std::vector<WaveFormProperty>& getWaveFormProperties();
 };
 
 // Factory functions.

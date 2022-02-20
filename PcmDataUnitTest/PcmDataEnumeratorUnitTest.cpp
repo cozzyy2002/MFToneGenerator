@@ -8,9 +8,38 @@
 
 using namespace ::testing;
 
-using PcmDataEnumeratorUnitTestDataType = std::tuple<PcmDataEnumerator::SampleDataTypeProperty, PcmDataEnumerator::WaveGeneratorProperty>;
+TEST(PcmDataEnumeratorUnitTest, SampleDataTypeProperties)
+{
+	auto properties = PcmDataEnumerator::getSampleDatatypeProperties();
+	ASSERT_EQ(properties.size(), 4);
 
-// Class for PcmDataEnumerator test with all combination of SampleDataType and WaveGenerator
+	for(auto sp : properties) {
+		EXPECT_THAT(sp.type, AnyOf(
+			IPcmData::SampleDataType::PCM_8bits,
+			IPcmData::SampleDataType::PCM_16bits,
+			IPcmData::SampleDataType::PCM_24bits,
+			IPcmData::SampleDataType::IEEE_Float
+		));
+	}
+}
+
+TEST(PcmDataEnumeratorUnitTest, WaveFormProperties)
+{
+	auto properties = PcmDataEnumerator::getWaveFormProperties();
+	ASSERT_EQ(properties.size(), 3);
+
+	for(auto wp : properties) {
+		EXPECT_THAT(wp.type, AnyOf(
+			IPcmData::WaveFormType::SquareWave,
+			IPcmData::WaveFormType::SineWave,
+			IPcmData::WaveFormType::TriangleWave
+		));
+	}
+}
+
+using PcmDataEnumeratorUnitTestDataType = std::tuple<PcmDataEnumerator::SampleDataTypeProperty, PcmDataEnumerator::WaveFormProperty>;
+
+// Class for PcmDataEnumerator test with all combination of SampleDataType and WaveForm
 class PcmDataEnumeratorUnitTest : public TestWithParam<PcmDataEnumeratorUnitTestDataType>
 {
 public:
@@ -26,25 +55,21 @@ public:
 			auto& wp(std::get<1>(params.param));
 
 			char buff[100];
-			auto len = sprintf_s(buff, "%02d_%s_%s", params.index, sp.name, wp.waveForm);
+			auto len = sprintf_s(buff, "%02d_%s_%s", params.index, sp.name, wp.name);
 			std::for_each(buff, &buff[len], Replace());
 			return buff;
 		}
 	};
 };
 
-TEST_P(PcmDataEnumeratorUnitTest, SampleDataType)
-{
-	auto& param(GetParam());
-	auto& sp(std::get<0>(param));
-	EXPECT_NE(sp.type, IPcmData::SampleDataType::Unknown);
-}
-
+// WaveGenerator and PcmData object should be created for all combination of
+// SampleDataType and WaveFormType.
+// And created objects should have property value that is equal to creation parameter.
 TEST_P(PcmDataEnumeratorUnitTest, WaveGenerator)
 {
 	auto& param(GetParam());
-	auto& sp(std::get<0>(param));
-	auto& wp(std::get<1>(param));
+	auto& sp(std::get<0>(param));	// SampleDataTypeProperty
+	auto& wp(std::get<1>(param));	// WaveGeneratorProperty
 
 	auto gen = wp.factory(sp.type, 0);
 	ASSERT_THAT(gen, NotNull());
@@ -54,13 +79,14 @@ TEST_P(PcmDataEnumeratorUnitTest, WaveGenerator)
 	EXPECT_EQ(pcmData->getSampleDataType(), sp.type);
 	EXPECT_EQ(pcmData->getBitsPerSample(), sp.bitsPerSample);
 	EXPECT_EQ(pcmData->getFormatTag(), sp.formatTag);
-	EXPECT_STREQ(pcmData->getWaveForm(), wp.waveForm);
+	EXPECT_EQ(pcmData->getWaveFormType(), wp.type);
+	EXPECT_STREQ(pcmData->getWaveFormTypeName(), wp.name);
 }
 
 INSTANTIATE_TEST_SUITE_P(AllProperties, PcmDataEnumeratorUnitTest,
 	Combine(
 		ValuesIn(PcmDataEnumerator::getSampleDatatypeProperties()),
-		ValuesIn(PcmDataEnumerator::getWaveGeneratorProperties())
+		ValuesIn(PcmDataEnumerator::getWaveFormProperties())
 	),
 	PcmDataEnumeratorUnitTest::Name()
 );

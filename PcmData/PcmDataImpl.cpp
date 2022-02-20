@@ -63,13 +63,15 @@ static const PcmDataEnumerator::WaveGeneratorProperty waveGeneratorProperties[] 
 
 /*static*/ const std::vector<PcmDataEnumerator::SampleDataTypeProperty>& PcmDataEnumerator::getSampleDatatypeProperties()
 {
-	static std::vector<PcmDataEnumerator::SampleDataTypeProperty> ret(&sampleDataTypeProperties[0], &sampleDataTypeProperties[ARRAYSIZE(sampleDataTypeProperties)]);
+	auto& ar(sampleDataTypeProperties);
+	static std::vector<SampleDataTypeProperty> ret(&ar[0], &ar[ARRAYSIZE(ar)]);
 	return ret;
 }
 
 /*static*/ const std::vector<PcmDataEnumerator::WaveGeneratorProperty>& PcmDataEnumerator::getWaveGeneratorProperties()
 {
-	static std::vector<PcmDataEnumerator::WaveGeneratorProperty> ret(&waveGeneratorProperties[0], &waveGeneratorProperties[ARRAYSIZE(waveGeneratorProperties)]);
+	auto& ar(waveGeneratorProperties);
+	static std::vector<WaveGeneratorProperty> ret(&ar[0], &ar[ARRAYSIZE(ar)]);
 	return ret;
 }
 #pragma endregion

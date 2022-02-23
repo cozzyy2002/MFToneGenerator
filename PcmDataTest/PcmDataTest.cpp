@@ -77,6 +77,9 @@ int main(int argc, char* argv[])
 	float level = 1.0f;
 	float phaseShift = 0;
 
+	auto& sampleDataTypeProperties(PcmDataEnumerator::getSampleDatatypeProperties());
+	auto& waveFormProperties(PcmDataEnumerator::getWaveFormProperties());
+
 	float fVal;
 	int iVal;
 	for(int i = 1; i < argc; i++) {
@@ -102,24 +105,24 @@ int main(int argc, char* argv[])
 		<< "\nPhase Shift," << phaseShift
 		<< "\n\n";
 
-	// Create PcmData objects associate with all kinds of WaveGenerator.
-	IWaveGenerator* waveGenerators[] = {
-		createSquareWaveGenerator(IPcmData::SampleDataType::PCM_8bits, duty),
-		createSineWaveGenerator(IPcmData::SampleDataType::PCM_8bits),
-		createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_8bits, peakPosition),
-		createSquareWaveGenerator(IPcmData::SampleDataType::PCM_16bits, duty),
-		createSineWaveGenerator(IPcmData::SampleDataType::PCM_16bits),
-		createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_16bits, peakPosition),
-		createSquareWaveGenerator(IPcmData::SampleDataType::PCM_24bits, duty),
-		createSineWaveGenerator(IPcmData::SampleDataType::PCM_24bits),
-		createTriangleWaveGenerator(IPcmData::SampleDataType::PCM_24bits, peakPosition),
-		createSquareWaveGenerator(IPcmData::SampleDataType::IEEE_Float, duty),
-		createSineWaveGenerator(IPcmData::SampleDataType::IEEE_Float),
-		createTriangleWaveGenerator(IPcmData::SampleDataType::IEEE_Float, peakPosition),
-	};
+	// Create PcmData objects and it's Handler objects associate with all combination of SampleDataType and WaveForm.
 	std::vector<std::unique_ptr<Handler>> handlers;
-	for(auto gen : waveGenerators) {
-		handlers.push_back(std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, gen)));
+	for(auto& sp : sampleDataTypeProperties) {
+		for(auto& wp : waveFormProperties) {
+			float param = 0.0f;
+			switch(wp.parameter) {
+			case PcmDataEnumerator::FactoryParameter::Duty:
+				param = duty;
+				break;
+			case PcmDataEnumerator::FactoryParameter::PeakPosition:
+				param = peakPosition;
+				break;
+			default:
+				break;
+			}
+			auto gen = wp.factory(sp.type, param);
+			handlers.push_back(std::make_unique<Handler>(createPcmData(samplesPerSecond, channels, gen)));
+		}
 	}
 
 	// Generate PCM data and show properties of each PcmData object.
@@ -141,13 +144,21 @@ int main(int argc, char* argv[])
 	}
 	std::cout << std::endl;
 
+	std::cout << "pos";
 	auto sampleCountInCycle = handlers[0]->getPcmData()->getSamplesPerCycle();
-	auto comma = std::string(",,,,").substr(0, channels - 1);
-	std::cout << ",UINT8" << comma << "," << comma << "," << comma << ",INT16" << comma << "," << comma << "," << comma << ",INT24" << comma << "," << comma << "," << comma << ",float\n";
-	std::cout << "pos,Square" << comma << ",Sine" << comma << ",Triangle" << comma
-				<< ",Square" << comma << ",Sine" << comma << ",Triangle" << comma
-				<< ",Square" << comma << ",Sine" << comma << ",Triangle" << comma
-				<< ",Square" << comma << ",Sine" << comma << ",Triangle\n";
+	const auto commas(std::string(40, ','));
+	auto comma1 = commas.substr(0, (waveFormProperties.size() * channels) - 1);
+	for(auto& sp : sampleDataTypeProperties) {
+		std::cout << "," << sp.name << comma1;
+	}
+	std::cout << std::endl;
+	auto comma2 = commas.substr(0, channels - 1);
+	for(size_t i = 0; i < sampleDataTypeProperties.size(); i++) {
+		for(auto& wp : waveFormProperties) {
+			std::cout << "," << wp.name << comma2;
+		}
+	}
+	std::cout << std::endl;
 	for(size_t pos = 0; pos < sampleCountInCycle; pos += channels) {
 		std::cout << (pos / channels);
 		for(auto& handler : handlers) {

@@ -51,6 +51,9 @@ public:
 //	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 
 protected:
+	const std::vector<PcmDataEnumerator::SampleDataTypeProperty>& m_sampleDataTypeProperties;
+	const std::vector<PcmDataEnumerator::WaveFormProperty>& m_WaveFormProperties;
+
 	std::unique_ptr<statemachine::IContext> m_context;
 	CComPtr<IPcmData> m_pcmData;
 

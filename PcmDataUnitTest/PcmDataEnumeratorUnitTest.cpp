@@ -67,12 +67,17 @@ TEST_P(PcmDataEnumeratorUnitTest, WaveGenerator)
 	auto& sp(std::get<0>(param));	// SampleDataTypeProperty
 	auto& wp(std::get<1>(param));	// WaveGeneratorProperty
 
+	static const WORD samplesPerSec = 440;
+	static const WORD channels = 2;
 	auto gen = wp.factory(sp.type, 0);
 	ASSERT_THAT(gen, NotNull());
-	CComPtr<IPcmData> pcmData(createPcmData(440, 1, gen));
+	CComPtr<IPcmData> pcmData(createPcmData(samplesPerSec, channels, gen));
 	ASSERT_THAT(pcmData.p, NotNull());
 
+	EXPECT_EQ(pcmData->getSamplesPerSec(), samplesPerSec);
+	EXPECT_EQ(pcmData->getChannels(), channels);
 	EXPECT_EQ(pcmData->getSampleDataType(), sp.type);
+	EXPECT_STREQ(pcmData->getSampleDataTypeName(), sp.name);
 	EXPECT_EQ(pcmData->getBitsPerSample(), sp.bitsPerSample);
 	EXPECT_EQ(pcmData->getFormatTag(), sp.formatTag);
 	EXPECT_EQ(pcmData->getWaveFormType(), wp.type);

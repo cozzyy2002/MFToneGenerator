@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 		if(sscanf_s(argv[i], "lvl=%f", &fVal) == 1) { level = fVal; continue; }
 		if(sscanf_s(argv[i], "sft=%f", &fVal) == 1) { phaseShift = fVal; continue; }
 
-		std::cout << "Usage: PcmDataTest [duty=Duty] [peak=PeakPosition] [sps=SamplesPerSecond] [ch=Channels] [key=Key] [lvl=Level] [sft=PhaseSift]\n";
+		std::cerr << "Usage: PcmDataTest [duty=Duty] [peak=PeakPosition] [sps=SamplesPerSecond] [ch=Channels] [key=Key] [lvl=Level] [sft=PhaseSift]\n";
 		return 0;
 	}
 
@@ -153,7 +153,7 @@ int main(int argc, char* argv[])
 	}
 	std::cout << std::endl;
 	auto comma2 = commas.substr(0, channels - 1);
-	for(size_t i = 0; i < sampleDataTypeProperties.size(); i++) {
+	for(auto& sp : sampleDataTypeProperties) {
 		for(auto& wp : waveFormProperties) {
 			std::cout << "," << wp.name << comma2;
 		}

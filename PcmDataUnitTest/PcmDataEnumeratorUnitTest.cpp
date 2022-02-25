@@ -43,20 +43,16 @@ using PcmDataEnumeratorUnitTestDataType = std::tuple<PcmDataEnumerator::SampleDa
 class PcmDataEnumeratorUnitTest : public TestWithParam<PcmDataEnumeratorUnitTestDataType>
 {
 public:
+	// Creates test name that contains SampleDataType and WaveForm.
+	// Space characters are replaced by "_".
 	struct Name {
-		struct Replace {
-			void operator()(char& c) const {
-				if(c == ' ') c = '_';
-			}
-		};
-
 		std::string operator()(const TestParamInfo<PcmDataEnumeratorUnitTestDataType>& params) {
 			auto& sp(std::get<0>(params.param));
 			auto& wp(std::get<1>(params.param));
 
 			char buff[100];
 			auto len = sprintf_s(buff, "%02d_%s_%s", params.index, sp.name, wp.name);
-			std::for_each(buff, &buff[len], Replace());
+			std::replace(buff, &buff[len], ' ', '_');
 			return buff;
 		}
 	};

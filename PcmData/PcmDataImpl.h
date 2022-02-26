@@ -17,6 +17,12 @@ public:
 
 	virtual IPcmData::SampleDataType getSampleDataType() const = 0;
 	virtual const char* getSampleDataTypeName() const = 0;
+	virtual IPcmData::WaveFormType getWaveFormType() const = 0;
+	virtual const char* getWaveFormTypeName() const = 0;
+
+	static const char* SquareWaveFormTypeName;
+	static const char* SineWaveFormTypeName;
+	static const char* TriangleWaveFormTypeName;
 };
 
 template<typename T>
@@ -27,14 +33,15 @@ public:
 
 	virtual IPcmData::SampleDataType getSampleDataType() const override { return SampleDataType; }
 	virtual const char* getSampleDataTypeName() const override { return SampleDataTypeName; }
+	virtual IPcmData::WaveFormType getWaveFormType() const override = 0;
+	virtual const char* getWaveFormTypeName() const override = 0;
 
-	virtual const char* getWaveForm() const = 0;
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) = 0;
 
-protected:
 	static const IPcmData::SampleDataType SampleDataType;
 	static const char* SampleDataTypeName;
 
+protected:
 	void adjustLevel(float level, T* pHighValue = nullptr, T* pLowValue = nullptr, T* pZeroValue = nullptr) const;
 };
 
@@ -61,7 +68,8 @@ public:
 	virtual const char* getSampleDataTypeName() const override { return m_waveGenerator->getSampleDataTypeName(); }
 
 	virtual WORD getFormatTag() const override { return FormatTag; }
-	virtual const char* getWaveForm() const override { return m_waveGenerator->getWaveForm(); }
+	virtual WaveFormType getWaveFormType() const { return m_waveGenerator->getWaveFormType(); }
+	virtual const char* getWaveFormTypeName() const override { return m_waveGenerator->getWaveFormTypeName(); }
 	// Returns byte size of the minimum atomic unit of data to be generated.
 	virtual WORD getBlockAlign() const override { return m_channels * sizeof(T); }
 	virtual WORD getBitsPerSample() const override { return sizeof(T) * 8; }
@@ -171,7 +179,8 @@ class SquareWaveGenerator : public WaveGenerator<T>
 public:
 	SquareWaveGenerator(float duty) : m_duty(duty) {}
 
-	virtual const char* getWaveForm() const override { return "Square Wave"; }
+	virtual IPcmData::WaveFormType getWaveFormType() const override { return IPcmData::WaveFormType::SquareWave; }
+	virtual const char* getWaveFormTypeName() const override { return IWaveGenerator::SquareWaveFormTypeName; }
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 
 protected:
@@ -202,7 +211,8 @@ template<typename T>
 class SineWaveGenerator : public WaveGenerator<T>
 {
 public:
-	virtual const char* getWaveForm() const override { return "Sine Wave"; }
+	virtual IPcmData::WaveFormType getWaveFormType() const override { return IPcmData::WaveFormType::SineWave; }
+	virtual const char* getWaveFormTypeName() const override { return IWaveGenerator::SineWaveFormTypeName; }
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 };
 
@@ -237,7 +247,8 @@ public:
 		else { m_peakPosition = peakPosition; }
 	}
 
-	virtual const char* getWaveForm() const override { return "Triangle Wave"; }
+	virtual IPcmData::WaveFormType getWaveFormType() const override { return IPcmData::WaveFormType::TriangleWave; }
+	virtual const char* getWaveFormTypeName() const override { return IWaveGenerator::TriangleWaveFormTypeName; }
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 
 protected:

@@ -63,34 +63,6 @@ struct TNameValue : std::pair<LPCTSTR, T>
 	second_type& value;
 };
 
-const TNameValue<IPcmData::SampleDataType> sampleTypeList[] = {
-#define SAMPLE_TYPE_ITEM(x) { _T(#x), IPcmData::SampleDataType::x }
-	SAMPLE_TYPE_ITEM(PCM_8bits),
-	SAMPLE_TYPE_ITEM(PCM_16bits),
-	SAMPLE_TYPE_ITEM(IEEE_Float),
-#undef SAMPLE_TYPE_ITEM
-};
-
-enum class WaveFormParam {
-	None,
-	Duty,				// SquareWaveGenerator
-	PeakPosition,		// TriangleWaveGenerator
-};
-
-using WaveGeneratorFactory = IWaveGenerator * (*)(IPcmData::SampleDataType, float param);
-struct WaveForm
-{
-	LPCTSTR name;
-	WaveGeneratorFactory factory;
-	WaveFormParam param;
-};
-
-const WaveForm waveFormList[] = {
-	{_T("Square Wave"), [](IPcmData::SampleDataType type, float duty) { return createSquareWaveGenerator(type, duty); }, WaveFormParam::Duty },
-	{_T("Sine Wave"), [](IPcmData::SampleDataType type, float) { return createSineWaveGenerator(type); }, WaveFormParam::None },
-	{_T("Triangle Wave"), [](IPcmData::SampleDataType type, float peakPosition) { return createTriangleWaveGenerator(type, peakPosition); }, WaveFormParam::PeakPosition },
-};
-
 const TNameValue<WORD> samplesPerSecondList[] = {
 	{_T("44.1Khz"), 44100},
 	{_T("22.05Khz"), 22050},
@@ -112,6 +84,8 @@ CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MFTONEGENERATOR_DIALOG, pParent)
 	, m_status(Status::Stopped)
 	, m_statusMessage(_T(""))
+	, m_sampleDataTypeProperties(PcmDataEnumerator::getSampleDatatypeProperties())
+	, m_WaveFormProperties(PcmDataEnumerator::getWaveFormProperties())
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -253,13 +227,15 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-	for(auto& x : sampleTypeList) {
-		m_sampleType.AddString(x.name);
+	for(auto& x : m_sampleDataTypeProperties) {
+		ATL::CA2T name(x.name);
+		m_sampleType.AddString((LPCTSTR)name);
 	}
 	m_sampleType.SetCurSel(0);
 
-	for(auto& x : waveFormList) {
-		m_waveForm.AddString(x.name);
+	for(auto& x : m_WaveFormProperties) {
+		ATL::CA2T name(x.name);
+		m_waveForm.AddString((LPCTSTR)name);
 	}
 	m_waveForm.SetCurSel(0);
 	OnCbnSelchangeComboWaveForm();
@@ -394,23 +370,23 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 {
 	UpdateData();
 	if(!m_pcmData) {
-		auto sampleType = sampleTypeList[m_sampleType.GetCurSel()].value;
-		auto& waveForm = waveFormList[m_waveForm.GetCurSel()];
+		auto& sp = m_sampleDataTypeProperties[m_sampleType.GetCurSel()];
+		auto& wp = m_WaveFormProperties[m_waveForm.GetCurSel()];
 		float param = 0.0f;
-		switch(waveForm.param) {
-		case WaveFormParam::Duty:
+		switch(wp.parameter) {
+		case PcmDataEnumerator::FactoryParameter::Duty:
 			param = (float)m_duty.GetPos() / SliderMaxValue;
 			break;
-		case WaveFormParam::PeakPosition:
+		case PcmDataEnumerator::FactoryParameter::PeakPosition:
 			param = (float)m_peakPosition.GetPos() / SliderMaxValue;
 			break;
 		}
-		auto generator = waveForm.factory(sampleType, param);
+		auto generator = wp.factory(sp.type, param);
 		auto samplesPerSecond = samplesPerSecondList[m_SamplesPerSecond.GetCurSel()].value;
 		auto channels = channelsList[m_channels.GetCurSel()].value;
 		m_pcmData = createPcmData(samplesPerSecond, channels, generator);
 		if(m_pcmData) {
-			ATL::CA2T waveForm(m_pcmData->getWaveForm());
+			ATL::CA2T waveForm(m_pcmData->getWaveFormTypeName());
 			logger.log(_T("Created PcmData %s(%f) %d bps, %d Hz, %d channels")
 				, (LPCTSTR)waveForm, param, m_pcmData->getBitsPerSample(), m_pcmData->getSamplesPerSec(), m_pcmData->getChannels());
 		} else {
@@ -467,7 +443,7 @@ void CMFToneGeneratorDlg::OnBnClickedButtonE2()
 void CMFToneGeneratorDlg::OnCbnSelchangeComboWaveForm()
 {
 	auto sel = m_waveForm.GetCurSel();
-	auto& waveForm = waveFormList[sel];
-	m_duty.EnableWindow((waveForm.param == WaveFormParam::Duty) ? TRUE : FALSE);
-	m_peakPosition.EnableWindow((waveForm.param == WaveFormParam::PeakPosition) ? TRUE : FALSE);
+	auto& wp = m_WaveFormProperties[sel];
+	m_duty.EnableWindow((wp.parameter == PcmDataEnumerator::FactoryParameter::Duty) ? TRUE : FALSE);
+	m_peakPosition.EnableWindow((wp.parameter == PcmDataEnumerator::FactoryParameter::PeakPosition) ? TRUE : FALSE);
 }

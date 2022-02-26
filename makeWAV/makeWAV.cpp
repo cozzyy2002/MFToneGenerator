@@ -7,62 +7,23 @@
 #include <fstream>
 #include <memory>
 
-struct WaveGeneratorFactory
-{
-	const char* name;
-
-	using func_t = IWaveGenerator* (*)(IPcmData::SampleDataType sampleDataType);
-	func_t func;
-};
-
-struct SampleDataType
-{
-	const char* name;
-	IPcmData::SampleDataType type;
-};
-
-namespace
-{
-auto duty = 0.5f;
-auto peakPosition = 0.5f;
-WORD samplesPerSecond = 44100;
-WORD channels = 1;
-WORD key = 440;
-float level = 1.0f;
-float phaseShift = 0;
-WORD sec = 10;
-WaveGeneratorFactory::func_t waveGeneratorFactoryFunc = nullptr;
-IPcmData::SampleDataType sampleDataType = IPcmData::SampleDataType::Unknown;
-std::string wavFileName;
-
-const WaveGeneratorFactory factories[] = {
-	{"Square", [](IPcmData::SampleDataType sampleDataType)
-	{
-		std::cout << "Creating SquareWaveGenerator(duty=" << duty << ")\n";
-		return createSquareWaveGenerator(sampleDataType, duty);
-	}},
-	{"Sine", [](IPcmData::SampleDataType sampleDataType)
-	{
-		std::cout << "Creating SineWaveGenerator\n";
-		return createSineWaveGenerator(sampleDataType);
-	}},
-	{"Triangle", [](IPcmData::SampleDataType sampleDataType)
-	{
-		std::cout << "Creating TriangleWaveGenerator(peakPosition=" << peakPosition << ")\n";
-		return createTriangleWaveGenerator(sampleDataType, peakPosition);
-	}},
-};
-
-const SampleDataType sampleDataTypes[] = {
-	{ "8", IPcmData::SampleDataType::PCM_8bits},
-	{ "16", IPcmData::SampleDataType::PCM_16bits},
-	{ "24", IPcmData::SampleDataType::PCM_24bits},
-	{ "32", IPcmData::SampleDataType::IEEE_Float},
-};
-}
-
 int main(int argc, char* argv[])
 {
+	const auto sampleDataTypeProperties(PcmDataEnumerator::getSampleDatatypeProperties());
+	const auto waveFormProperties(PcmDataEnumerator::getWaveFormProperties());
+
+	auto duty = 0.5f;
+	auto peakPosition = 0.5f;
+	WORD samplesPerSecond = 44100;
+	WORD channels = 1;
+	WORD key = 440;
+	float level = 1.0f;
+	float phaseShift = 0;
+	WORD sec = 1;
+	const PcmDataEnumerator::SampleDataTypeProperty* sampleDataTypeProperty = nullptr;
+	const PcmDataEnumerator::WaveFormProperty* waveFormProperty = nullptr;
+	std::string wavFileName;
+
 	float fVal;
 	int iVal;
 	int argIndex = 0;
@@ -86,26 +47,29 @@ int main(int argc, char* argv[])
 			switch(argIndex++) {
 			case 0:
 				// Wave form
-				for(auto& f : factories) {
-					if(_strnicmp(f.name, arg, strlen(arg)) == 0) {
-						waveGeneratorFactoryFunc = f.func;
+				for(auto& wp : waveFormProperties) {
+					if(_strnicmp(wp.name, arg, strlen(arg)) == 0) {
+						waveFormProperty = &wp;
 						break;
 					}
 				}
-				if(!waveGeneratorFactoryFunc) {
+				if(!waveFormProperty) {
 					std::cerr << "Unknown wave form: " << arg << std::endl;
 					argError = true;
 				}
 				break;
 			case 1:
 				// Sample data type
-				for(auto& s : sampleDataTypes) {
-					if(_strnicmp(s.name, arg, strlen(arg)) == 0) {
-						sampleDataType = s.type;
-						break;
+				{
+					WORD bitsPerSample = atoi(arg);
+					for(auto& sp : sampleDataTypeProperties) {
+						if(bitsPerSample == sp.bitsPerSample) {
+							sampleDataTypeProperty = &sp;
+							break;
+						}
 					}
 				}
-				if(sampleDataType == IPcmData::SampleDataType::Unknown) {
+				if(!sampleDataTypeProperty) {
 					std::cerr << "Unknown sample data type: " << arg << std::endl;
 					argError = true;
 				}
@@ -122,18 +86,34 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if(argError || !waveGeneratorFactoryFunc || (sampleDataType == IPcmData::SampleDataType::Unknown) || wavFileName.empty()) {
-		std::cout << "Usage:"
+	if(argError || !waveFormProperty || !sampleDataTypeProperty || wavFileName.empty()) {
+		std::cerr << "Usage:"
 			" makeWAV [duty=Duty] [peak=PeakPosition] [sps=SamplesPerSecond] [ch=Channels] [key=Key] [lvl=Level] [sft=PhaseSift] [sec=Second]"
-			" WaveForm SampleDataType WAVFileName"
-			"\n";
+			" WaveForm SampleDataType WAVFileName";
+		std::cerr << "\n    waveForm:";
+		for(auto& wp : waveFormProperties) { std::cerr << " '" << wp.name << "'"; };
+		std::cerr << std::endl;
+		std::cerr << "\n    sampleDataType:";
+		for(auto& sp : sampleDataTypeProperties) { std::cerr << " " << sp.bitsPerSample; };
+		std::cerr << std::endl;
 		return 1;
 	}
 
-	auto gen = waveGeneratorFactoryFunc(sampleDataType);
+	float param = 0;
+	switch(waveFormProperty->parameter) {
+	case PcmDataEnumerator::FactoryParameter::Duty:
+		param = duty;
+		break;
+	case PcmDataEnumerator::FactoryParameter::PeakPosition:
+		param = peakPosition;
+		break;
+	}
+
+	std::cout << "Creating WaveGenerator for " << waveFormProperty->name << "," << sampleDataTypeProperty->bitsPerSample << " bits per sample, Parameter=" << param << std::endl;
+	auto gen = waveFormProperty->factory(sampleDataTypeProperty->type, param);
 	CComPtr<IPcmData> pcmData(createPcmData(samplesPerSecond, channels, gen));
 
-	std::cout << "Generating " << pcmData->getWaveForm() << "(" << pcmData->getSampleDataTypeName() << ") to " << wavFileName
+	std::cout << "Generating " << pcmData->getWaveFormTypeName() << "(" << pcmData->getSampleDataTypeName() << ") to " << wavFileName
 		<< "\nSamples Per Second=" << samplesPerSecond
 		<< ", Channels=" << channels
 		<< ", Key=" << key

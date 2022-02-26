@@ -171,9 +171,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
-
-/*static*/ HRESULT tsm::Assert::checkHResult(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line)
-{
-	return hr;
-}

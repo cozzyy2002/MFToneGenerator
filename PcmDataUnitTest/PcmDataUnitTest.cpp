@@ -14,8 +14,3 @@ int main(int argc, char** argv)
 	::testing::InitGoogleMock(&argc, argv);
 	return RUN_ALL_TESTS();
 }
-
-/*static*/ HRESULT tsm::Assert::checkHResult(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line)
-{
-	return hr;
-}

@@ -185,9 +185,3 @@ int main(int argc, char* argv[])
 		wavFile.write((const char*)buffer.get(), bufferSize);
 	}
 }
-
-
-/*static*/ HRESULT tsm::Assert::checkHResult(HRESULT hr, LPCTSTR exp, LPCTSTR sourceFile, int line)
-{
-	return hr;
-}

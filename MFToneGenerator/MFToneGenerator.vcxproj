@@ -102,7 +102,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>PcmData.lib;StateMachine.lib;mfuuid.lib;mfplat.lib;mf.lib</AdditionalDependencies>
+      <AdditionalDependencies>PcmData.lib;mfuuid.lib;mfplat.lib;mf.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -175,7 +175,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>PcmData.lib;StateMachine.lib;mfuuid.lib;mfplat.lib;mf.lib</AdditionalDependencies>
+      <AdditionalDependencies>PcmData.lib;mfuuid.lib;mfplat.lib;mf.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>

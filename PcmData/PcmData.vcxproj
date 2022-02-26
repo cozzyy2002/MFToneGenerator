@@ -103,6 +103,12 @@
       <LinkLibraryDependencies>
       </LinkLibraryDependencies>
     </ProjectReference>
+    <Lib>
+      <AdditionalDependencies>StateMachine.lib</AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -125,6 +131,12 @@
       <LinkLibraryDependencies>
       </LinkLibraryDependencies>
     </ProjectReference>
+    <Lib>
+      <AdditionalDependencies>StateMachine.lib</AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>$(OutDir)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

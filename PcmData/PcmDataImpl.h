@@ -38,10 +38,10 @@ public:
 
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) = 0;
 
-protected:
 	static const IPcmData::SampleDataType SampleDataType;
 	static const char* SampleDataTypeName;
 
+protected:
 	void adjustLevel(float level, T* pHighValue = nullptr, T* pLowValue = nullptr, T* pZeroValue = nullptr) const;
 };
 

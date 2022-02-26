@@ -40,19 +40,11 @@ template<> const float PcmData<float>::LowValue = -0.5f;
 #pragma endregion
 
 #pragma region Implementation of PcmDataEnumerator
-template<class T>
-class WaveGeneratorGetter : public WaveGenerator<T>
-{
-public:
-	using WaveGenerator<T>::SampleDataType;
-	using WaveGenerator<T>::SampleDataTypeName;
-};
-
 static const PcmDataEnumerator::SampleDataTypeProperty sampleDataTypeProperties[] = {
-	{ WaveGeneratorGetter<UINT8>::SampleDataType, WaveGeneratorGetter<UINT8>::SampleDataTypeName, PcmData<UINT8>::FormatTag, sizeof(UINT8) * 8 },
-	{ WaveGeneratorGetter<INT16>::SampleDataType, WaveGeneratorGetter<INT16>::SampleDataTypeName, PcmData<INT16>::FormatTag, sizeof(INT16) * 8 },
-	{ WaveGeneratorGetter<INT24>::SampleDataType, WaveGeneratorGetter<INT24>::SampleDataTypeName, PcmData<INT24>::FormatTag, sizeof(INT24) * 8 },
-	{ WaveGeneratorGetter<float>::SampleDataType, WaveGeneratorGetter<float>::SampleDataTypeName, PcmData<float>::FormatTag, sizeof(float) * 8 },
+	{ WaveGenerator<UINT8>::SampleDataType, WaveGenerator<UINT8>::SampleDataTypeName, PcmData<UINT8>::FormatTag, sizeof(UINT8) * 8 },
+	{ WaveGenerator<INT16>::SampleDataType, WaveGenerator<INT16>::SampleDataTypeName, PcmData<INT16>::FormatTag, sizeof(INT16) * 8 },
+	{ WaveGenerator<INT24>::SampleDataType, WaveGenerator<INT24>::SampleDataTypeName, PcmData<INT24>::FormatTag, sizeof(INT24) * 8 },
+	{ WaveGenerator<float>::SampleDataType, WaveGenerator<float>::SampleDataTypeName, PcmData<float>::FormatTag, sizeof(float) * 8 },
 };
 
 static const PcmDataEnumerator::WaveFormProperty waveGeneratorProperties[] = {

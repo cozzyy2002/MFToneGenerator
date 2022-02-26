@@ -117,7 +117,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutDir);$(GoogleTestDir)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>PcmData.lib;gtestd.lib;gmockd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PcmData.lib;gtest.lib;gmock.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

@@ -372,8 +372,6 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 	if(!m_pcmData) {
 		auto& sp = m_sampleDataTypeProperties[m_sampleType.GetCurSel()];
 		auto& wp = m_WaveFormProperties[m_waveForm.GetCurSel()];
-		auto sampleDataType = sp.type;
-		auto& waveFormType = wp.type;
 		float param = 0.0f;
 		switch(wp.parameter) {
 		case PcmDataEnumerator::FactoryParameter::Duty:
@@ -383,7 +381,7 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 			param = (float)m_peakPosition.GetPos() / SliderMaxValue;
 			break;
 		}
-		auto generator = wp.factory(sampleDataType, param);
+		auto generator = wp.factory(sp.type, param);
 		auto samplesPerSecond = samplesPerSecondList[m_SamplesPerSecond.GetCurSel()].value;
 		auto channels = channelsList[m_channels.GetCurSel()].value;
 		m_pcmData = createPcmData(samplesPerSecond, channels, generator);

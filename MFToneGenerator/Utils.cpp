@@ -38,6 +38,19 @@ std::tstring StringFormatter::format(HRESULT hr, ...) const
 	return msg;
 }
 
+std::tstring StringFormatter::operator()(REFGUID guid) const
+{
+	LPOLESTR olestr;
+	auto hr = StringFromCLSID(guid, &olestr);
+	if(SUCCEEDED(hr)) {
+		CW2T str(olestr);
+		CoTaskMemFree(olestr);
+		return std::tstring((LPCTSTR)str);
+	} else {
+		return format(_T("StringFromCLSID() failed. HRESULT=0x%p"), hr);
+	}
+}
+
 void Logger::log(LPCTSTR fmt, ...) const
 {
 	va_list args;

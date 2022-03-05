@@ -63,7 +63,7 @@ struct TNameValue : std::pair<LPCTSTR, T>
 	second_type& value;
 };
 
-const TNameValue<WORD> samplesPerSecondList[] = {
+const TNameValue<DWORD> samplesPerSecondList[] = {
 	{_T("44.1Khz"), 44100},
 	{_T("22.05Khz"), 22050},
 	{_T("16Khz"), 16000},

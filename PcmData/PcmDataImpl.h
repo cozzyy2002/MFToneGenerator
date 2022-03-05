@@ -55,7 +55,7 @@ template<typename T>
 class PcmData : public IPcmData
 {
 public:
-	PcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
+	PcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
 		: m_samplesPerSec(samplesPerSec), m_channels(channels)
 		, m_waveGenerator((WaveGenerator<T>*)waveGenerator)
 		, m_samplesPerCycle(0), m_currentPosition(0)
@@ -73,7 +73,7 @@ public:
 	// Returns byte size of the minimum atomic unit of data to be generated.
 	virtual WORD getBlockAlign() const override { return m_channels * sizeof(T); }
 	virtual WORD getBitsPerSample() const override { return sizeof(T) * 8; }
-	virtual WORD getSamplesPerSec() const override { return m_samplesPerSec; }
+	virtual DWORD getSamplesPerSec() const override { return m_samplesPerSec; }
 	virtual WORD getChannels() const override { return m_channels; }
 	virtual const char* getSampleTypeName() const { return typeid(T).name(); }
 	virtual size_t getSamplesPerCycle() const { return m_samplesPerCycle; }
@@ -85,7 +85,7 @@ public:
 	static const T LowValue;
 
 protected:
-	const WORD m_samplesPerSec;
+	const DWORD m_samplesPerSec;
 	const WORD m_channels;
 	size_t m_samplesPerCycle;
 	size_t m_currentPosition;
@@ -129,12 +129,12 @@ template<typename T>
 void PcmData<T>::generate(float key, float level, float phaseShift)
 {
 	// Generate PCM data for first channel using WaveGenerator.
-	auto samplesPerCycle = (size_t)(m_channels * m_samplesPerSec / key);
+	auto samplesPerCycle = (size_t)(m_samplesPerSec * m_channels / key);
 	std::unique_ptr<T[]> cycleData(new T[samplesPerCycle]);
 	m_waveGenerator->generate(cycleData.get(), samplesPerCycle, m_channels, level);
 
 	// Copy first channel to another channel shifting phase.
-	auto shiftDelta = (size_t)(samplesPerCycle * phaseShift) / m_channels * m_channels;
+	auto shiftDelta = (size_t)(samplesPerCycle * phaseShift);
 	auto shift = shiftDelta;
 	for(WORD channel = 1; channel < m_channels; channel++) {
 		for(size_t pos = 0; pos < samplesPerCycle; pos += m_channels) {
@@ -197,7 +197,7 @@ void SquareWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WORD
 	for(; pos < highDuration; pos += channels) {
 		cycleData[pos] = highValue;
 	}
-	for(; pos < samplesPerCycle; pos++) {
+	for(; pos < samplesPerCycle; pos += channels) {
 		cycleData[pos] = lowValue;
 	}
 }

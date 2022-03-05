@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 
 	auto duty = 0.5f;
 	auto peakPosition = 0.5f;
-	WORD samplesPerSecond = 44100;
+	DWORD samplesPerSecond = 44100;
 	WORD channels = 1;
 	WORD key = 440;
 	float level = 1.0f;
@@ -92,7 +92,6 @@ int main(int argc, char* argv[])
 			" WaveForm SampleDataType WAVFileName";
 		std::cerr << "\n    waveForm:";
 		for(auto& wp : waveFormProperties) { std::cerr << " '" << wp.name << "'"; };
-		std::cerr << std::endl;
 		std::cerr << "\n    sampleDataType:";
 		for(auto& sp : sampleDataTypeProperties) { std::cerr << " " << sp.bitsPerSample; };
 		std::cerr << std::endl;
@@ -170,7 +169,7 @@ int main(int argc, char* argv[])
 		{ *(DWORD*)"WAVE" , {
 			*(DWORD*)"fmt ", sizeof(Header::Wave::Fmt::format), {
 					pcmData->getFormatTag(), pcmData->getChannels(), pcmData->getSamplesPerSec(),
-					(DWORD)pcmData->getSamplesPerSec() * pcmData->getBlockAlign(),
+					pcmData->getSamplesPerSec() * pcmData->getBlockAlign(),
 					pcmData->getBlockAlign(), pcmData->getBitsPerSample()
 				},
 			},

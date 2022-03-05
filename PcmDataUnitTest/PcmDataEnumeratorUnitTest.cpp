@@ -67,7 +67,7 @@ TEST_P(PcmDataEnumeratorUnitTest, WaveGenerator)
 	auto& sp(std::get<0>(param));	// SampleDataTypeProperty
 	auto& wp(std::get<1>(param));	// WaveGeneratorProperty
 
-	static const WORD samplesPerSec = 440;
+	static const DWORD samplesPerSec = 440;
 	static const WORD channels = 2;
 	auto gen = wp.factory(sp.type, 0);
 	ASSERT_THAT(gen, NotNull());

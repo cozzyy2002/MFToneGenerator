@@ -68,7 +68,7 @@ static const PcmDataEnumerator::WaveFormProperty waveGeneratorProperties[] = {
 }
 #pragma endregion
 
-IPcmData* createPcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
+IPcmData* createPcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
 {
 	if(!waveGenerator) { return nullptr; }
 

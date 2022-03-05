@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 {
 	auto duty = 0.5f;
 	auto peakPosition = 0.5f;
-	WORD samplesPerSecond = 44100;
+	DWORD samplesPerSecond = 44100;
 	WORD channels = 1;
 	WORD key = 440;
 	float level = 1.0f;

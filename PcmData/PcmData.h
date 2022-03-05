@@ -44,7 +44,7 @@ public:
 	virtual const char* getWaveFormTypeName() const = 0;
 	virtual WORD getBlockAlign() const = 0;
 	virtual WORD getBitsPerSample() const = 0;
-	virtual WORD getSamplesPerSec() const = 0;
+	virtual DWORD getSamplesPerSec() const = 0;
 	virtual WORD getChannels() const = 0;
 	virtual const char* getSampleTypeName() const = 0;
 	virtual size_t getSamplesPerCycle() const = 0;		// Available after generate() method is called.
@@ -81,7 +81,7 @@ public:
 };
 
 // Factory functions.
-IPcmData* createPcmData(WORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
+IPcmData* createPcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
 IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty = 0.5f);
 IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType);
 IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition = 0.5f);

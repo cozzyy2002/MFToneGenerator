@@ -29,9 +29,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PcmData.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PcmDataImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

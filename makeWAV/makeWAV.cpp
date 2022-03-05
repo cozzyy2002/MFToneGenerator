@@ -121,7 +121,7 @@ int main(int argc, char* argv[])
 		<< ", Second=" << sec
 		<< "\n\n";
 
-	std::ofstream wavFile(wavFileName);
+	std::ofstream wavFile(wavFileName, std::ios_base::binary);
 
 	pcmData->generate(key, level, phaseShift);
 	const size_t duration = 1;

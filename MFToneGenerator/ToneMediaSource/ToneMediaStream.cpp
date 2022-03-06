@@ -73,13 +73,13 @@ HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 	DWORD size = m_pcmData->getSampleBufferSize(duration);
 	HR_ASSERT_OK(MFCreateMemoryBuffer(size, &buffer));
 	HR_ASSERT_OK(buffer->Lock(&rawBuffer, nullptr, nullptr));
-	m_pcmData->copyTo(rawBuffer, size);
+	HR_ASSERT_OK(m_pcmData->copyTo(rawBuffer, size));
 	HR_ASSERT_OK(buffer->Unlock());
 	HR_ASSERT_OK(buffer->SetCurrentLength(size));
 
 	// Create IMFSample contains the buffer.
 	CComPtr<IMFSample> sample;
-	MFCreateSample(&sample);
+	HR_ASSERT_OK(MFCreateSample(&sample));
 	sample->AddBuffer(buffer);
 	if(pToken) {
 		sample->SetUnknown(MFSampleExtension_Token, pToken);

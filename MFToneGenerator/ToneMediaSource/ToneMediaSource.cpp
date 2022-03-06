@@ -47,20 +47,20 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 		};
 
 		CComPtr<IMFMediaType> mediaType;
-		MFCreateMediaType(&mediaType);
-		MFInitMediaTypeFromWaveFormatEx(mediaType, &waveFormat, sizeof(waveFormat));
+		HR_ASSERT_OK(MFCreateMediaType(&mediaType));
+		HR_ASSERT_OK(MFInitMediaTypeFromWaveFormatEx(mediaType, &waveFormat, sizeof(waveFormat)));
 
 		// Create StreamDesctiptor and set current MediaType
 		CComPtr<IMFStreamDescriptor> sd;
 		IMFMediaType* mediaTypes[] = { mediaType.p };
-		MFCreateStreamDescriptor(1, ARRAYSIZE(mediaTypes), mediaTypes, &sd);
+		HR_ASSERT_OK(MFCreateStreamDescriptor(1, ARRAYSIZE(mediaTypes), mediaTypes, &sd));
 		CComPtr<IMFMediaTypeHandler> mth;
 		sd->GetMediaTypeHandler(&mth);
 		mth->SetCurrentMediaType(mediaType);
 
 		// Create PresentationDesctiptor and select the only MediaStream.
 		IMFStreamDescriptor* sds[] = { sd.p };
-		MFCreatePresentationDescriptor(ARRAYSIZE(sds), sds, &m_pd);
+		HR_ASSERT_OK(MFCreatePresentationDescriptor(ARRAYSIZE(sds), sds, &m_pd));
 		m_pd->SelectStream(0);
 	}
 

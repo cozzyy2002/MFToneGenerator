@@ -32,10 +32,10 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 
 	if(!m_pd) {
 		// Create MediaType
-		static const WORD nChannels = m_pcmData->getChannels();
-		static const DWORD nSamplesPerSec = m_pcmData->getSamplesPerSec();
-		static const WORD nBlockAlign = m_pcmData->getBlockAlign();
-		static const WORD wBitsPerSample = m_pcmData->getBitsPerSample();
+		const WORD nChannels = m_pcmData->getChannels();
+		const DWORD nSamplesPerSec = m_pcmData->getSamplesPerSec();
+		const WORD nBlockAlign = m_pcmData->getBlockAlign();
+		const WORD wBitsPerSample = m_pcmData->getBitsPerSample();
 		WAVEFORMATEX waveFormat = {
 			m_pcmData->getFormatTag(),
 			nChannels,							// nChannels

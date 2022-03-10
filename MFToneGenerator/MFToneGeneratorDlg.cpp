@@ -126,7 +126,10 @@ void CMFToneGeneratorDlg::onResumed()
 
 void CMFToneGeneratorDlg::onError(LPCTSTR source, HRESULT hr, LPCTSTR message)
 {
-	showStatus(_T("%s failed. Error 0x%p: %s"), source, hr, message);
+	StringFormatter fmt;
+	auto msg = fmt.format(_T("%s failed. Error 0x%p: %s"), source, hr, message);
+	showStatus(msg);
+	MessageBox(msg.c_str(), _T("Error"), MB_OK | MB_ICONERROR);
 }
 
 void CMFToneGeneratorDlg::showStatus(Status status)
@@ -341,6 +344,7 @@ void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 		break;
 
 	case Status::Playing:
+	case Status::Paused:
 		m_context->stop();
 		break;
 	}

@@ -68,6 +68,12 @@ HRESULT PlayingState::handleEvent(Context* context, Event* event, State** nextSt
     case Event::Type::MESessionPaused:
         *nextState = new PausedState(this);
         break;
+    case Event::Type::MEError:
+        {
+            HR_ASSERT_OK(context->stopSession());
+            callErrorCallback(context, (SessionEvent*)event);
+            break;
+        }
     }
     return S_OK;
 }
@@ -102,6 +108,13 @@ HRESULT PausedState::handleEvent(Context* context, Event* event, State** nextSta
         return S_FALSE;
     }
     return S_OK;
+}
+
+void State::callErrorCallback(Context* context, SessionEvent* sessionEvent) const
+{
+    HRESULT hr;
+    HR_EXPECT_OK(sessionEvent->getMediaEvent()->GetStatus(&hr));
+    context->callback([hr](Context::ICallback* callback) { callback->onError(_T("MediaSession"), hr, _T("MEError")); });
 }
 
 }

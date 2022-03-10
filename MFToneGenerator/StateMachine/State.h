@@ -14,6 +14,8 @@ public:
 
 protected:
 	using BaseClass = tsm::State<Context, Event, State>;
+
+	void callErrorCallback(Context* context, SessionEvent* sessionEvent) const;
 };
 
 class StoppedState : public State

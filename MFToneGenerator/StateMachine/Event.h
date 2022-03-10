@@ -77,6 +77,7 @@ class SessionEvent : public Event
 public:
 	SessionEvent(Type type, IMFMediaEvent* mediaEvent) : Event(type), m_mediaEvent(mediaEvent) {}
 
+	IMFMediaEvent* getMediaEvent() const { return m_mediaEvent; }
 	virtual std::tstring toString() const override;
 
 protected:

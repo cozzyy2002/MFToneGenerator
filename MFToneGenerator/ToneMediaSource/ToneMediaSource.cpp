@@ -85,7 +85,7 @@ HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor
 	m_eventGenerator.QueueEvent(MENewStream, &value);
 	m_eventGenerator.QueueEvent(MESourceStarted, pvarStartPosition);
 
-	m_mediaStream->start();
+	HR_ASSERT_OK(m_mediaStream->start());
 	m_mediaStream->QueueEvent(MEStreamStarted, pvarStartPosition);
 
 	return S_OK;

@@ -68,6 +68,7 @@ protected:
 
 	void showStatus(Status status);
 	void showStatus(LPCTSTR msg, ...);
+	void showStatus(const std::tstring& msg) { showStatus(msg.c_str()); }
 	Logger logger;
 
 public:

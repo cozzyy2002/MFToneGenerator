@@ -32,17 +32,15 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 
 	if(!m_pd) {
 		// Create MediaType
-		const WORD nChannels = m_pcmData->getChannels();
 		const DWORD nSamplesPerSec = m_pcmData->getSamplesPerSec();
 		const WORD nBlockAlign = m_pcmData->getBlockAlign();
-		const WORD wBitsPerSample = m_pcmData->getBitsPerSample();
 		WAVEFORMATEX waveFormat = {
-			m_pcmData->getFormatTag(),
-			nChannels,							// nChannels
+			m_pcmData->getFormatTag(),			// wFormatTag
+			m_pcmData->getChannels(),			// nChannels
 			nSamplesPerSec,						// nSamplesPerSec
 			nSamplesPerSec * nBlockAlign,		// nAvgBytesPerSec
 			nBlockAlign,						// nBlockAlign
-			wBitsPerSample,						// wBitsPerSample
+			m_pcmData->getBitsPerSample(),		// wBitsPerSample
 			0,									// cbSize(No extra information)
 		};
 
@@ -64,9 +62,7 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 		m_pd->SelectStream(0);
 	}
 
-	m_pd->Clone(ppPresentationDescriptor);
-
-	return S_OK;
+	return HR_EXPECT_OK(m_pd->Clone(ppPresentationDescriptor));
 }
 
 HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor* pPresentationDescriptor, __RPC__in_opt const GUID* pguidTimeFormat, __RPC__in_opt const PROPVARIANT* pvarStartPosition)
@@ -148,6 +144,7 @@ HRESULT __stdcall ToneMediaSource::QueryInterface(REFIID riid, _COM_Outptr_ void
 	static const QITAB qitab[] = {
 		QITABENT(ToneMediaSource, IMFMediaSource),
 		QITABENT(ToneMediaSource, IMFMediaEventGenerator),
+		{ 0 }
 	};
 	return m_unknownImpl.QueryInterface(riid, ppvObject, qitab);
 }

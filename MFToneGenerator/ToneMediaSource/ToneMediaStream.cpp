@@ -124,6 +124,7 @@ HRESULT __stdcall ToneMediaStream::QueryInterface(REFIID riid, _COM_Outptr_ void
 	static const QITAB qitab[] = {
 		QITABENT(ToneMediaStream, IMFMediaStream),
 		QITABENT(ToneMediaStream, IMFMediaEventGenerator),
+		{ 0 }
 	};
 	return m_unknownImpl.QueryInterface(riid, ppvObject, qitab);
 }

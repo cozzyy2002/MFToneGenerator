@@ -397,15 +397,16 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 			showStatus(_T("Failed to create PcmData for generator(0x%p)"), generator);
 			return;
 		}
+
+		// NOTE: Calling IContext::startTone() causes calling IPcmData::copyTo() that should be called after IPcmData::generate() bellow.
+		//       WindowProcStateMachine used by Context, performs methods of Context on the UI thread as same as this method.
+		//       So the calling sequence is assured.
+		m_context->startTone(m_pcmData);
 	}
 
 	auto level = (float)m_level.GetPos() / SliderMaxValue;
 	auto phaseShift = (float)m_phaseShift.GetPos() / SliderMaxValue;
 	m_pcmData->generate(key, level, phaseShift);
-
-	if(m_status == Status::Stopped) {
-		m_context->startTone(m_pcmData);
-	}
 }
 
 void CMFToneGeneratorDlg::OnBnClickedButtonE4()

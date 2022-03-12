@@ -48,6 +48,9 @@ public:
 	virtual WORD getChannels() const = 0;
 	virtual const char* getSampleTypeName() const = 0;
 	virtual size_t getSamplesPerCycle() const = 0;		// Available after generate() method is called.
+
+	// Returns required buffer size in bytes for given duration(mSec).
+	// If duration == 0, size for 1 cycle samples is returned.
 	virtual size_t getSampleBufferSize(size_t duration) const = 0;
 };
 

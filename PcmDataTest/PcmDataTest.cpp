@@ -48,7 +48,7 @@ public:
 	void generate(float key, float level, float phaseShift)
 	{
 		m_pcmData->generate(key, level, phaseShift);
-		auto cycleDataSize = m_pcmData->getSamplesPerCycle() * m_pcmData->getBlockAlign();
+		auto cycleDataSize = m_pcmData->getSampleBufferSize(0);
 		m_cycleData = std::make_unique<BYTE[]>(cycleDataSize);
 		m_pcmData->copyTo(m_cycleData.get(), cycleDataSize);
 	}
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
 			<< "," << pcmData->getChannels()
 			<< "," << pcmData->getBlockAlign()
 			<< "," << pcmData->getSamplesPerCycle()
-			<< "," << pcmData->getSamplesPerCycle() * pcmData->getBlockAlign()
+			<< "," << pcmData->getSampleBufferSize(0)
 			<< std::endl;
 	}
 	std::cout << std::endl;

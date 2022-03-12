@@ -77,7 +77,11 @@ public:
 	virtual WORD getChannels() const override { return m_channels; }
 	virtual const char* getSampleTypeName() const { return typeid(T).name(); }
 	virtual size_t getSamplesPerCycle() const { return m_samplesPerCycle; }
-	virtual size_t getSampleBufferSize(size_t duration) const { return m_samplesPerSec * getBlockAlign() * duration / 1000; }
+	virtual size_t getSampleBufferSize(size_t duration) const {
+		return (0 < duration)
+			? m_samplesPerSec * getBlockAlign() * duration / 1000
+			: m_samplesPerCycle * getBlockAlign();
+	}
 
 	static const WORD FormatTag;
 	static const T HighValue;

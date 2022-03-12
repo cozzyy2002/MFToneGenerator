@@ -2,11 +2,6 @@
 //
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <stdio.h>
-
-#include <PcmData/PcmData.h>
-#define tsm_STATE_MACHINE_EXPORT __declspec(dllexport)
-#include <../tsm/public/include/StateMachine/Assert.h>
 
 int main(int argc, char** argv)
 {

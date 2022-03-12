@@ -3,7 +3,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <tuple>
-#include <algorithm>
 #include <atlbase.h>
 
 using namespace ::testing;

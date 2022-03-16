@@ -39,7 +39,7 @@ public:
 	public:
 		Testee() {}
 		Testee(INT32 value) : INT24(value) {}
-		Testee(float value) : INT24(value) {}
+		Testee(double value) : INT24(value) {}
 		Testee(const INT24& other) : INT24(other) {}
 
 		bool checkValue(BYTE high = 0, BYTE mid = 0, BYTE low = 0) {
@@ -56,7 +56,7 @@ TEST_F(INT24UnitTest, double_multi)
 	Testee highValue, zeroValue;
 	static const Testee MaxValue = 0x7f00;
 	static const Testee ZeroValue = 0;
-	static const float level = 1.0f;
+	static const double level = 1.0;
 	highValue = Testee((MaxValue - ZeroValue) * level) + ZeroValue;
 	EXPECT_TRUE(highValue.checkValue(0, 0x7f, 0));
 	zeroValue = ZeroValue;
@@ -73,7 +73,7 @@ TEST_F(INT24UnitTest, DefaultConstructor)
 {
 	Testee testee;
 	EXPECT_TRUE(testee.checkValue(0, 0, 0));
-	EXPECT_EQ((float)testee, 0.0f);
+	EXPECT_EQ((double)testee, 0.0);
 }
 
 // class for Constructor test with parameters.
@@ -84,7 +84,7 @@ TEST_F(INT24UnitTest, DefaultConstructor)
 //   3ed BYTE = Lowest byte of expected value.
 class INT24ConstructorUnitTest : public INT24UnitTest, public WithParamInterface<std::tuple<INT32, BYTE, BYTE, BYTE>> {};
 
-// Constructor with INT32/float parameter should create instance
+// Constructor with INT32/double parameter should create instance
 // that has value equal to the parameter.
 TEST_P(INT24ConstructorUnitTest, WithParameter)
 {
@@ -93,11 +93,11 @@ TEST_P(INT24ConstructorUnitTest, WithParameter)
 
 	Testee fromINT32(value);
 	EXPECT_TRUE(fromINT32.checkValue(std::get<1>(params), std::get<2>(params), std::get<3>(params)));
-	EXPECT_EQ((float)fromINT32, (float)value);
+	EXPECT_EQ((double)fromINT32, (double)value);
 
-	Testee fromFloat((float)value);
-	EXPECT_TRUE(fromFloat.checkValue(std::get<1>(params), std::get<2>(params), std::get<3>(params)));
-	EXPECT_EQ((float)fromFloat, (float)value);
+	Testee fromDouble((double)value);
+	EXPECT_TRUE(fromDouble.checkValue(std::get<1>(params), std::get<2>(params), std::get<3>(params)));
+	EXPECT_EQ((double)fromDouble, (double)value);
 }
 
 INSTANTIATE_TEST_SUITE_P(_, INT24ConstructorUnitTest, Values(
@@ -118,10 +118,10 @@ TEST_P(INT24BinaryOperatorUnitTest, _)
 	auto b = std::get<1>(params);
 
 	EXPECT_EQ(INT24(a) + INT24(b), a + b);
-	EXPECT_EQ(INT24(a) + float(b), a + b);
+	EXPECT_EQ(INT24(a) + double(b), a + b);
 	EXPECT_EQ(INT24(a) - INT24(b), a - b);
-	EXPECT_EQ(INT24(a) - float(b), a - b);
-	EXPECT_EQ(INT24(a) * float(b), a * b);
+	EXPECT_EQ(INT24(a) - double(b), a - b);
+	EXPECT_EQ(INT24(a) * double(b), a * b);
 	EXPECT_EQ(double(a) * INT24(b), a * b);
 }
 

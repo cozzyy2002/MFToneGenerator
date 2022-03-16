@@ -22,8 +22,8 @@ INT24::operator INT32() const
 }
 
 INT24 operator+(const INT24& a, const INT24& b) { return INT24((INT32)a + (INT32)b); }
-INT24 operator+(const INT24& a, float b) { return INT24((INT32)a + b); }
+INT24 operator+(const INT24& a, double b) { return INT24((INT32)a + b); }
 INT24 operator-(const INT24& a, const INT24& b) { return INT24((INT32)a - (INT32)b); }
-INT24 operator-(const INT24& a, float b) { return INT24((INT32)a - b); }
-INT24 operator*(const INT24& a, float b) { return INT24((INT32)a * b); }
+INT24 operator-(const INT24& a, double b) { return INT24((INT32)a - b); }
+INT24 operator*(const INT24& a, double b) { return INT24((INT32)a * b); }
 INT24 operator*(double a, const INT24& b) { return INT24((INT32)(a * (INT32)b)); }

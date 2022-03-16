@@ -161,10 +161,10 @@ template<typename T>
 void WaveGenerator<T>::adjustLevel(float level, T* pHighValue, T* pLowValue, T* pZeroValue) const
 {
 	if(pHighValue) {
-		*pHighValue = (T)((PcmData<T>::HighValue - PcmData<T>::ZeroValue) * level) + PcmData<T>::ZeroValue;
+		*pHighValue = (T)((PcmData<T>::HighValue - PcmData<T>::ZeroValue) * (double)level) + PcmData<T>::ZeroValue;
 	}
 	if(pLowValue) {
-		*pLowValue = PcmData<T>::ZeroValue - (T)((PcmData<T>::ZeroValue - PcmData<T>::LowValue) * level);
+		*pLowValue = PcmData<T>::ZeroValue - (T)((PcmData<T>::ZeroValue - PcmData<T>::LowValue) * (double)level);
 	}
 	if(pZeroValue) {
 		*pZeroValue = PcmData<T>::ZeroValue;
@@ -264,24 +264,24 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WO
 {
 	T highValue, lowValue, zeroValue;
 	WaveGenerator<T>::adjustLevel(level, &highValue, &lowValue, &zeroValue);
-	float height = (float)(highValue - lowValue);
-	float upDelta, downDelta;
+	double height = (double)highValue - (double)lowValue;
+	double upDelta, downDelta;
 	upDelta = downDelta = height * channels / samplesPerCycle;
 	bool up;
-	float value;
+	double value;
 	if(m_peakPosition == 0.0f) {
 		upDelta = height * channels;
 		up = false;
-		value = (float)highValue;
+		value = highValue;
 	} else if(m_peakPosition == 1.0f) {
 		downDelta = height * channels;
 		up = true;
-		value = (float)lowValue;
+		value = lowValue;
 	} else {
 		upDelta /= m_peakPosition;
 		downDelta /= (1.0f - m_peakPosition);
 		up = true;
-		value = (float)zeroValue;
+		value = zeroValue;
 	}
 
 	if((lowValue + upDelta) > highValue) { upDelta = height; }
@@ -292,14 +292,14 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WO
 		if(up) {
 			value += upDelta;
 			if(highValue < value) {
-				value = (float)highValue;
+				value = highValue;
 				up = false;
 			}
 		}
 		else {
 			value -= downDelta;
 			if(value < lowValue) {
-				value = (float)lowValue;
+				value = lowValue;
 				up = true;
 			}
 		}

@@ -5,7 +5,7 @@ class INT24
 public:
 	INT24() { construct(0); }
 	INT24(INT32 value) { construct(value); }
-	INT24(float value) { construct((INT32)value); }
+	INT24(double value) { construct((INT32)value); }
 
 	operator INT32() const;
 
@@ -21,8 +21,8 @@ protected:
 };
 
 INT24 operator+(const INT24&, const INT24&);
-INT24 operator+(const INT24&, float);
+INT24 operator+(const INT24&, double);
 INT24 operator-(const INT24&, const INT24&);
-INT24 operator-(const INT24&, float);
-INT24 operator*(const INT24&, float);
+INT24 operator-(const INT24&, double);
+INT24 operator*(const INT24&, double);
 INT24 operator*(double, const INT24&);

@@ -23,19 +23,19 @@ template<> const UINT8 PcmData<UINT8>::ZeroValue = 0x80;
 template<> const UINT8 PcmData<UINT8>::LowValue = 0x40;
 
 template<> const WORD PcmData<INT16>::FormatTag = WAVE_FORMAT_PCM;
-template<> const INT16 PcmData<INT16>::HighValue = 8000;
+template<> const INT16 PcmData<INT16>::HighValue = 0x6000;
 template<> const INT16 PcmData<INT16>::ZeroValue = 0;
-template<> const INT16 PcmData<INT16>::LowValue = -8000;
+template<> const INT16 PcmData<INT16>::LowValue = -0x6000;
 
 template<> const WORD PcmData<INT24>::FormatTag = WAVE_FORMAT_PCM;
-template<> const INT24 PcmData<INT24>::HighValue = 0x80000;
+template<> const INT24 PcmData<INT24>::HighValue = 0x600000;
 template<> const INT24 PcmData<INT24>::ZeroValue = 0;
-template<> const INT24 PcmData<INT24>::LowValue = -0x80000;
+template<> const INT24 PcmData<INT24>::LowValue = -0x600000;
 
 template<> const WORD PcmData<float>::FormatTag = WAVE_FORMAT_IEEE_FLOAT;
-template<> const float PcmData<float>::HighValue = 0.5f;
+template<> const float PcmData<float>::HighValue = 0.8f;
 template<> const float PcmData<float>::ZeroValue = 0.0f;
-template<> const float PcmData<float>::LowValue = -0.5f;
+template<> const float PcmData<float>::LowValue = -0.8f;
 
 #pragma endregion
 

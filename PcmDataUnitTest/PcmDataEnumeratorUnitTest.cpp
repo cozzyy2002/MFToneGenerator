@@ -64,7 +64,7 @@ TEST_P(PcmDataEnumeratorUnitTest, WaveGenerator)
 {
 	auto& param(GetParam());
 	auto& sp(std::get<0>(param));	// SampleDataTypeProperty
-	auto& wp(std::get<1>(param));	// WaveGeneratorProperty
+	auto& wp(std::get<1>(param));	// WaveFormProperty
 
 	static const DWORD samplesPerSec = 440;
 	static const WORD channels = 2;

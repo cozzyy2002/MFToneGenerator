@@ -134,6 +134,7 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 {
 	// Generate PCM data for first channel using WaveGenerator.
 	auto samplesPerCycle = (size_t)(m_samplesPerSec * m_channels / key);
+	samplesPerCycle += (samplesPerCycle % m_channels);		// Roundup to channel number boundary
 	std::unique_ptr<T[]> cycleData(new T[samplesPerCycle]);
 	m_waveGenerator->generate(cycleData.get(), samplesPerCycle, m_channels, level);
 

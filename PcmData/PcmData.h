@@ -3,6 +3,7 @@
 #include "framework.h"
 #include <Unknwn.h>
 #include <vector>
+#include <string>
 
 class IWaveGenerator;
 
@@ -54,6 +55,24 @@ public:
 	virtual size_t getSampleBufferSize(size_t duration) const = 0;
 };
 
+/*
+ * IPcmSample interface.
+ * 
+ * Utility to access each PCM sample without knowledge of sample type: such as bits/sample(8/16/...), representation(unsigned/signed or integer/float)
+ * To create object implementing this interface, call createPcmSample() function with IPcmData object as it's parameter.
+ * 
+ * get()/set() methods use double as sample data type that is enough to hold PCM sample upto 24bit and IEEE float.
+ */
+class IPcmSample
+{
+public:
+	virtual ~IPcmSample() {}
+
+	virtual double get(size_t sampleIndex, WORD channelIndex = 0) const = 0;
+	virtual void set(double value, size_t sampleIndex, WORD channelIndex = 0) = 0;
+	virtual std::string getString(size_t sampleIndex, WORD channelIndex = 0) const = 0;
+};
+
 class PcmDataEnumerator
 {
 public:
@@ -89,6 +108,17 @@ IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataTyp
 IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType);
 IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition = 0.5f);
 
+// Creates IPcmSample object to access internal buffer of IPcmData object taht contains 1 cycle samples.
+//   Note:
+//		This function should be called after IPcmData::generate() that creates internal buffer.
+//		After IPcmData::generate() is called again, re-create IPcmSample object because the method re-creates the internal buffer.
+IPcmSample* createPcmSample(IPcmData* pcmData);
+
+// Creates IPcmSample object to access buffer specified as arguments.
+//   Note:
+//		sampleBufferSize should be boundary of channels.
+//		sampleBuffer should be available in the lifetime of IPcmSample object.
+IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, WORD channels, void* sampleBuffer, size_t sampleBufferSize);
 
 class DoNotCopy
 {

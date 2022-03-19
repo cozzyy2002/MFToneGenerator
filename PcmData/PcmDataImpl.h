@@ -10,6 +10,9 @@
 #include <Windows.h>
 #include <mmreg.h>
 
+template<typename T>
+class PcmSampleImpl;
+
 class IWaveGenerator
 {
 public:
@@ -54,6 +57,9 @@ protected:
 template<typename T>
 class PcmData : public IPcmData
 {
+	template<typename TT>
+	friend class PcmSampleImpl;
+
 public:
 	PcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
 		: m_samplesPerSec(samplesPerSec), m_channels(channels)
@@ -306,3 +312,90 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WO
 		}
 	}
 }
+
+#pragma region Implementation of IPcmSample interface.
+
+template<typename T>
+class PcmSampleImpl : public IPcmSample
+{
+public:
+	PcmSampleImpl(IPcmData* pcmData);
+	PcmSampleImpl(WORD channels, void* sampleBuffer, size_t sampleBufferSize);
+
+	virtual double get(size_t sampleIndex, WORD channelIndex) const override;
+	virtual void set(double value, size_t sampleIndex, WORD channelIndex) override;
+	virtual std::string getString(size_t sampleIndex, WORD channelIndex) const override;
+
+protected:
+	CComPtr<PcmData<T>> m_pcmData;
+
+	const WORD m_channels;
+	T* m_buffer;
+	const size_t m_bufferSize;
+
+	bool assertArgs(size_t sampleIndex, WORD channelIndex) const;
+};
+
+template<typename T>
+PcmSampleImpl<T>::PcmSampleImpl(IPcmData* pcmData)
+	: m_pcmData((PcmData<T>*)pcmData)
+	, m_channels(pcmData->getChannels())
+	, m_buffer(m_pcmData->m_cycleData.get())
+	, m_bufferSize(pcmData->getSamplesPerCycle())
+{
+}
+
+template<typename T>
+PcmSampleImpl<T>::PcmSampleImpl(WORD channels, void* sampleBuffer, size_t sampleBufferSize)
+	: m_channels(channels)
+	, m_buffer((T*)sampleBuffer)
+	, m_bufferSize(sampleBufferSize / sizeof(T))
+{
+}
+
+template<typename T>
+double PcmSampleImpl<T>::get(size_t sampleIndex, WORD channelIndex) const
+{
+	if(!assertArgs(sampleIndex, channelIndex)) return 0;
+
+	return (double)m_buffer[sampleIndex + channelIndex];
+}
+
+template<typename T>
+void PcmSampleImpl<T>::set(double value, size_t sampleIndex, WORD channelIndex)
+{
+	if(!assertArgs(sampleIndex, channelIndex)) return;
+
+	m_buffer[sampleIndex + channelIndex] = (T)value ;
+}
+
+template<typename T>
+std::string PcmSampleImpl<T>::getString(size_t sampleIndex, WORD channelIndex) const
+{
+	if(!assertArgs(sampleIndex, channelIndex)) return "";
+
+	char s[30];
+	_itoa_s(m_buffer[sampleIndex + channelIndex], s, 10);
+	return s;
+}
+
+
+template<>
+std::string PcmSampleImpl<float>::getString(size_t sampleIndex, WORD channelIndex) const
+{
+	if(!assertArgs(sampleIndex, channelIndex)) return "";
+
+	char s[20] = "";
+	_gcvt_s(s, m_buffer[sampleIndex + channelIndex], 8);
+	return s;
+}
+
+template<typename T>
+bool PcmSampleImpl<T>::assertArgs(size_t sampleIndex, WORD channelIndex) const
+{
+	return
+		(m_buffer ? true : false) &&
+		((sampleIndex + channelIndex) < m_bufferSize);
+}
+
+#pragma endregion

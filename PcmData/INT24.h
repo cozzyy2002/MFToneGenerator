@@ -16,8 +16,8 @@ public:
 	INT24 operator-(double that) const { return INT24(this->toINT32() - that); }
 	INT24 operator*(double that) const { return INT24(this->toINT32() * that); }
 
-	static const INT32 MaxValue = +8388607;
-	static const INT32 MinValue = -8388608;
+	static const INT32 MaxValue = 0x007fffff;	// +8388607;
+	static const INT32 MinValue = 0xff800000;	// -8388608;
 
 protected:
 	void construct(INT32);

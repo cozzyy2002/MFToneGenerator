@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include <PcmData/PcmData.h>
+#include <PcmData/PcmSample.h>
 
 #include <vector>
 #include <iostream>

@@ -72,6 +72,9 @@ public:
 	virtual double get(size_t index) const = 0;
 	virtual void set(double value, size_t index) = 0;
 	virtual std::string getString(size_t index) const = 0;
+	virtual double getHighValue() const = 0;
+	virtual double getZeroValue() const = 0;
+	virtual double getLowValue() const = 0;
 	virtual bool isValid(size_t index) const = 0;
 };
 

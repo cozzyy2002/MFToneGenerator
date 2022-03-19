@@ -68,10 +68,9 @@ int main(int argc, char* argv[])
 	}
 
 	// Generate PCM data and show properties of each PcmData object.
-	std::cout << ",Wave form,Sample type,Bits per sample,Channels,Block align,Samples in cycle,Byte size of cycle\n";
+	std::cout << ",Wave form,Sample type,Bits per sample,Channels,Block align,Samples in cycle,Byte size of cycle, High value, Zero value, Low value\n";
 	int i = 0;
 	for(auto& pcmSample : pcmSamples) {
-
 		auto pcmData = pcmSample->getPcmData();
 		std::cout << i++
 			<< "," << pcmData->getWaveFormTypeName()
@@ -81,6 +80,9 @@ int main(int argc, char* argv[])
 			<< "," << pcmData->getBlockAlign()
 			<< "," << pcmData->getSamplesPerCycle()
 			<< "," << pcmData->getSampleBufferSize(0)
+			<< "," << pcmSample->getHighValue()
+			<< "," << pcmSample->getZeroValue()
+			<< "," << pcmSample->getLowValue()
 			<< std::endl;
 	}
 	std::cout << std::endl;

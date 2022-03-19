@@ -13,8 +13,7 @@ public:
 	PcmSampleImpl(void* buffer, size_t bytesInBuffer);
 
 	virtual IPcmData* getPcmData() const override { return m_pcmData; }
-	virtual double get(size_t index) const override;
-	virtual void set(double value, size_t index) override;
+	virtual double operator[](size_t index) const override;
 	virtual std::string getString(size_t siIndex) const override;
 	virtual double getHighValue() const override { return PcmData<T>::HighValue; }
 	virtual double getZeroValue() const override { return PcmData<T>::ZeroValue; }
@@ -47,19 +46,11 @@ PcmSampleImpl<T>::PcmSampleImpl(void* buffer, size_t bytesInBuffer)
 }
 
 template<typename T>
-double PcmSampleImpl<T>::get(size_t index) const
+double PcmSampleImpl<T>::operator[](size_t index) const
 {
 	if(!isValid(index)) return 0;
 
 	return (double)m_buffer[index];
-}
-
-template<typename T>
-void PcmSampleImpl<T>::set(double value, size_t index)
-{
-	if(!isValid(index)) return;
-
-	m_buffer[index] = (T)value;
 }
 
 template<typename T>

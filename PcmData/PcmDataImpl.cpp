@@ -150,17 +150,17 @@ IPcmSample* createPcmSample(IPcmData* pcmData)
 	}
 }
 
-IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, WORD channels, void* sampleBuffer, size_t sampleBufferSize)
+IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffer, size_t bytesInBuffer)
 {
 	switch(sampleDataType) {
 	case IPcmData::SampleDataType::PCM_8bits:
-		return new PcmSampleImpl<UINT8>(channels, sampleBuffer, sampleBufferSize);
+		return new PcmSampleImpl<UINT8>(buffer, bytesInBuffer);
 	case IPcmData::SampleDataType::PCM_16bits:
-		return new PcmSampleImpl<INT16>(channels, sampleBuffer, sampleBufferSize);
+		return new PcmSampleImpl<INT16>(buffer, bytesInBuffer);
 	case IPcmData::SampleDataType::PCM_24bits:
-		return new PcmSampleImpl<INT24>(channels, sampleBuffer, sampleBufferSize);
+		return new PcmSampleImpl<INT24>(buffer, bytesInBuffer);
 	case IPcmData::SampleDataType::IEEE_Float:
-		return new PcmSampleImpl<float>(channels, sampleBuffer, sampleBufferSize);
+		return new PcmSampleImpl<float>(buffer, bytesInBuffer);
 	default:
 		return nullptr;
 	}

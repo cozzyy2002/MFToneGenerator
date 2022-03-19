@@ -68,9 +68,11 @@ class IPcmSample
 public:
 	virtual ~IPcmSample() {}
 
-	virtual double get(size_t sampleIndex, WORD channelIndex = 0) const = 0;
-	virtual void set(double value, size_t sampleIndex, WORD channelIndex = 0) = 0;
-	virtual std::string getString(size_t sampleIndex, WORD channelIndex = 0) const = 0;
+	virtual IPcmData* getPcmData() const = 0;
+	virtual double get(size_t index) const = 0;
+	virtual void set(double value, size_t index) = 0;
+	virtual std::string getString(size_t index) const = 0;
+	virtual bool isValid(size_t index) const = 0;
 };
 
 class PcmDataEnumerator
@@ -116,9 +118,9 @@ IPcmSample* createPcmSample(IPcmData* pcmData);
 
 // Creates IPcmSample object to access buffer specified as arguments.
 //   Note:
-//		sampleBufferSize should be boundary of channels.
 //		sampleBuffer should be available in the lifetime of IPcmSample object.
-IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, WORD channels, void* sampleBuffer, size_t sampleBufferSize);
+//		bytesInBuffer should be boundary of sample data size. You can use the value returned from IPcmData::getSampleBufferSize(duration).
+IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffer, size_t bytesInBuffer);
 
 class DoNotCopy
 {

@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 		std::cout << (pos / channels);
 		for(auto& pcmSample : pcmSamples) {
 			for(WORD ch = 0; ch < channels; ch++) {
-				std::cout << "," << pcmSample->getString(pos + ch);
+				std::cout << "," << (std::string)(*pcmSample)[pos + ch];
 			}
 		}
 		std::cout << std::endl;

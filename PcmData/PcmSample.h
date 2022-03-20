@@ -11,9 +11,8 @@
  * Utility to access each PCM sample without knowledge of sample type: such as bits/sample(8/16/...), representation(unsigned/signed or integer/float)
  * To create object implementing this interface, call createPcmSample() function with IPcmData object as it's parameter.
  *
- * Sample data is retrieved as double regardless of original sample data type:
- *   double is enough to hold PCM sample upto 24bit and IEEE float.
- *   Some errors may be observed because of converting original data type to double.
+ * Sample data is retrieved as Value object regardless of original sample data type:
+ * Value object provides converting sample data to/from integer and to string.
  */
 class IPcmSample
 {
@@ -38,10 +37,9 @@ public:
 
 	virtual IPcmData* getPcmData() const = 0;
 	virtual Value operator[](size_t index) const = 0;
-	virtual std::string getString(size_t index) const = 0;
-	virtual double getHighValue() const = 0;
-	virtual double getZeroValue() const = 0;
-	virtual double getLowValue() const = 0;
+	virtual Value getHighValue() const = 0;
+	virtual Value getZeroValue() const = 0;
+	virtual Value getLowValue() const = 0;
 	virtual bool isValid(size_t index) const = 0;
 };
 

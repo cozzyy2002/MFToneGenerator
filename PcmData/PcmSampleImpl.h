@@ -8,54 +8,70 @@
 namespace
 {
 
+// Helper interface to convert sample data using IPcmSample::Value::Handle.
 class IValueHelper
 {
 public:
-	virtual INT32 toInt32(void* p) const = 0;
-	virtual double toDouble(void* p) const = 0;
-	virtual std::string toString(void* p) const = 0;
+	using Value = IPcmSample::Value;
+	using Handle = IPcmSample::Value::Handle;
+
+	virtual INT32 toInt32(const Handle&) const = 0;
+	virtual double toDouble(const Handle&) const = 0;
+	virtual std::string toString(const Handle&) const = 0;
 };
 
+// Implementation of IValueHelper for sample data of type T.
+// 
+// IPcmSample::Value::Handle contains:
+//	p[0] = Pointer to IValueHelper object
+//	p[1] = Pointer to sample data
 template<typename T>
 class ValueHelper : public IValueHelper
 {
 public:
-	INT32 toInt32(void* p) const override;
-	double toDouble(void* p) const override;
-	std::string toString(void* p) const override;
+	INT32 toInt32(const Handle&) const override;
+	double toDouble(const Handle&) const override;
+	std::string toString(const Handle& handle) const override;
 
-	static IPcmSample::Value createValue(const T* sample) {
+	// Returns IPcmSample::Value object.
+	static Value createValue(const T* sample) {
 		static ValueHelper<T> helper;
-		void* pp[2] = { &helper, (void*)sample };
-		return IPcmSample::Value(pp);
+		Handle handle = { &helper, (void*)sample };
+		return Value(handle);
 	}
+
+	// Returns sample data of type T.
+	T& getSample(const Handle& handle) const { return *(T*)handle.p[1]; }
 };
 
+// Returns Pointer of IValueHelper object.
+IValueHelper* getHelper(const IValueHelper::Handle& handle) { return (IValueHelper*)handle.p[0]; }
+
 template<typename T>
-INT32 ValueHelper<T>::toInt32(void* p) const
+INT32 ValueHelper<T>::toInt32(const Handle& handle) const
 {
-	return (INT32)(*(T*)p);
+	return (INT32)getSample(handle);
 }
 
 template<typename T>
-double ValueHelper<T>::toDouble(void* p) const
+double ValueHelper<T>::toDouble(const Handle& handle) const
 {
-	return (double)(*(T*)p);
+	return (double)getSample(handle);
 }
 
 template<typename T>
-std::string ValueHelper<T>::toString(void* p) const
+std::string ValueHelper<T>::toString(const Handle& handle) const
 {
-	char s[20] = "";
-	_gcvt_s(s, (T)(*(T*)p), 8);
+	char s[30] = "";
+	_itoa_s(*(T*)handle.p[1], s, 10);
 	return s;
 }
 
 template<>
-std::string ValueHelper<float>::toString(void* p) const
+std::string ValueHelper<float>::toString(const Handle& handle) const
 {
 	char s[20] = "";
-	_gcvt_s(s, (float)(*(float*)p), 8);
+	_gcvt_s(s, *(float*)handle.p[1], 8);
 	return s;
 }
 
@@ -64,17 +80,17 @@ std::string ValueHelper<float>::toString(void* p) const
 
 IPcmSample::Value::operator INT32() const
 {
-	return ((IValueHelper*)m_pp[0])->toInt32(m_pp[1]);
+	return getHelper(m_handle)->toInt32(m_handle);
 }
 
 IPcmSample::Value::operator double() const
 {
-	return ((IValueHelper*)m_pp[0])->toDouble(m_pp[1]);
+	return getHelper(m_handle)->toDouble(m_handle);
 }
 
 IPcmSample::Value::operator std::string() const
 {
-	return ((IValueHelper*)m_pp[0])->toString(m_pp[1]);
+	return getHelper(m_handle)->toString(m_handle);
 }
 
 template<typename T>
@@ -90,6 +106,8 @@ public:
 	virtual Value getZeroValue() const override;
 	virtual Value getLowValue() const override;
 	virtual bool isValid(size_t index) const override;
+
+	virtual WORD getFormatTag() const override { return PcmData<T>::FormatTag; }
 
 protected:
 	CComPtr<PcmData<T>> m_pcmData;
@@ -119,9 +137,9 @@ PcmSampleImpl<T>::PcmSampleImpl(void* buffer, size_t bytesInBuffer)
 template<typename T>
 IPcmSample::Value PcmSampleImpl<T>::operator[](size_t index) const
 {
-	if(!isValid(index)) return 0;
+	auto pValue = isValid(index) ? &m_buffer[index] : &PcmData<T>::ZeroValue;
 
-	return ValueHelper<T>::createValue(&m_buffer[index]);
+	return ValueHelper<T>::createValue(pValue);
 }
 
 template<typename T>

@@ -12,7 +12,17 @@
  * To create object implementing this interface, call createPcmSample() function with IPcmData object as it's parameter.
  *
  * Sample data is retrieved as Value object regardless of original sample data type:
- * Value object provides converting sample data to/from integer and to string.
+ * Value class provides converting sample data to integer, double and string.
+ * 
+ * Type operators of Value class act depending on audio format type as followings.
+ * (Audio format type can be retrieved by IPcmSample::getFormatTag() method.)
+ * 		operator		WAVE_FORMAT_PCM					WAVE_FORMAT_IEEE_FLOAT
+ *		--------------- ------------------------------- ----------------------
+ *		INT32()			Returns as the sample is.		Returns 0 or 1.
+ *														(Sample value of this type is 0.0f ~ 1.0f)
+ *		double()		Returns as the sample is.		Returns as the sample is.
+ *						(Some error may be ovserved)
+ *		std::string()	Returns decimal string.			Returns floating-point string.
  */
 class IPcmSample
 {
@@ -20,17 +30,17 @@ public:
 	class Value
 	{
 	public:
-		Value(void** pp) {
-			m_pp[0] = pp[0];
-			m_pp[1] = pp[1];
-		}
+		// Opaque object to access sample data.
+		struct Handle { void* p[2]; };
+
+		Value(Handle& handle) : m_handle(handle) {}
 
 		operator INT32() const;
 		operator double() const;
 		operator std::string() const;
 
 	protected:
-		void* m_pp[2];
+		Handle m_handle;
 	};
 
 	virtual ~IPcmSample() {}
@@ -41,6 +51,10 @@ public:
 	virtual Value getZeroValue() const = 0;
 	virtual Value getLowValue() const = 0;
 	virtual bool isValid(size_t index) const = 0;
+
+	// Returns audio format type used in WAVEFORMAT structure.
+	// WAVE_FORMAT_PCM or WAVE_FORMAT_IEEE_FLOAT.
+	virtual WORD getFormatTag() const = 0;
 };
 
 // Creates IPcmSample object to access internal buffer of IPcmData object taht contains 1 cycle samples.

@@ -63,7 +63,7 @@ template<typename T>
 std::string ValueHelper<T>::toString(const Handle& handle) const
 {
 	char s[30] = "";
-	_itoa_s(*(T*)handle.p[1], s, 10);
+	_itoa_s(getSample(handle), s, 10);
 	return s;
 }
 
@@ -71,7 +71,7 @@ template<>
 std::string ValueHelper<float>::toString(const Handle& handle) const
 {
 	char s[20] = "";
-	_gcvt_s(s, *(float*)handle.p[1], 8);
+	_gcvt_s(s, getSample(handle), 8);
 	return s;
 }
 

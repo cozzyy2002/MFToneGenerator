@@ -89,6 +89,7 @@ IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataTyp
 IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType);
 IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition = 0.5f);
 
+
 class DoNotCopy
 {
 public:

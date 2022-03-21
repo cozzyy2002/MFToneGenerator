@@ -14,19 +14,21 @@
  * Sample data is retrieved as Value object regardless of original sample data type:
  * Value class provides converting sample data to integer, double and string.
  * 
- * Type operators of Value class act depending on audio format type as followings.
+ * Each operator of Value class acts depending on audio format type as followings.
  * (Audio format type can be retrieved by IPcmSample::getFormatTag() method.)
  * 		operator		WAVE_FORMAT_PCM					WAVE_FORMAT_IEEE_FLOAT
- *		--------------- ------------------------------- ----------------------
+ *		--------------- ------------------------------- ----------------------------------------------
  *		INT32()			Returns as the sample is.		Returns 0 or 1.
  *														(Sample value of this type is 0.0f ~ 1.0f)
  *		double()		Returns as the sample is.		Returns as the sample is.
- *						(Some error may be ovserved)
+ *						(Some errors may be observed)
  *		std::string()	Returns decimal string.			Returns floating-point string.
  */
 class IPcmSample
 {
 public:
+	// The object of this class will be returned by IPcmData
+	// and can be used to retrieve sample data as integer, double or string.
 	class Value
 	{
 	public:
@@ -57,7 +59,7 @@ public:
 	virtual WORD getFormatTag() const = 0;
 };
 
-// Creates IPcmSample object to access internal buffer of IPcmData object taht contains 1 cycle samples.
+// Creates IPcmSample object to access internal buffer of IPcmData object that contains 1 cycle samples.
 //   Note:
 //		This function should be called after IPcmData::generate() that creates internal buffer.
 //		After IPcmData::generate() is called again, re-create IPcmSample object because the method re-creates the internal buffer.

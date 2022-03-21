@@ -32,3 +32,27 @@ IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffe
 		return nullptr;
 	}
 }
+
+template<>
+IPcmSample* createPcmSample<UINT8>(void* buffer, size_t bytesInBuffer)
+{
+	return createPcmSample(IPcmData::SampleDataType::PCM_8bits, buffer, bytesInBuffer);
+}
+
+template<>
+IPcmSample* createPcmSample<INT16>(void* buffer, size_t bytesInBuffer)
+{
+	return createPcmSample(IPcmData::SampleDataType::PCM_16bits, buffer, bytesInBuffer);
+}
+
+template<>
+IPcmSample* createPcmSample<INT24>(void* buffer, size_t bytesInBuffer)
+{
+	return createPcmSample(IPcmData::SampleDataType::PCM_24bits, buffer, bytesInBuffer);
+}
+
+template<>
+IPcmSample* createPcmSample<float>(void* buffer, size_t bytesInBuffer)
+{
+	return createPcmSample(IPcmData::SampleDataType::IEEE_Float, buffer, bytesInBuffer);
+}

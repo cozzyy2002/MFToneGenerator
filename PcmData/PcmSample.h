@@ -68,7 +68,9 @@ IPcmSample* createPcmSample(IPcmData* pcmData);
 // Creates IPcmSample object to access buffer specified as arguments.
 //   Note:
 //		sampleBuffer should be available in the lifetime of IPcmSample object.
-//		bytesInBuffer should be boundary of sample data size. You can use the value returned from IPcmData::getSampleBufferSize(duration).
+//		bytesInBuffer should be boundary of sample data size.
+//		You can use the value returned from IPcmData::getSampleBufferSize(duration),
+//		if samples in the buffer were retrieved by IPcmData::copyTo() method.
 IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffer, size_t bytesInBuffer);
 
 template<typename T>

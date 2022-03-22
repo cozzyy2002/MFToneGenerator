@@ -17,16 +17,16 @@ struct TestSample
 	static const size_t SamplesCount;
 };
 
-template<> const UINT8 TestSample<UINT8>::Samples[] = { 0, 0x40, 0x80, 0xc0, 0xff };
+template<> const UINT8 TestSample<UINT8>::Samples[] = { 0, 0x40, 0x60, 0x80, 0xa0, 0xc0, 0xff };
 template<> const size_t TestSample<UINT8>::SamplesCount = ARRAYSIZE(Samples);
 
-template<> const INT16 TestSample<INT16>::Samples[] = { (INT16)0xa000, 0 , 0x6000, (INT16)0xffff };
+template<> const INT16 TestSample<INT16>::Samples[] = { (INT16)0xa000, (INT16)0xc000, 0, 0x6000, 0x7fff, (INT16)0xffff };
 template<> const size_t TestSample<INT16>::SamplesCount = ARRAYSIZE(Samples);
 
-template<> const INT24 TestSample<INT24>::Samples[] = { 0xa00000, 0 , 0x600000, 0xffffff };
+template<> const INT24 TestSample<INT24>::Samples[] = { 0xa00000, 0xc00000, 0, 0x600000, 0x7fffff, 0xffffff };
 template<> const size_t TestSample<INT24>::SamplesCount = ARRAYSIZE(Samples);
 
-template<> const float TestSample<float>::Samples[] = {  -1.0f, -0.8f, 0 , 0.8f, 1.0f };
+template<> const float TestSample<float>::Samples[] = { -1.0f, -0.4f, -0.8f, 0, 0.4f, 0.8f, 1.0f };
 template<> const size_t TestSample<float>::SamplesCount = ARRAYSIZE(Samples);
 
 template<typename T>
@@ -43,7 +43,7 @@ public:
 		testSamples = TestSample<T>::Samples;
 		testSamplesCount = TestSample<T>::SamplesCount;
 		buffer = std::make_unique<T[]>(testSamplesCount);
-		for(size_t i = 0; i < testSamplesCount; i++) { buffer[i] = (T)testSamples[i]; }
+		for(size_t i = 0; i < testSamplesCount; i++) { buffer[i] = testSamples[i]; }
 
 		// Create IPcmSample object using the buffer.
 		testee.reset(createPcmSample<T>(buffer.get(), testSamplesCount * sizeof(T)));

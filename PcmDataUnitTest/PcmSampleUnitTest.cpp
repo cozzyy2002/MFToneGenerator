@@ -129,3 +129,45 @@ TYPED_TEST(PcmSampleTypedTest, constants)
 		break;
 	}
 }
+
+// createPcmSample() with Null IPcmData parameter should return null.
+TEST(PcmSampleUnitTest, IPcmData_null)
+{
+	std::unique_ptr<IPcmSample> testee(createPcmSample(nullptr));
+	ASSERT_EQ(testee.get(), nullptr);
+}
+
+// createPcmSample() with Null IPcmData that has not been called generate() method, should return null.
+TEST(PcmSampleUnitTest, IPcmData_not_generated)
+{
+	auto gen = createSineWaveGenerator(IPcmData::SampleDataType::PCM_16bits);
+	CComPtr<IPcmData> pcmData(createPcmData(44100, 1, gen));
+	std::unique_ptr<IPcmSample> testee(createPcmSample(pcmData));
+	ASSERT_EQ(testee.get(), nullptr);
+}
+
+// createPcmSample() with Null unknown sample data type parameter should return null.
+TEST(PcmSampleUnitTest, error_unknown_data_type)
+{
+	BYTE buffer[10];
+	std::unique_ptr<IPcmSample> testee(createPcmSample(IPcmData::SampleDataType::Unknown, buffer, sizeof(buffer)));
+	ASSERT_EQ(testee.get(), nullptr);
+}
+
+// createPcmSample() with Null buffer parameter should return null.
+TEST(PcmSampleUnitTest, error_buffer_null)
+{
+	std::unique_ptr<IPcmSample> testee(createPcmSample<INT16>(nullptr, 10));
+	ASSERT_EQ(testee.get(), nullptr);
+}
+
+// createPcmSample() with illegal boundary buffer size parameter should return null.
+TYPED_TEST(PcmSampleTypedTest, error_buffer_size)
+{
+	if(sizeof(TypeParam) == 1) return;
+
+	// Illegal buffer size for the samples other than UINT8
+	BYTE buffer[11];
+	std::unique_ptr<IPcmSample> testee(createPcmSample<TypeParam>(buffer, sizeof(buffer)));
+	ASSERT_EQ(testee.get(), nullptr);
+}

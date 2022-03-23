@@ -41,8 +41,12 @@ public:
 		operator double() const;
 		operator std::string() const;
 
+		Value& operator =(INT32);
+		Value& operator =(double);
+		Value& operator =(const Value&);
+
 	protected:
-		Handle m_handle;
+		const Handle m_handle;
 	};
 
 	virtual ~IPcmSample() {}
@@ -72,6 +76,9 @@ IPcmSample* createPcmSample(IPcmData* pcmData);
 //		You can use the value returned from IPcmData::getSampleBufferSize(duration),
 //		if samples in the buffer were retrieved by IPcmData::copyTo() method.
 IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffer, size_t bytesInBuffer);
+
+template<typename T>
+IPcmSample* createPcmSample(T* buffer, size_t samplesInBuffer);
 
 template<typename T>
 IPcmSample* createPcmSample(void* buffer, size_t bytesInBuffer);

@@ -18,13 +18,17 @@ public:
 	virtual INT32 toInt32(const Handle&) const = 0;
 	virtual double toDouble(const Handle&) const = 0;
 	virtual std::string toString(const Handle&) const = 0;
+
+	virtual void setInt32(const Handle&, INT32) = 0;
+	virtual void setDouble(const Handle&, double) = 0;
+	virtual void setValue(const Handle&, const Handle&) = 0;
 };
 
 // Implementation of IValueHelper for sample data of type T.
 // 
 // IPcmSample::Value::Handle contains:
 //	p[0] = Pointer to IValueHelper object
-//	p[1] = Pointer to sample data
+//	p[1] = Pointer to a sample data
 template<typename T>
 class ValueHelper : public IValueHelper
 {
@@ -33,8 +37,14 @@ public:
 	double toDouble(const Handle&) const override;
 	std::string toString(const Handle& handle) const override;
 
+	void setInt32(const Handle&, INT32) override;
+	void setDouble(const Handle&, double) override;
+	void setValue(const Handle&, const Handle&) override;
+
 	// Returns IPcmSample::Value object.
 	static Value createValue(const T* sample) {
+		// ValueHelper object for sample type T.
+		// This object is shared by Value objects those have same sample type.
 		static ValueHelper<T> helper;
 		Handle handle = { &helper, (void*)sample };
 		return Value(handle);
@@ -45,7 +55,7 @@ public:
 };
 
 // Returns Pointer of IValueHelper object.
-IValueHelper* getHelper(const IValueHelper::Handle& handle) { return (IValueHelper*)handle.p[0]; }
+inline IValueHelper* getHelper(const IValueHelper::Handle& handle) { return (IValueHelper*)handle.p[0]; }
 
 template<typename T>
 INT32 ValueHelper<T>::toInt32(const Handle& handle) const
@@ -75,6 +85,27 @@ std::string ValueHelper<float>::toString(const Handle& handle) const
 	return s;
 }
 
+template<typename T>
+void ValueHelper<T>::setInt32(const Handle& to, INT32 value)
+{
+	getSample(to) = (T)value;
+}
+
+template<typename T>
+void ValueHelper<T>::setDouble(const Handle& to, double value)
+{
+	getSample(to) = (T)value;
+}
+
+template<typename T>
+void ValueHelper<T>::setValue(const Handle& to, const Handle& value)
+{
+	// Assignment is performed by objects that have same sample type.
+	if(this == getHelper(value)) {
+		getSample(to) = getSample(value);
+	}
+}
+
 }
 
 
@@ -91,6 +122,24 @@ IPcmSample::Value::operator double() const
 IPcmSample::Value::operator std::string() const
 {
 	return getHelper(m_handle)->toString(m_handle);
+}
+
+IPcmSample::Value& IPcmSample::Value::operator =(INT32 value)
+{
+	getHelper(m_handle)->setInt32(m_handle, value);
+	return *this;
+}
+
+IPcmSample::Value& IPcmSample::Value::operator =(double value)
+{
+	getHelper(m_handle)->setDouble(m_handle, value);
+	return *this;
+}
+
+IPcmSample::Value& IPcmSample::Value::operator =(const Value& value)
+{
+	getHelper(m_handle)->setValue(m_handle, value.m_handle);
+	return *this;
 }
 
 template<typename T>
@@ -163,7 +212,23 @@ IPcmSample::Value PcmSampleImpl<T>::getLowValue() const
 template<typename T>
 bool PcmSampleImpl<T>::isValid(size_t index) const
 {
-	return
-		(m_buffer ? true : false) &&
-		(index < m_samplesInBuffer);
+	return (index < m_samplesInBuffer);
+}
+
+template<typename T>
+IPcmSample* createPcmSample(T* buffer, size_t samplesInBuffer)
+{
+	if(!buffer) return nullptr;
+	if(!samplesInBuffer) return nullptr;
+
+	return new PcmSampleImpl<T>((void*)buffer, samplesInBuffer * sizeof(T));
+}
+
+template<typename T>
+IPcmSample* createPcmSample(void* buffer, size_t bytesInBuffer)
+{
+	// Check if buffer size is sample data size boundary.
+	if((bytesInBuffer % sizeof(T)) != 0) return nullptr;
+
+	return createPcmSample((T*)buffer, bytesInBuffer / sizeof(T));
 }

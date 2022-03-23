@@ -34,19 +34,15 @@ class PcmSampleTypedTest : public Test
 {
 public:
 	std::unique_ptr<IPcmSample> testee;
-	std::unique_ptr<T[]> buffer;
 	const T* testSamples;
 	size_t testSamplesCount;
 
 	void SetUp() {
-		// Copy TestSample to buffer of type T.
 		testSamples = TestSample<T>::Samples;
 		testSamplesCount = TestSample<T>::SamplesCount;
-		buffer = std::make_unique<T[]>(testSamplesCount);
-		for(size_t i = 0; i < testSamplesCount; i++) { buffer[i] = testSamples[i]; }
 
 		// Create IPcmSample object using the buffer.
-		testee.reset(createPcmSample<T>(buffer.get(), testSamplesCount * sizeof(T)));
+		testee.reset(createPcmSample(const_cast<T*>(testSamples), testSamplesCount));
 		ASSERT_THAT(testee.get(), Not(nullptr));
 	}
 };
@@ -128,6 +124,32 @@ TYPED_TEST(PcmSampleTypedTest, constants)
 		FAIL() << "Unknown FormatTag: " << formatTag;
 		break;
 	}
+}
+
+TYPED_TEST(PcmSampleTypedTest, assignment)
+{
+	TypeParam dest = (TypeParam)0xab;
+	std::unique_ptr<IPcmSample> destPcmSample(createPcmSample(&dest, 1));
+	ASSERT_THAT(destPcmSample.get(), Not(nullptr));
+	auto destValue = (*destPcmSample)[0];
+	for(size_t i = 0; i < this->testSamplesCount; i++) {
+		auto& testSample = this->testSamples[i];
+
+		// Value::operator=(INT32 or double)
+		destValue = this->testSamples[i];
+		EXPECT_EQ(dest, testSample);
+
+		// Value::operator=(const Value&)
+		dest = (TypeParam)0xcd;
+		destValue = (*this->testee)[i];
+		EXPECT_EQ(dest, testSample);
+	}
+}
+
+TEST(PcmSampleUnitTest, assignment_type_error)
+{
+	//UINT8 dest = 10;
+	//std::unique_ptr<UINT8>
 }
 
 // createPcmSample() with Null IPcmData parameter should return null.

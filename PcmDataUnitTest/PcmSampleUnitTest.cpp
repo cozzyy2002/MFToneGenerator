@@ -11,6 +11,23 @@
 using namespace ::testing;
 
 template<typename T>
+IPcmData::SampleDataType getSampleDataType()
+{
+	switch(sizeof(T)) {
+	case 1:
+		return IPcmData::SampleDataType::PCM_8bits;
+	case 2:
+		return IPcmData::SampleDataType::PCM_16bits;
+	case 3:
+		return IPcmData::SampleDataType::PCM_24bits;
+	case 4:
+		return IPcmData::SampleDataType::IEEE_Float;
+	default:
+		return IPcmData::SampleDataType::Unknown;
+	}
+}
+
+template<typename T>
 struct TestSample
 {
 	static const T Samples[];
@@ -109,16 +126,24 @@ TYPED_TEST(PcmSampleTypedTest, to_string)
 TYPED_TEST(PcmSampleTypedTest, constants)
 {
 	auto formatTag = this->testee->getFormatTag();
+	auto sampleDataType = getSampleDataType<TypeParam>();
+
 	switch(formatTag) {
 	case WAVE_FORMAT_PCM:
-		EXPECT_EQ((INT32)this->testee->getHighValue(), PcmData<TypeParam>::HighValue);
-		EXPECT_EQ((INT32)this->testee->getZeroValue(), PcmData<TypeParam>::ZeroValue);
-		EXPECT_EQ((INT32)this->testee->getLowValue(), PcmData<TypeParam>::LowValue);
+		EXPECT_EQ((INT32)IPcmSample::HighValue<TypeParam>, PcmData<TypeParam>::HighValue);
+		EXPECT_EQ((INT32)IPcmSample::ZeroValue<TypeParam>, PcmData<TypeParam>::ZeroValue);
+		EXPECT_EQ((INT32)IPcmSample::LowValue<TypeParam>, PcmData<TypeParam>::LowValue);
+		EXPECT_EQ((INT32)IPcmSample::getHighValue(sampleDataType), PcmData<TypeParam>::HighValue);
+		EXPECT_EQ((INT32)IPcmSample::getZeroValue(sampleDataType), PcmData<TypeParam>::ZeroValue);
+		EXPECT_EQ((INT32)IPcmSample::getLowValue(sampleDataType), PcmData<TypeParam>::LowValue);
 		break;
 	case WAVE_FORMAT_IEEE_FLOAT:
-		EXPECT_EQ((double)this->testee->getHighValue(), PcmData<TypeParam>::HighValue);
-		EXPECT_EQ((double)this->testee->getZeroValue(), PcmData<TypeParam>::ZeroValue);
-		EXPECT_EQ((double)this->testee->getLowValue(), PcmData<TypeParam>::LowValue);
+		EXPECT_EQ((double)IPcmSample::HighValue<TypeParam>, PcmData<TypeParam>::HighValue);
+		EXPECT_EQ((double)IPcmSample::ZeroValue<TypeParam>, PcmData<TypeParam>::ZeroValue);
+		EXPECT_EQ((double)IPcmSample::LowValue<TypeParam>, PcmData<TypeParam>::LowValue);
+		EXPECT_EQ((double)IPcmSample::getHighValue(sampleDataType), PcmData<TypeParam>::HighValue);
+		EXPECT_EQ((double)IPcmSample::getZeroValue(sampleDataType), PcmData<TypeParam>::ZeroValue);
+		EXPECT_EQ((double)IPcmSample::getLowValue(sampleDataType), PcmData<TypeParam>::LowValue);
 		break;
 	default:
 		FAIL() << "Unknown FormatTag: " << formatTag;
@@ -237,25 +262,13 @@ TYPED_TEST(PcmSampleTypedTest, error_buffer_size)
 	BYTE buffer[11];
 	std::unique_ptr<IPcmSample> testee;
 
-	switch(sizeof(TypeParam)) {
-	case 1:		// UINT8: Boundary error does not occur.
-		return;
-	case 2:		// INT16
-		testee.reset(createPcmSample(IPcmData::SampleDataType::PCM_16bits, buffer, sizeof(buffer)));
-		ASSERT_EQ(testee.get(), nullptr);
-		break;
-	case 3:		// INT24
-		testee.reset(createPcmSample(IPcmData::SampleDataType::PCM_24bits, buffer, sizeof(buffer)));
-		ASSERT_EQ(testee.get(), nullptr);
-		break;
-	case 4:		// float
-		testee.reset(createPcmSample(IPcmData::SampleDataType::IEEE_Float, buffer, sizeof(buffer)));
-		ASSERT_EQ(testee.get(), nullptr);
-		break;
-	default:
-		FAIL() << "Unknown sample type: " << typeid(TypeParam).name();
-		break;
-	}
+	auto sampleDataType = getSampleDataType<TypeParam>();
+
+	// Boundary error does not occur when PCM_8bits.
+	if(sampleDataType == IPcmData::SampleDataType::PCM_8bits) return;
+
+	testee.reset(createPcmSample(sampleDataType, buffer, sizeof(buffer)));
+	ASSERT_EQ(testee.get(), nullptr);
 
 	testee.reset(createPcmSample<TypeParam>(buffer, sizeof(buffer)));
 	ASSERT_EQ(testee.get(), nullptr);

@@ -23,6 +23,12 @@
  *		double()		Returns as the sample is.		Returns as the sample is.
  *						(Some errors may be observed)
  *		std::string()	Returns decimal string.			Returns floating-point string.
+ *
+ * CAUTION
+ *   Do not write to the Value object copied from const Value or write access violation occurs.
+ *   Example:
+ *      auto value = IPcmSample::HighValue<INT16>;
+ *      value = 0;   <--- write access violation.
  */
 class IPcmSample
 {
@@ -54,14 +60,19 @@ public:
 
 	virtual IPcmData* getPcmData() const = 0;
 	virtual Value operator[](size_t index) const = 0;
-	virtual const Value& getHighValue() const = 0;
-	virtual const Value& getZeroValue() const = 0;
-	virtual const Value& getLowValue() const = 0;
 	virtual bool isValid(size_t index) const = 0;
 
 	// Returns audio format type used in WAVEFORMAT structure.
 	// WAVE_FORMAT_PCM or WAVE_FORMAT_IEEE_FLOAT.
 	virtual WORD getFormatTag() const = 0;
+
+	static const Value& getHighValue(IPcmData::SampleDataType);
+	static const Value& getZeroValue(IPcmData::SampleDataType);
+	static const Value& getLowValue(IPcmData::SampleDataType);
+
+	template<typename T> static const Value& HighValue;
+	template<typename T> static const Value& ZeroValue;
+	template<typename T> static const Value& LowValue;
 };
 
 // Creates IPcmSample object to access internal buffer of IPcmData object that contains 1 cycle samples.

@@ -182,9 +182,6 @@ public:
 
 	virtual IPcmData* getPcmData() const override { return m_pcmData; }
 	virtual Value operator[](size_t index) const override;
-	virtual const Value& getHighValue() const override;
-	virtual const Value& getZeroValue() const override;
-	virtual const Value& getLowValue() const override;
 	virtual bool isValid(size_t index) const override;
 
 	virtual WORD getFormatTag() const override { return PcmData<T>::FormatTag; }
@@ -220,27 +217,6 @@ IPcmSample::Value PcmSampleImpl<T>::operator[](size_t index) const
 	return isValid(index) ? 
 		ValueHelper<T>::createValue(&m_buffer[index]) :
 		Value();
-}
-
-template<typename T>
-const IPcmSample::Value& PcmSampleImpl<T>::getHighValue() const
-{
-	static auto value = ValueHelper<T>::createValue(&PcmData<T>::HighValue);
-	return value;
-}
-
-template<typename T>
-const IPcmSample::Value& PcmSampleImpl<T>::getZeroValue() const
-{
-	static auto value = ValueHelper<T>::createValue(&PcmData<T>::ZeroValue);
-	return value;
-}
-
-template<typename T>
-const IPcmSample::Value& PcmSampleImpl<T>::getLowValue() const
-{
-	static auto value = ValueHelper<T>::createValue(&PcmData<T>::LowValue);
-	return value;
 }
 
 template<typename T>

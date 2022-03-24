@@ -81,9 +81,9 @@ int main(int argc, char* argv[])
 			<< "," << pcmData->getBlockAlign()
 			<< "," << pcmData->getSamplesPerCycle()
 			<< "," << pcmData->getSampleBufferSize(0)
-			<< "," << (std::string)pcmSample->getHighValue()
-			<< "," << (std::string)pcmSample->getZeroValue()
-			<< "," << (std::string)pcmSample->getLowValue()
+			<< "," << (std::string)IPcmSample::getHighValue(pcmData->getSampleDataType())
+			<< "," << (std::string)IPcmSample::getZeroValue(pcmData->getSampleDataType())
+			<< "," << (std::string)IPcmSample::getLowValue(pcmData->getSampleDataType())
 			<< std::endl;
 	}
 	std::cout << std::endl;

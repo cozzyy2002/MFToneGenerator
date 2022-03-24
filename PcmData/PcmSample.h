@@ -54,9 +54,9 @@ public:
 
 	virtual IPcmData* getPcmData() const = 0;
 	virtual Value operator[](size_t index) const = 0;
-	virtual Value getHighValue() const = 0;
-	virtual Value getZeroValue() const = 0;
-	virtual Value getLowValue() const = 0;
+	virtual const Value& getHighValue() const = 0;
+	virtual const Value& getZeroValue() const = 0;
+	virtual const Value& getLowValue() const = 0;
 	virtual bool isValid(size_t index) const = 0;
 
 	// Returns audio format type used in WAVEFORMAT structure.

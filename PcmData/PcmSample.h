@@ -35,7 +35,8 @@ public:
 		// Opaque object to access sample data.
 		struct Handle { void* p[2]; };
 
-		Value(Handle& handle) : m_handle(handle) {}
+		Value();
+		Value(Handle& handle);
 
 		operator INT32() const;
 		operator double() const;

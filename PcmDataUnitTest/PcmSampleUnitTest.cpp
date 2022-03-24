@@ -83,7 +83,7 @@ TYPED_TEST(PcmSampleTypedTest, to_int_float)
 }
 
 // Test for std::string operator of IPcmSample::Value class.
-// The operator should return string that is parsed to the value as same as sample data passed to createPcmSample() functio.
+// The operator should return string that is parsed to the value as same as sample data passed to createPcmSample() function.
 TYPED_TEST(PcmSampleTypedTest, to_string)
 {
 	for(size_t i = 0; i < this->testSamplesCount; i++) {
@@ -146,10 +146,47 @@ TYPED_TEST(PcmSampleTypedTest, assignment)
 	}
 }
 
-TEST(PcmSampleUnitTest, assignment_type_error)
+TYPED_TEST(PcmSampleTypedTest, assignment_type_error)
 {
-	//UINT8 dest = 10;
-	//std::unique_ptr<UINT8>
+	const TypeParam expected = 10;
+	TypeParam dest = expected;
+	std::unique_ptr<IPcmSample> destSamples(createPcmSample(&dest, 1));
+	auto destValue = (*destSamples)[0];
+
+	std::unique_ptr<IPcmSample> sourceSamples;
+
+	switch(sizeof(TypeParam)) {
+	case 1:	// INT16 can not assign to UINT8
+		{
+			static INT16 source = 0;
+			sourceSamples.reset(createPcmSample(&source, 1));
+		}
+		break;
+	case 2:	// INT24 can not assign to INT16
+		{
+			static INT24 source = 0;
+			sourceSamples.reset(createPcmSample(&source, 1));
+		}
+		break;
+	case 3:	// float can not assign to INT24
+		{
+			static float source = 0;
+			sourceSamples.reset(createPcmSample(&source, 1));
+		}
+		break;
+	case 4:	// UINT8 can not assign to float
+		{
+			static UINT8 source = 0;
+			sourceSamples.reset(createPcmSample(&source, 1));
+		}
+		break;
+	}
+
+	ASSERT_THAT(sourceSamples.get(), Not(nullptr));
+
+	auto sourceValue = (*sourceSamples)[0];
+	destValue = sourceValue;
+	ASSERT_EQ(dest, expected);
 }
 
 // createPcmSample() with Null IPcmData parameter should return null.
@@ -168,7 +205,7 @@ TEST(PcmSampleUnitTest, IPcmData_not_generated)
 	ASSERT_EQ(testee.get(), nullptr);
 }
 
-// createPcmSample() with Null unknown sample data type parameter should return null.
+// createPcmSample() with unknown sample data type parameter should return null.
 TEST(PcmSampleUnitTest, error_unknown_data_type)
 {
 	BYTE buffer[10];
@@ -179,17 +216,47 @@ TEST(PcmSampleUnitTest, error_unknown_data_type)
 // createPcmSample() with Null buffer parameter should return null.
 TEST(PcmSampleUnitTest, error_buffer_null)
 {
-	std::unique_ptr<IPcmSample> testee(createPcmSample<INT16>(nullptr, 10));
+	// Buffer size that fits all sample data size.
+	static const size_t bufferSize = 4;
+	std::unique_ptr<IPcmSample> testee;
+
+	testee.reset(createPcmSample<INT16>(nullptr, bufferSize));
+	ASSERT_EQ(testee.get(), nullptr);
+
+	testee.reset(createPcmSample((INT24*)nullptr, bufferSize));
+	ASSERT_EQ(testee.get(), nullptr);
+
+	testee.reset(createPcmSample(IPcmData::SampleDataType::IEEE_Float, nullptr, bufferSize));
 	ASSERT_EQ(testee.get(), nullptr);
 }
 
 // createPcmSample() with illegal boundary buffer size parameter should return null.
 TYPED_TEST(PcmSampleTypedTest, error_buffer_size)
 {
-	if(sizeof(TypeParam) == 1) return;
-
 	// Illegal buffer size for the samples other than UINT8
 	BYTE buffer[11];
-	std::unique_ptr<IPcmSample> testee(createPcmSample<TypeParam>(buffer, sizeof(buffer)));
+	std::unique_ptr<IPcmSample> testee;
+
+	switch(sizeof(TypeParam)) {
+	case 1:		// UINT8: Boundary error does not occur.
+		return;
+	case 2:		// INT16
+		testee.reset(createPcmSample(IPcmData::SampleDataType::PCM_16bits, buffer, sizeof(buffer)));
+		ASSERT_EQ(testee.get(), nullptr);
+		break;
+	case 3:		// INT24
+		testee.reset(createPcmSample(IPcmData::SampleDataType::PCM_24bits, buffer, sizeof(buffer)));
+		ASSERT_EQ(testee.get(), nullptr);
+		break;
+	case 4:		// float
+		testee.reset(createPcmSample(IPcmData::SampleDataType::IEEE_Float, buffer, sizeof(buffer)));
+		ASSERT_EQ(testee.get(), nullptr);
+		break;
+	default:
+		FAIL() << "Unknown sample type: " << typeid(TypeParam).name();
+		break;
+	}
+
+	testee.reset(createPcmSample<TypeParam>(buffer, sizeof(buffer)));
 	ASSERT_EQ(testee.get(), nullptr);
 }

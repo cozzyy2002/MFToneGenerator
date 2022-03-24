@@ -54,6 +54,27 @@ public:
 	T& getSample(const Handle& handle) const { return *(T*)handle.p[1]; }
 };
 
+// ValueHelper class used to create Value object by default constructor.
+// Methods of this class:
+//   ignore it's parameter.
+//   return default value of each type T.
+//   set nothing.
+class NullValueHelper : public IValueHelper
+{
+public:
+	INT32 toInt32(const Handle&) const override { return INT32(); }
+	double toDouble(const Handle&) const override { return double(); }
+	std::string toString(const Handle& handle) const override { return ""; }
+
+	void setInt32(const Handle&, INT32) override {}
+	void setDouble(const Handle&, double) override {}
+	void setValue(const Handle&, const Handle&) override {}
+
+	static NullValueHelper instance;
+};
+
+/*static*/ NullValueHelper NullValueHelper::instance;
+
 // Returns Pointer of IValueHelper object.
 inline IValueHelper* getHelper(const IValueHelper::Handle& handle) { return (IValueHelper*)handle.p[0]; }
 
@@ -108,6 +129,16 @@ void ValueHelper<T>::setValue(const Handle& to, const Handle& value)
 
 }
 
+// Default Value constructor using NullValueHelper.
+IPcmSample::Value::Value()
+	: m_handle{ &NullValueHelper::instance, nullptr }
+{
+}
+
+IPcmSample::Value::Value(Handle& handle)
+	: m_handle(handle)
+{
+}
 
 IPcmSample::Value::operator INT32() const
 {
@@ -186,9 +217,9 @@ PcmSampleImpl<T>::PcmSampleImpl(void* buffer, size_t bytesInBuffer)
 template<typename T>
 IPcmSample::Value PcmSampleImpl<T>::operator[](size_t index) const
 {
-	auto pValue = isValid(index) ? &m_buffer[index] : &PcmData<T>::ZeroValue;
-
-	return ValueHelper<T>::createValue(pValue);
+	return isValid(index) ? 
+		ValueHelper<T>::createValue(&m_buffer[index]) :
+		Value();
 }
 
 template<typename T>

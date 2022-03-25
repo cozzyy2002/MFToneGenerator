@@ -23,7 +23,13 @@
  *		double()		Returns as the sample is.		Returns as the sample is.
  *						(Some errors may be observed)
  *		std::string()	Returns decimal string.			Returns floating-point string.
- *
+ * 
+ *		isFloat()		Returns false.					Returns true;
+ *		getInt32()		Returns as the sample is.		Returns (sample * 0x7fffff) as INT32.
+ *		setInt32()		Sets as the sample is.			Sets (INT32 value / 0x7fffff) as float.
+ * 
+ * Where 0x7fffff is positive max value of INT24 type.
+ * 
  * CAUTION
  *   Do not write to the Value object copied from const Value or write access violation occurs.
  *   Example:
@@ -51,6 +57,10 @@ public:
 		Value& operator =(INT32);
 		Value& operator =(double);
 		Value& operator =(const Value&);
+
+		bool isFloat() const;
+		INT32 getInt32() const;
+		void setInt32(INT32);
 
 	protected:
 		const Handle m_handle;

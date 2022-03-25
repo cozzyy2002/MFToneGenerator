@@ -2,6 +2,7 @@
 
 #include "PcmSample.h"
 #include "PcmDataImpl.h"
+#include "INT24.h"
 
 #include <atlbase.h>
 
@@ -22,6 +23,8 @@ public:
 	virtual void setInt32(const Handle&, INT32) = 0;
 	virtual void setDouble(const Handle&, double) = 0;
 	virtual void setValue(const Handle&, const Handle&) = 0;
+
+	virtual bool isFloat() const = 0;
 };
 
 // Implementation of IValueHelper for sample data of type T.
@@ -40,6 +43,8 @@ public:
 	void setInt32(const Handle&, INT32) override;
 	void setDouble(const Handle&, double) override;
 	void setValue(const Handle&, const Handle&) override;
+
+	bool isFloat() const override;
 
 	// Returns IPcmSample::Value object.
 	static Value createValue(const T* sample) {
@@ -69,6 +74,8 @@ public:
 	void setInt32(const Handle&, INT32) override {}
 	void setDouble(const Handle&, double) override {}
 	void setValue(const Handle&, const Handle&) override {}
+
+	bool isFloat() const override { return false; }
 
 	static NullValueHelper instance;
 };
@@ -127,6 +134,18 @@ void ValueHelper<T>::setValue(const Handle& to, const Handle& value)
 	}
 }
 
+template<typename T>
+bool ValueHelper<T>::isFloat() const
+{
+	return false;
+}
+
+template<>
+bool ValueHelper<float>::isFloat() const
+{
+	return true;
+}
+
 }
 
 // Default Value constructor using NullValueHelper.
@@ -171,6 +190,30 @@ IPcmSample::Value& IPcmSample::Value::operator =(const Value& value)
 {
 	getHelper(m_handle)->setValue(m_handle, value.m_handle);
 	return *this;
+}
+
+
+bool IPcmSample::Value::isFloat() const
+{
+	return getHelper(m_handle)->isFloat();
+}
+
+INT32 IPcmSample::Value::getInt32() const
+{
+	if(isFloat()) {
+		return (INT32)(this->operator double() * INT24::MaxValue);
+	} else {
+		return this->operator INT32();
+	}
+}
+
+void IPcmSample::Value::setInt32(INT32 value)
+{
+	if(isFloat()) {
+		this->operator=((double)value / INT24::MaxValue);
+	} else {
+		this->operator=(value);
+	}
 }
 
 template<typename T>

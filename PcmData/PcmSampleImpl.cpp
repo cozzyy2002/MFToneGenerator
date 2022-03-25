@@ -1,5 +1,4 @@
 #include "PcmSampleImpl.h"
-#include "INT24.h"
 
 IPcmSample* createPcmSample(IPcmData* pcmData)
 {

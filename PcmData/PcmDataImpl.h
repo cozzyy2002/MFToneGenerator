@@ -10,6 +10,9 @@
 #include <Windows.h>
 #include <mmreg.h>
 
+template<typename T>
+class PcmSampleImpl;
+
 class IWaveGenerator
 {
 public:
@@ -54,6 +57,9 @@ protected:
 template<typename T>
 class PcmData : public IPcmData
 {
+	template<typename TT>
+	friend class PcmSampleImpl;
+
 public:
 	PcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
 		: m_samplesPerSec(samplesPerSec), m_channels(channels)

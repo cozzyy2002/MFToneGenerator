@@ -173,10 +173,13 @@
     <ClInclude Include="INT24.h" />
     <ClInclude Include="PcmData.h" />
     <ClInclude Include="PcmDataImpl.h" />
+    <ClInclude Include="PcmSample.h" />
+    <ClInclude Include="PcmSampleImpl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="INT24.cpp" />
     <ClCompile Include="PcmDataImpl.cpp" />
+    <ClCompile Include="PcmSampleImpl.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

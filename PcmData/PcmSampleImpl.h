@@ -221,11 +221,12 @@ class PcmSampleImpl : public IPcmSample
 {
 public:
 	PcmSampleImpl(IPcmData* pcmData);
-	PcmSampleImpl(void* buffer, size_t bytesInBuffer);
+	PcmSampleImpl(T* buffer, size_t sampleCount);
 
 	virtual IPcmData* getPcmData() const override { return m_pcmData; }
 	virtual Value operator[](size_t index) const override;
 	virtual bool isValid(size_t index) const override;
+	virtual size_t getSampleCount() const override;
 
 	virtual WORD getFormatTag() const override { return PcmData<T>::FormatTag; }
 
@@ -233,24 +234,24 @@ protected:
 	CComPtr<PcmData<T>> m_pcmData;
 
 	T* m_buffer;
-	size_t m_samplesInBuffer;
+	size_t m_sampleCount;
 };
 
 template<typename T>
 PcmSampleImpl<T>::PcmSampleImpl(IPcmData* pcmData)
 	: m_pcmData((PcmData<T>*)pcmData)
-	, m_buffer(nullptr), m_samplesInBuffer(0)
+	, m_buffer(nullptr), m_sampleCount(0)
 {
 	if(m_pcmData) {
 		m_buffer = m_pcmData->m_cycleData.get();
-		m_samplesInBuffer = m_pcmData->getSamplesPerCycle();
+		m_sampleCount = m_pcmData->getSamplesPerCycle();
 	}
 }
 
 template<typename T>
-PcmSampleImpl<T>::PcmSampleImpl(void* buffer, size_t bytesInBuffer)
-	: m_buffer((T*)buffer)
-	, m_samplesInBuffer(bytesInBuffer / sizeof(T))
+PcmSampleImpl<T>::PcmSampleImpl(T* buffer, size_t sampleCount)
+	: m_buffer(buffer)
+	, m_sampleCount(sampleCount)
 {
 }
 
@@ -265,23 +266,29 @@ IPcmSample::Value PcmSampleImpl<T>::operator[](size_t index) const
 template<typename T>
 bool PcmSampleImpl<T>::isValid(size_t index) const
 {
-	return (index < m_samplesInBuffer);
+	return (index < m_sampleCount);
 }
 
 template<typename T>
-IPcmSample* createPcmSample(T* buffer, size_t samplesInBuffer)
+size_t PcmSampleImpl<T>::getSampleCount() const
+{
+	return m_sampleCount;
+}
+
+template<typename T>
+IPcmSample* createPcmSample(T* buffer, size_t sampleCount)
 {
 	if(!buffer) return nullptr;
-	if(!samplesInBuffer) return nullptr;
+	if(!sampleCount) return nullptr;
 
-	return new PcmSampleImpl<T>((void*)buffer, samplesInBuffer * sizeof(T));
+	return new PcmSampleImpl<T>(buffer, sampleCount);
 }
 
 template<typename T>
-IPcmSample* createPcmSample(void* buffer, size_t bytesInBuffer)
+IPcmSample* createPcmSample(void* buffer, size_t size)
 {
 	// Check if buffer size is sample data size boundary.
-	if((bytesInBuffer % sizeof(T)) != 0) return nullptr;
+	if((size % sizeof(T)) != 0) return nullptr;
 
-	return createPcmSample((T*)buffer, bytesInBuffer / sizeof(T));
+	return createPcmSample((T*)buffer, size / sizeof(T));
 }

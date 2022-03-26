@@ -71,6 +71,7 @@ public:
 	virtual IPcmData* getPcmData() const = 0;
 	virtual Value operator[](size_t index) const = 0;
 	virtual bool isValid(size_t index) const = 0;
+	virtual size_t getSampleCount() const = 0;
 
 	// Returns audio format type used in WAVEFORMAT structure.
 	// WAVE_FORMAT_PCM or WAVE_FORMAT_IEEE_FLOAT.
@@ -94,13 +95,19 @@ IPcmSample* createPcmSample(IPcmData* pcmData);
 // Creates IPcmSample object to access buffer specified as arguments.
 //   Note:
 //		sampleBuffer should be available in the lifetime of IPcmSample object.
-//		bytesInBuffer should be boundary of sample data size.
+//		size should be boundary of sample data size.
 //		You can use the value returned from IPcmData::getSampleBufferSize(duration),
 //		if samples in the buffer were retrieved by IPcmData::copyTo() method.
-IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffer, size_t bytesInBuffer);
+IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffer, size_t size);
 
 template<typename T>
-IPcmSample* createPcmSample(T* buffer, size_t samplesInBuffer);
+IPcmSample* createPcmSample(T* buffer, size_t sampleCount);
 
 template<typename T>
-IPcmSample* createPcmSample(void* buffer, size_t bytesInBuffer);
+IPcmSample* createPcmSample(void* buffer, size_t size);
+
+template<typename T, size_t sampleCount>
+IPcmSample* createPcmSample(T (&buffer)[sampleCount])
+{
+	return createPcmSample(buffer, sampleCount);
+}

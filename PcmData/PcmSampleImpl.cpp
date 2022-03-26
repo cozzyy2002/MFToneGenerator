@@ -18,17 +18,17 @@ IPcmSample* createPcmSample(IPcmData* pcmData)
 	}
 }
 
-IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffer, size_t bytesInBuffer)
+IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffer, size_t size)
 {
 	switch(sampleDataType) {
 	case IPcmData::SampleDataType::PCM_8bits:
-		return createPcmSample<UINT8>(buffer, bytesInBuffer);
+		return createPcmSample<UINT8>(buffer, size);
 	case IPcmData::SampleDataType::PCM_16bits:
-		return createPcmSample<INT16>(buffer, bytesInBuffer);
+		return createPcmSample<INT16>(buffer, size);
 	case IPcmData::SampleDataType::PCM_24bits:
-		return createPcmSample<INT24>(buffer, bytesInBuffer);
+		return createPcmSample<INT24>(buffer, size);
 	case IPcmData::SampleDataType::IEEE_Float:
-		return createPcmSample<float>(buffer, bytesInBuffer);
+		return createPcmSample<float>(buffer, size);
 	default: return nullptr;
 	}
 }

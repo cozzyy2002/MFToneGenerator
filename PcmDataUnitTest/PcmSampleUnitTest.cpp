@@ -78,6 +78,14 @@ TYPED_TEST(PcmSampleTypedTest, isValid)
 	EXPECT_FALSE(this->testee->isValid(this->testSamplesCount));
 }
 
+TYPED_TEST(PcmSampleTypedTest, buffer_size)
+{
+	TypeParam buffer[3];
+	this->testee.reset(createPcmSample(buffer));
+	ASSERT_THAT(this->testee.get(), Not(nullptr));
+	ASSERT_EQ(this->testee->getSampleCount(), ARRAYSIZE(buffer));
+}
+
 // Test for INT32/double operator of IPcmSample::Value class.
 // The operator should return value as same as sample data passed to createPcmSample() functio.
 TYPED_TEST(PcmSampleTypedTest, to_int_float)

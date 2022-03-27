@@ -155,6 +155,7 @@
   <ItemGroup>
     <ClCompile Include="INT24UnitTest.cpp" />
     <ClCompile Include="PcmDataEnumeratorUnitTest.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="PcmDataUnitTest.cpp" />
     <ClCompile Include="PcmSampleUnitTest.cpp" />
   </ItemGroup>

@@ -50,7 +50,7 @@ public:
 			auto& wp(std::get<1>(params.param));
 
 			char buff[100];
-			auto len = sprintf_s(buff, "%02d_%s_%s", params.index, sp.name, wp.name);
+			auto len = sprintf_s(buff, "%02d_%s_%s", params.index, wp.name, sp.name);
 			std::replace(buff, &buff[len], ' ', '_');
 			return buff;
 		}

@@ -40,6 +40,10 @@ template<> const float PcmData<float>::LowValue = -0.8f;
 #pragma endregion
 
 #pragma region Implementation of PcmDataEnumerator
+
+/*static*/ const float PcmDataEnumerator::DefaultDuty = 0.5f;
+/*static*/ const float PcmDataEnumerator::DefaultPeakPosition = 0.5f;
+
 static const PcmDataEnumerator::SampleDataTypeProperty sampleDataTypeProperties[] = {
 	{ WaveGenerator<UINT8>::SampleDataType, WaveGenerator<UINT8>::SampleDataTypeName, PcmData<UINT8>::FormatTag, sizeof(UINT8) * 8 },
 	{ WaveGenerator<INT16>::SampleDataType, WaveGenerator<INT16>::SampleDataTypeName, PcmData<INT16>::FormatTag, sizeof(INT16) * 8 },
@@ -48,9 +52,9 @@ static const PcmDataEnumerator::SampleDataTypeProperty sampleDataTypeProperties[
 };
 
 static const PcmDataEnumerator::WaveFormProperty waveGeneratorProperties[] = {
-	{ IPcmData::WaveFormType::SquareWave, IWaveGenerator::SquareWaveFormTypeName, createSquareWaveGenerator, PcmDataEnumerator::FactoryParameter::Duty },
+	{ IPcmData::WaveFormType::SquareWave, IWaveGenerator::SquareWaveFormTypeName, createSquareWaveGenerator, PcmDataEnumerator::FactoryParameter::Duty, PcmDataEnumerator::DefaultDuty },
 	{ IPcmData::WaveFormType::SineWave, IWaveGenerator::SineWaveFormTypeName, [](IPcmData::SampleDataType type, float param) { return createSineWaveGenerator(type); }, PcmDataEnumerator::FactoryParameter::None },
-	{ IPcmData::WaveFormType::TriangleWave, IWaveGenerator::TriangleWaveFormTypeName, createTriangleWaveGenerator, PcmDataEnumerator::FactoryParameter::PeakPosition },
+	{ IPcmData::WaveFormType::TriangleWave, IWaveGenerator::TriangleWaveFormTypeName, createTriangleWaveGenerator, PcmDataEnumerator::FactoryParameter::PeakPosition, PcmDataEnumerator::DefaultPeakPosition },
 };
 
 /*static*/ const std::vector<PcmDataEnumerator::SampleDataTypeProperty>& PcmDataEnumerator::getSampleDatatypeProperties()

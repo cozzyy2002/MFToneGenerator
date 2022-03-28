@@ -30,31 +30,32 @@ public:
 	INT32 highValue;
 	INT32 zeroValue;
 	INT32 lowValue;
-	INT32 height;
+	INT32 positiveHeight;
+	INT32 negativeHeight;
 
 	PcmDataUnitTest()
 		: sp(std::get<0>(GetParam())), wp(std::get<1>(GetParam()))
 		, samplesPerSec(std::get<2>(GetParam())), channels(std::get<3>(GetParam()))
 		, key(std::get<4>(GetParam())), phaseShift(std::get<5>(GetParam()))
-	{}
-
-	void SetUp() {
+	{
 		highValue = IPcmSample::getHighValue(sp.type).getInt32();
 		zeroValue = IPcmSample::getZeroValue(sp.type).getInt32();
 		lowValue = IPcmSample::getLowValue(sp.type).getInt32();
-		height = highValue - zeroValue;
+		positiveHeight = highValue - zeroValue;
+		negativeHeight = zeroValue - lowValue;
 	}
 
-	void getExpectedTotal(size_t sampleCount, INT32& unsignedTotal) {
+	void getExpectedTotal(size_t sampleCount, double& unsignedTotal) {
+		double squreTotal = (double)(positiveHeight + negativeHeight) * sampleCount / 2 / channels;
 		switch(wp.type) {
 		case IPcmData::WaveFormType::SquareWave:
-			unsignedTotal = height * sampleCount;
+			unsignedTotal = squreTotal;
 			break;
 		case IPcmData::WaveFormType::SineWave:
-			unsignedTotal = (INT32)(height * sampleCount * 2 / 3.141592);
+			unsignedTotal = (double)squreTotal * 2 / 3.141592;
 			break;
 		case IPcmData::WaveFormType::TriangleWave:
-			unsignedTotal = height * sampleCount / 2;
+			unsignedTotal = squreTotal / 2;
 			break;
 		default:
 			FAIL() << "Unknown wave form: " << (int)wp.type;
@@ -62,13 +63,13 @@ public:
 		}
 	}
 
-	void getTotal(IPcmSample* pcmSample, INT32& unsignedTotal, INT32& signedTotal) {
+	void getTotal(IPcmSample* pcmSample, WORD channel, double& unsignedTotal, double& signedTotal) {
 		unsignedTotal = signedTotal = 0;
-		auto count = pcmSample->getSampleCount();
-		for(size_t i = 0; i < count; i++) {
-			auto value = (*pcmSample)[i].getInt32();
-			unsignedTotal += std::abs(value) - zeroValue;
-			signedTotal += value - zeroValue;
+		auto sampleCount = pcmSample->getSampleCount();
+		for(size_t i = 0; i < sampleCount; i += channels) {
+			auto value = (*pcmSample)[i + channel].getInt32() - zeroValue;
+			unsignedTotal += std::abs(value);
+			signedTotal += value;
 		}
 	}
 
@@ -95,35 +96,43 @@ public:
 TEST_P(PcmDataUnitTest, total)
 {
 	// Create IPcmData object and generate 1-cycle PCM samples.
-	auto gen = wp.factory(sp.type, 0);
+	auto gen = wp.factory(sp.type, wp.defaultPrameter);
 	CComPtr<IPcmData> pcmData = createPcmData(samplesPerSec, channels, gen);
 	ASSERT_THAT(pcmData, Not(nullptr));
 	pcmData->generate(key, 1.0f, phaseShift);
-	auto bufferSize = pcmData->getSampleBufferSize(0);
-	auto buffer = std::make_unique<BYTE[]>(bufferSize);
 	auto sampleCount = pcmData->getSamplesPerCycle();
 	auto bytesPerSample = pcmData->getBitsPerSample() / 8;
 	ASSERT_EQ(pcmData->getBlockAlign(), bytesPerSample * channels);
-	ASSERT_EQ(bufferSize / bytesPerSample, sampleCount);
 
 	std::unique_ptr<IPcmSample> pcmSample;
-	INT32 expectedTotal, unsignedTotal, signedTotal;
+	double expectedTotal, unsignedTotal, signedTotal;
 	getExpectedTotal(sampleCount, expectedTotal);
 
 	// Test value of Samples in the IPcmData.
 	pcmSample.reset(createPcmSample(pcmData));
 	ASSERT_THAT(pcmSample.get(), Not(nullptr));
-	getTotal(pcmSample.get(), unsignedTotal, signedTotal);
-	EXPECT_EQ(unsignedTotal, expectedTotal);
-	EXPECT_EQ(signedTotal, 0);
+	ASSERT_EQ(pcmSample->getSampleCount(), sampleCount);
+	for(WORD ch = 0; ch < channels; ch++) {
+		getTotal(pcmSample.get(), ch, unsignedTotal, signedTotal);
+		EXPECT_NEAR(unsignedTotal, expectedTotal, positiveHeight + negativeHeight)	<< "PcmData: Unsigned total: channel=" << ch;
+		EXPECT_NEAR(signedTotal, 0, positiveHeight)									<< "PcmData: Signed total: chennel=" << ch;
+	}
+
+	// Copy samples generated to the buffer.
+	auto bufferSize = pcmData->getSampleBufferSize(0);
+	ASSERT_EQ(bufferSize / bytesPerSample, sampleCount);
+	auto buffer = std::make_unique<BYTE[]>(bufferSize);
+	ASSERT_HRESULT_SUCCEEDED(pcmData->copyTo(buffer.get(), bufferSize));
 
 	// Test value of Samples copied to the buffer.
-	ASSERT_HRESULT_SUCCEEDED(pcmData->copyTo(buffer.get(), bufferSize));
 	pcmSample.reset(createPcmSample(sp.type, buffer.get(), bufferSize));
 	ASSERT_THAT(pcmSample.get(), Not(nullptr));
-	getTotal(pcmSample.get(), unsignedTotal, signedTotal);
-	EXPECT_EQ(unsignedTotal, expectedTotal);
-	EXPECT_EQ(signedTotal, 0);
+	ASSERT_EQ(pcmSample->getSampleCount(), sampleCount);
+	for(WORD ch = 0; ch < channels; ch++) {
+		getTotal(pcmSample.get(), ch, unsignedTotal, signedTotal);
+		EXPECT_NEAR(unsignedTotal, expectedTotal, positiveHeight + negativeHeight)	<< "Copied buffer: Unsigned total: channel=" << ch;
+		EXPECT_NEAR(signedTotal, 0, positiveHeight)									<< "Copied buffer: Signed total: channel=" << ch;
+	}
 }
 
 INSTANTIATE_TEST_SUITE_P(all, PcmDataUnitTest,
@@ -131,7 +140,7 @@ INSTANTIATE_TEST_SUITE_P(all, PcmDataUnitTest,
 		ValuesIn(PcmDataEnumerator::getSampleDatatypeProperties()),
 		ValuesIn(PcmDataEnumerator::getWaveFormProperties()),
 		Values(44100/*, 32000*/),										// Samples/Second
-		Values(1/*, 2, 4*/),											// Channels
+		Values(1, 2/*, 4 */ ),											// Channels
 		Values(440, 600),												// Key
 		Values(0, 0.2/*, 0.5*/)											// Phase shift
 	),

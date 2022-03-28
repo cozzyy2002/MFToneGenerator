@@ -70,6 +70,9 @@ public:
 		PeakPosition,	// TriangleWaveGenerator
 	};
 
+	static const float DefaultDuty;
+	static const float DefaultPeakPosition;
+
 	using Factory = IWaveGenerator* (*)(IPcmData::SampleDataType, float);
 
 	struct WaveFormProperty {
@@ -77,6 +80,7 @@ public:
 		const char* name;
 		Factory factory;
 		FactoryParameter parameter;
+		float defaultPrameter;
 	};
 
 	static const std::vector<SampleDataTypeProperty>& getSampleDatatypeProperties();
@@ -85,9 +89,9 @@ public:
 
 // Factory functions.
 IPcmData* createPcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
-IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty = 0.5f);
+IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty = PcmDataEnumerator::DefaultDuty);
 IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType);
-IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition = 0.5f);
+IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition = PcmDataEnumerator::DefaultPeakPosition);
 
 
 class DoNotCopy

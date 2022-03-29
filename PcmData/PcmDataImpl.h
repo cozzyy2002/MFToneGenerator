@@ -134,6 +134,7 @@ HRESULT PcmData<T>::copyTo(void* destBuffer, size_t destSize)
 	HR_ASSERT(m_cycleData, E_ILLEGAL_METHOD_CALL);
 
 	HR_ASSERT(destBuffer, E_POINTER);
+	HR_ASSERT(0 < destSize, ERROR_INCORRECT_SIZE);
 	HR_ASSERT((destSize % getBlockAlign()) == 0, E_BOUNDS);
 
 	for(DWORD destPosition = 0; destPosition < destSize; destPosition += sizeof(T)) {

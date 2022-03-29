@@ -67,7 +67,7 @@ public:
 		, m_samplesPerCycle(0), m_currentPosition(0)
 		, m_unknownImpl(this) {}
 
-	virtual HRESULT copyTo(BYTE* destBuffer, size_t destSize) override;
+	virtual HRESULT copyTo(void* destBuffer, size_t destSize) override;
 	virtual void generate(float key, float level, float phaseShift) override;
 
 	virtual SampleDataType getSampleDataType() const override { return m_waveGenerator->getSampleDataType(); }
@@ -84,9 +84,18 @@ public:
 	virtual const char* getSampleTypeName() const { return typeid(T).name(); }
 	virtual size_t getSamplesPerCycle() const { return m_samplesPerCycle; }
 	virtual size_t getSampleBufferSize(size_t duration) const {
-		return (0 < duration)
-			? m_samplesPerSec * getBlockAlign() * duration / 1000
-			: m_samplesPerCycle * getBlockAlign();
+		size_t ret;
+		if(0 < duration) {
+			auto ba = getBlockAlign();
+			ret = m_samplesPerSec * ba * duration / 1000;
+			auto remain = ret % ba;
+			if(remain) {
+				ret += (ba - remain);
+			}
+		} else {
+			ret = m_samplesPerCycle * sizeof(T);
+		}
+		return ret;
 	}
 
 	static const WORD FormatTag;
@@ -117,7 +126,7 @@ protected:
 };
 
 template<typename T>
-HRESULT PcmData<T>::copyTo(BYTE* destBuffer, size_t destSize)
+HRESULT PcmData<T>::copyTo(void* destBuffer, size_t destSize)
 {
 	CriticalSection lock(m_cycleDataLock);
 
@@ -125,10 +134,10 @@ HRESULT PcmData<T>::copyTo(BYTE* destBuffer, size_t destSize)
 	HR_ASSERT(m_cycleData, E_ILLEGAL_METHOD_CALL);
 
 	HR_ASSERT(destBuffer, E_POINTER);
-	HR_ASSERT((destSize % sizeof(T)) == 0, E_BOUNDS);
+	HR_ASSERT((destSize % getBlockAlign()) == 0, E_BOUNDS);
 
 	for(DWORD destPosition = 0; destPosition < destSize; destPosition += sizeof(T)) {
-		*(T*)(&destBuffer[destPosition]) = m_cycleData[m_currentPosition++];
+		*(T*)&((BYTE*)destBuffer)[destPosition] = m_cycleData[m_currentPosition++];
 		if(m_samplesPerCycle <= m_currentPosition) { m_currentPosition = 0; }
 	}
 
@@ -140,7 +149,11 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 {
 	// Generate PCM data for first channel using WaveGenerator.
 	auto samplesPerCycle = (size_t)(m_samplesPerSec * m_channels / key);
-	samplesPerCycle += (samplesPerCycle % m_channels);		// Roundup to channel number boundary
+	auto remain = samplesPerCycle % m_channels;
+	if(remain) {
+		// Roundup to channel number boundary
+		samplesPerCycle += (m_channels - remain);
+	}
 	std::unique_ptr<T[]> cycleData(new T[samplesPerCycle]);
 	m_waveGenerator->generate(cycleData.get(), samplesPerCycle, m_channels, level);
 

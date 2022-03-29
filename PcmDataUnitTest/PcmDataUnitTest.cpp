@@ -85,7 +85,7 @@ public:
 			auto phaseShift(std::get<5>(params.param));
 
 			char buff[100];
-			auto len = sprintf_s(buff, "%02d_%s_%s_%dHz_%dch_%d_%d",
+			auto len = sprintf_s(buff, "%d_%s_%s_%dHz_%dch_%d_%d",
 				params.index, wp.name, sp.name, samplesPerSec, channels, (int)key, (int)(phaseShift * 100));
 			std::replace(buff, &buff[len], ' ', '_');
 			return buff;
@@ -114,8 +114,8 @@ TEST_P(PcmDataUnitTest, total)
 	ASSERT_EQ(pcmSample->getSampleCount(), sampleCount);
 	for(WORD ch = 0; ch < channels; ch++) {
 		getTotal(pcmSample.get(), ch, unsignedTotal, signedTotal);
-		EXPECT_NEAR(unsignedTotal, expectedTotal, positiveHeight + negativeHeight)	<< "PcmData: Unsigned total: channel=" << ch;
-		EXPECT_NEAR(signedTotal, 0, positiveHeight)									<< "PcmData: Signed total: chennel=" << ch;
+		EXPECT_NEAR(unsignedTotal, expectedTotal, positiveHeight + negativeHeight)	<< "PcmData: Unsigned total: channel=" << (ch + 1);
+		EXPECT_NEAR(signedTotal, 0, positiveHeight)									<< "PcmData: Signed total: chennel=" << (ch + 1);
 	}
 
 	// Copy samples generated to the buffer.
@@ -130,8 +130,8 @@ TEST_P(PcmDataUnitTest, total)
 	ASSERT_EQ(pcmSample->getSampleCount(), sampleCount);
 	for(WORD ch = 0; ch < channels; ch++) {
 		getTotal(pcmSample.get(), ch, unsignedTotal, signedTotal);
-		EXPECT_NEAR(unsignedTotal, expectedTotal, positiveHeight + negativeHeight)	<< "Copied buffer: Unsigned total: channel=" << ch;
-		EXPECT_NEAR(signedTotal, 0, positiveHeight)									<< "Copied buffer: Signed total: channel=" << ch;
+		EXPECT_NEAR(unsignedTotal, expectedTotal, positiveHeight + negativeHeight)	<< "Copied buffer: Unsigned total: channel=" << (ch + 1);
+		EXPECT_NEAR(signedTotal, 0, positiveHeight)									<< "Copied buffer: Signed total: channel=" << (ch + 1);
 	}
 }
 
@@ -145,4 +145,94 @@ INSTANTIATE_TEST_SUITE_P(all, PcmDataUnitTest,
 		Values(0, 0.2/*, 0.5*/)											// Phase shift
 	),
 	PcmDataUnitTest::Name()
+);
+
+
+using PcmDataBufferUnitTestDataType = std::tuple<
+	PcmDataEnumerator::SampleDataTypeProperty,
+	DWORD,											// Samples/Second
+	WORD,											// Channels
+	float,											// Key
+	size_t											// duration
+>;
+
+class PcmDataBufferUnitTest : public TestWithParam<PcmDataBufferUnitTestDataType>
+{
+public:
+	const PcmDataEnumerator::SampleDataTypeProperty& sp;
+	const DWORD samplesPerSec;
+	const WORD channels;
+	const float key;
+	const size_t duration;
+
+	PcmDataBufferUnitTest()
+		: sp(std::get<0>(GetParam()))
+		, samplesPerSec(std::get<1>(GetParam())), channels(std::get<2>(GetParam()))
+		, key(std::get<3>(GetParam())), duration(std::get<4>(GetParam()))
+	{}
+
+	struct Name {
+		std::string operator()(const TestParamInfo<PcmDataBufferUnitTestDataType>& params) {
+			auto& sp(std::get<0>(params.param));
+			auto samplesPerSec(std::get<1>(params.param));
+			auto channels(std::get<2>(params.param));
+			auto key(std::get<3>(params.param));
+			auto duration(std::get<4>(params.param));
+
+			char buff[100];
+			auto len = sprintf_s(buff, "%d_%s_%dHz_%dch_%d_%d",
+				params.index, sp.name, samplesPerSec, channels, (int)key, (int)duration);
+			std::replace(buff, &buff[len], ' ', '_');
+			return buff;
+		}
+	};
+};
+
+TEST_P(PcmDataBufferUnitTest, buffer)
+{
+	// Create IPcmData object and generate 1-cycle PCM samples.
+	auto gen = createSquareWaveGenerator(sp.type);
+	CComPtr<IPcmData> pcmData = createPcmData(samplesPerSec, channels, gen);
+	ASSERT_THAT(pcmData, Not(nullptr));
+	pcmData->generate(key, 1.0f, 0.0f);
+	auto bytesPerSample = pcmData->getBitsPerSample() / 8;
+	ASSERT_EQ(pcmData->getBlockAlign(), bytesPerSample * channels);
+
+	// IPcmSample create from 1-cycle data in IPcmData.
+	std::unique_ptr<IPcmSample> pcmSampleSrc(createPcmSample(pcmData));
+	ASSERT_THAT(pcmSampleSrc.get(), Not(nullptr));
+
+	// Allocate buffer enough for duration, and copy generated samples to the buffer.
+	auto bufferSize = pcmData->getSampleBufferSize(duration);
+	ASSERT_EQ(bufferSize % pcmData->getBlockAlign(), 0);
+	auto buffer = std::make_unique<BYTE[]>(bufferSize);
+	pcmData->copyTo(buffer.get(), bufferSize);
+
+	// IPcmSample create from the buffer.
+	std::unique_ptr<IPcmSample> pcmSampleDest(createPcmSample(sp.type, buffer.get(), bufferSize));
+	ASSERT_THAT(pcmSampleDest.get(), Not(nullptr));
+	auto samplesInBuffer = bufferSize / (pcmData->getBitsPerSample() / 8);
+	ASSERT_EQ(samplesInBuffer, pcmSampleDest->getSampleCount());
+
+	// Compare samples in IPcmData object and in the buffer.
+	auto samplesPerCycle = pcmData->getSamplesPerCycle();
+	for(size_t i = 0; i < samplesInBuffer; i++) {
+		auto ii = i % samplesPerCycle;
+		ASSERT_TRUE(pcmSampleSrc->isValid(ii)) << "pcmSampleSrc->isValid(" << ii << ")";
+		ASSERT_TRUE(pcmSampleDest->isValid(i)) << "pcmSampleDest->isValid(" << i << ")";
+		auto src = (*pcmSampleSrc)[ii];
+		auto dest = (*pcmSampleDest)[i];
+		ASSERT_EQ(src.getInt32(), dest.getInt32()) << "Source sample[" << ii << "], Dest sample[" << i << "]";
+	}
+}
+
+INSTANTIATE_TEST_SUITE_P(all, PcmDataBufferUnitTest,
+	Combine(
+		ValuesIn(PcmDataEnumerator::getSampleDatatypeProperties()),
+		Values(44100, 32000),											// Samples/Second
+		Values(1, 2, 4 ),												// Channels
+		Values(440, 600),												// Key
+		Values(1000, 100, 20)											// duration
+	),
+	PcmDataBufferUnitTest::Name()
 );

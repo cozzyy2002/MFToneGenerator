@@ -46,7 +46,7 @@ public:
 	}
 
 	void getExpectedTotal(size_t sampleCount, double& unsignedTotal) {
-		double squreTotal = (double)(positiveHeight + negativeHeight) * sampleCount / 2 / channels;
+		double squreTotal = (double)(positiveHeight + negativeHeight) * sampleCount / channels / 2;
 		switch(wp.type) {
 		case IPcmData::WaveFormType::SquareWave:
 			unsignedTotal = squreTotal;
@@ -139,10 +139,10 @@ INSTANTIATE_TEST_SUITE_P(all, PcmDataUnitTest,
 	Combine(
 		ValuesIn(PcmDataEnumerator::getSampleDatatypeProperties()),
 		ValuesIn(PcmDataEnumerator::getWaveFormProperties()),
-		Values(44100/*, 32000*/),										// Samples/Second
-		Values(1, 2/*, 4 */ ),											// Channels
-		Values(440, 600),												// Key
-		Values(0, 0.2/*, 0.5*/)											// Phase shift
+		Values(44100, 32000),										// Samples/Second
+		Values(1, 2, 4),											// Channels
+		Values(440, 600),											// Key
+		Values(0, 0.2, 0.5)											// Phase shift
 	),
 	PcmDataUnitTest::Name()
 );

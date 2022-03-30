@@ -159,13 +159,13 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 	m_waveGenerator->generate(cycleData.get(), samplesPerCycle, m_channels, level);
 
 	// Copy first channel to another channel shifting phase.
-	auto shiftDelta = (size_t)(samplesPerCycle * phaseShift);
-	auto shift = shiftDelta;
+	auto shiftDelta = (size_t)(samplesPerCycle / m_channels * phaseShift);
+	size_t shift = 0;
 	for(WORD channel = 1; channel < m_channels; channel++) {
+		shift += (shiftDelta * m_channels);
 		for(size_t pos = 0; pos < samplesPerCycle; pos += m_channels) {
 			cycleData[pos + channel] = cycleData[(pos + samplesPerCycle - shift) % samplesPerCycle];
 		}
-		shift += shiftDelta;
 	}
 
 	// Update member variables in the Critical Section.

@@ -83,20 +83,7 @@ public:
 	virtual WORD getChannels() const override { return m_channels; }
 	virtual const char* getSampleTypeName() const { return typeid(T).name(); }
 	virtual size_t getSamplesPerCycle() const { return m_samplesPerCycle; }
-	virtual size_t getSampleBufferSize(size_t duration) const {
-		size_t ret;
-		if(0 < duration) {
-			auto ba = getBlockAlign();
-			ret = m_samplesPerSec * ba * duration / 1000;
-			auto remain = ret % ba;
-			if(remain) {
-				ret += (ba - remain);
-			}
-		} else {
-			ret = m_samplesPerCycle * sizeof(T);
-		}
-		return ret;
-	}
+	virtual size_t getSampleBufferSize(size_t duration) const;
 
 	static const WORD FormatTag;
 	static const T HighValue;
@@ -175,6 +162,23 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 		m_samplesPerCycle = samplesPerCycle;
 		m_currentPosition = 0;
 	}
+}
+
+template<typename T>
+size_t PcmData<T>::getSampleBufferSize(size_t duration) const
+{
+	size_t ret;
+	if(0 < duration) {
+		auto ba = getBlockAlign();
+		ret = m_samplesPerSec * ba * duration / 1000;
+		auto remain = ret % ba;
+		if(remain) {
+			ret += (ba - remain);
+		}
+	} else {
+		ret = m_samplesPerCycle * sizeof(T);
+	}
+	return ret;
 }
 
 

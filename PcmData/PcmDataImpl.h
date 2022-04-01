@@ -13,6 +13,16 @@
 template<typename T>
 class PcmSampleImpl;
 
+namespace
+{
+float limit(float value, float max = 1.0f, float min = 0)
+{
+	if(value < min) return min;
+	if(max < value) return max;
+	return value;
+}
+}
+
 class IWaveGenerator
 {
 public:
@@ -141,17 +151,19 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 	// Generate PCM data for first channel using WaveGenerator.
 	auto samplesPerCycle = ceiling((size_t)(m_samplesPerSec * m_channels / key), m_channels);
 	std::unique_ptr<T[]> cycleData(new T[samplesPerCycle]);
-	m_waveGenerator->generate(cycleData.get(), samplesPerCycle, m_channels, level);
+	m_waveGenerator->generate(cycleData.get(), samplesPerCycle, m_channels, limit(level));
 
-	// Copy first channel to another channel shifting phase.
-	auto shiftDelta = ceiling(samplesPerCycle - (size_t)(samplesPerCycle * phaseShift), m_channels);
-	size_t shift = 0;
-	for(WORD channel = 1; channel < m_channels; channel++) {
-		shift += shiftDelta;
-		auto posSrc = shift;
-		for(size_t pos = 0; pos < samplesPerCycle; pos += m_channels) {
-			cycleData[pos + channel] = cycleData[posSrc % samplesPerCycle];
-			posSrc += m_channels;
+	if(1 < m_channels) {
+		// Copy first channel to another channel shifting phase.
+		auto shiftDelta = ceiling(samplesPerCycle - (size_t)(samplesPerCycle * limit(phaseShift)), m_channels);
+		size_t shift = 0;
+		for(WORD channel = 1; channel < m_channels; channel++) {
+			shift += shiftDelta;
+			auto posSrc = shift;
+			for(size_t pos = 0; pos < samplesPerCycle; pos += m_channels) {
+				cycleData[pos + channel] = cycleData[posSrc % samplesPerCycle];
+				posSrc += m_channels;
+			}
 		}
 	}
 
@@ -210,14 +222,14 @@ template<typename T>
 class SquareWaveGenerator : public WaveGenerator<T>
 {
 public:
-	SquareWaveGenerator(float duty) : m_duty(duty) {}
+	SquareWaveGenerator(float duty) : m_duty(limit(duty, 0.9f, 0.1f)) {}
 
 	virtual IPcmData::WaveFormType getWaveFormType() const override { return IPcmData::WaveFormType::SquareWave; }
 	virtual const char* getWaveFormTypeName() const override { return IWaveGenerator::SquareWaveFormTypeName; }
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 
 protected:
-	float m_duty;
+	const float m_duty;
 };
 
 template<typename T>
@@ -273,19 +285,14 @@ template<typename T>
 class TriangleWaveGenerator : public WaveGenerator<T>
 {
 public:
-	TriangleWaveGenerator(float peakPosition)
-	{
-		if(peakPosition < 0) { m_peakPosition = 0; }
-		else if(1 < peakPosition) { m_peakPosition = 1; }
-		else { m_peakPosition = peakPosition; }
-	}
+	TriangleWaveGenerator(float peakPosition) : m_peakPosition(limit(peakPosition)) {}
 
 	virtual IPcmData::WaveFormType getWaveFormType() const override { return IPcmData::WaveFormType::TriangleWave; }
 	virtual const char* getWaveFormTypeName() const override { return IWaveGenerator::TriangleWaveFormTypeName; }
 	virtual void generate(T* cycleData, size_t samplesPerCycle, WORD channels, float level) override;
 
 protected:
-	float m_peakPosition;
+	const float m_peakPosition;
 };
 
 template<typename T>

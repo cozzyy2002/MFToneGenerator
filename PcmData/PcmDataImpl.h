@@ -99,6 +99,9 @@ protected:
 	std::unique_ptr<WaveGenerator<T>> m_waveGenerator;
 	CriticalSection::Object m_cycleDataLock;
 
+	// Returns number rounded up to the nearest multiple of significance value.
+	size_t ceiling(size_t number, size_t significance) const;
+
 #pragma region Implementation of IUnknown
 public:
 	virtual HRESULT STDMETHODCALLTYPE QueryInterface(
@@ -136,22 +139,19 @@ template<typename T>
 void PcmData<T>::generate(float key, float level, float phaseShift)
 {
 	// Generate PCM data for first channel using WaveGenerator.
-	auto samplesPerCycle = (size_t)(m_samplesPerSec * m_channels / key);
-	auto remain = samplesPerCycle % m_channels;
-	if(remain) {
-		// Roundup to channel number boundary
-		samplesPerCycle += (m_channels - remain);
-	}
+	auto samplesPerCycle = ceiling((size_t)(m_samplesPerSec * m_channels / key), m_channels);
 	std::unique_ptr<T[]> cycleData(new T[samplesPerCycle]);
 	m_waveGenerator->generate(cycleData.get(), samplesPerCycle, m_channels, level);
 
 	// Copy first channel to another channel shifting phase.
-	auto shiftDelta = (size_t)(samplesPerCycle / m_channels * phaseShift);
+	auto shiftDelta = ceiling(samplesPerCycle - (size_t)(samplesPerCycle * phaseShift), m_channels);
 	size_t shift = 0;
 	for(WORD channel = 1; channel < m_channels; channel++) {
-		shift += (shiftDelta * m_channels);
+		shift += shiftDelta;
+		auto posSrc = shift;
 		for(size_t pos = 0; pos < samplesPerCycle; pos += m_channels) {
-			cycleData[pos + channel] = cycleData[(pos + samplesPerCycle - shift) % samplesPerCycle];
+			cycleData[pos + channel] = cycleData[posSrc % samplesPerCycle];
+			posSrc += m_channels;
 		}
 	}
 
@@ -167,18 +167,22 @@ void PcmData<T>::generate(float key, float level, float phaseShift)
 template<typename T>
 size_t PcmData<T>::getSampleBufferSize(size_t duration) const
 {
-	size_t ret;
 	if(0 < duration) {
 		auto ba = getBlockAlign();
-		ret = m_samplesPerSec * ba * duration / 1000;
-		auto remain = ret % ba;
-		if(remain) {
-			ret += (ba - remain);
-		}
+		return ceiling(m_samplesPerSec * ba * duration / 1000, ba);
 	} else {
-		ret = m_samplesPerCycle * sizeof(T);
+		return m_samplesPerCycle * sizeof(T);
 	}
-	return ret;
+}
+
+template<typename T>
+size_t PcmData<T>::ceiling(size_t number, size_t significance) const
+{
+	auto remain = number % significance;
+	if(remain) {
+		number += (significance - remain);
+	}
+	return number;
 }
 
 

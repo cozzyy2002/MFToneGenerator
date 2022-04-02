@@ -53,7 +53,7 @@ static const PcmDataEnumerator::SampleDataTypeProperty sampleDataTypeProperties[
 
 static const PcmDataEnumerator::WaveFormProperty waveGeneratorProperties[] = {
 	{ IPcmData::WaveFormType::SquareWave, IWaveGenerator::SquareWaveFormTypeName, createSquareWaveGenerator, PcmDataEnumerator::FactoryParameter::Duty, PcmDataEnumerator::DefaultDuty },
-	{ IPcmData::WaveFormType::SineWave, IWaveGenerator::SineWaveFormTypeName, [](IPcmData::SampleDataType type, float param) { return createSineWaveGenerator(type); }, PcmDataEnumerator::FactoryParameter::None },
+	{ IPcmData::WaveFormType::SineWave, IWaveGenerator::SineWaveFormTypeName, createSineWaveGenerator, PcmDataEnumerator::FactoryParameter::None },
 	{ IPcmData::WaveFormType::TriangleWave, IWaveGenerator::TriangleWaveFormTypeName, createTriangleWaveGenerator, PcmDataEnumerator::FactoryParameter::PeakPosition, PcmDataEnumerator::DefaultPeakPosition },
 };
 
@@ -106,7 +106,7 @@ IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataTyp
 	}
 }
 
-IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType)
+IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType, float)
 {
 	switch(sampleDataType) {
 	case IPcmData::SampleDataType::PCM_8bits:

@@ -90,7 +90,7 @@ public:
 // Factory functions.
 IPcmData* createPcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
 IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty = PcmDataEnumerator::DefaultDuty);
-IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType);
+IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType, float notUsed = 0);
 IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition = PcmDataEnumerator::DefaultPeakPosition);
 
 

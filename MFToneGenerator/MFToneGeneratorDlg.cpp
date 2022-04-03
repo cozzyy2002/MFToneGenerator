@@ -57,26 +57,31 @@ const int SliderMaxValue = 100;
 template<typename T>
 struct TNameValue : std::pair<LPCTSTR, T>
 {
-	TNameValue(first_type name, second_type value)
-		: std::pair<LPCTSTR, T>(name, value), name(name), value(second) {}
+	TNameValue(first_type name, second_type value, bool isDefault = false)
+		: std::pair<LPCTSTR, T>(name, value), name(name), value(second), isDefault(isDefault) {}
 	first_type name;
 	second_type& value;
+	bool isDefault;
 };
 
 const TNameValue<DWORD> samplesPerSecondList[] = {
-	{_T("44.1Khz"), 44100},
-	{_T("22.05Khz"), 22050},
 	{_T("16Khz"), 16000},
+	{_T("22.05Khz"), 22050},
 	{_T("32Khz"), 32000},
+	{_T("44.1Khz"), 44100, true},
 	{_T("48Khz"), 48000},
 };
 
 const TNameValue<WORD> channelsList[] = {
 	{_T("1ch"), 1},
-	{_T("2ch"), 2},
+	{_T("2ch"), 2, true},
 	{_T("4ch"), 4},
 	{_T("5.1ch"), 6},
 };
+
+// Default items to be selected initially in each ComboBox.
+const auto defaultSampeDataType = IPcmData::SampleDataType::PCM_16bits;
+const auto defaultWaveForm = IPcmData::WaveFormType::SineWave;
 
 }
 
@@ -229,29 +234,36 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	// TODO: Add extra initialization here
 	for(auto& x : m_sampleDataTypeProperties) {
 		ATL::CA2T name(x.name);
-		m_sampleType.AddString((LPCTSTR)name);
+		auto i = m_sampleType.AddString((LPCTSTR)name);
+		if(x.type == defaultSampeDataType) {
+			m_sampleType.SetCurSel(i);
+		}
 	}
-	m_sampleType.SetCurSel(0);
 
 	for(auto& x : m_WaveFormProperties) {
 		ATL::CA2T name(x.name);
-		m_waveForm.AddString((LPCTSTR)name);
+		auto i = m_waveForm.AddString((LPCTSTR)name);
+		if(x.type == defaultWaveForm) {
+			m_waveForm.SetCurSel(i);
+		}
 	}
-	m_waveForm.SetCurSel(0);
 	OnCbnSelchangeComboWaveForm();
 
 	for(auto& x : samplesPerSecondList) {
-		m_SamplesPerSecond.AddString(x.name);
+		auto i = m_SamplesPerSecond.AddString(x.name);
+		if(x.isDefault) {
+			m_SamplesPerSecond.SetCurSel(i);
+		}
 	}
-	m_SamplesPerSecond.SetCurSel(0);
 
 	for(auto& x : channelsList) {
-		m_channels.AddString(x.name);
+		auto i = m_channels.AddString(x.name);
+		if(x.isDefault) {
+			m_channels.SetCurSel(i);
+		}
 	}
-	m_channels.SetCurSel(0);
 
 	CSliderCtrl* sliders[] = {
 		&m_duty, &m_peakPosition, &m_level, &m_phaseShift

@@ -12,12 +12,12 @@ class ToneMediaStream;
 class ToneMediaSource : public IMFMediaSource, DoNotCopy
 {
 public:
-    ToneMediaSource(IPcmData* pcmData);
+    ToneMediaSource(std::shared_ptr<IPcmData>& pcmData);
     ToneMediaStream* getMediaStream() { return m_mediaStream; }
 
 protected:
     HRESULT checkShutdown();
-    CComPtr<IPcmData> m_pcmData;
+    std::shared_ptr<IPcmData> m_pcmData;
 
 #pragma region Implementation of IMFMediaSource
 public:

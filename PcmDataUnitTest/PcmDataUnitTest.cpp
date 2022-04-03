@@ -97,8 +97,8 @@ TEST_P(PcmDataUnitTest, total)
 {
 	// Create IPcmData object and generate 1-cycle PCM samples.
 	auto gen = wp.factory(sp.type, wp.defaultPrameter);
-	CComPtr<IPcmData> pcmData = createPcmData(samplesPerSec, channels, gen);
-	ASSERT_THAT(pcmData, Not(nullptr));
+	auto pcmData = createPcmData(samplesPerSec, channels, gen);
+	ASSERT_THAT(pcmData, NotNull());
 	pcmData->generate(key, 1.0f, phaseShift);
 	auto sampleCount = pcmData->getSamplesPerCycle();
 	auto bytesPerSample = pcmData->getBitsPerSample() / 8;
@@ -110,7 +110,7 @@ TEST_P(PcmDataUnitTest, total)
 
 	// Test value of Samples in the IPcmData.
 	pcmSample.reset(createPcmSample(pcmData));
-	ASSERT_THAT(pcmSample.get(), Not(nullptr));
+	ASSERT_THAT(pcmSample, NotNull());
 	ASSERT_EQ(pcmSample->getSampleCount(), sampleCount);
 	for(WORD ch = 0; ch < channels; ch++) {
 		getTotal(pcmSample.get(), ch, unsignedTotal, signedTotal);
@@ -126,7 +126,7 @@ TEST_P(PcmDataUnitTest, total)
 
 	// Test value of Samples copied to the buffer.
 	pcmSample.reset(createPcmSample(sp.type, buffer.get(), bufferSize));
-	ASSERT_THAT(pcmSample.get(), Not(nullptr));
+	ASSERT_THAT(pcmSample, NotNull());
 	ASSERT_EQ(pcmSample->getSampleCount(), sampleCount);
 	for(WORD ch = 0; ch < channels; ch++) {
 		getTotal(pcmSample.get(), ch, unsignedTotal, signedTotal);
@@ -192,15 +192,15 @@ TEST_P(PcmDataBufferUnitTest, buffer)
 {
 	// Create IPcmData object and generate 1-cycle PCM samples.
 	auto gen = createTriangleWaveGenerator(sp.type);
-	CComPtr<IPcmData> pcmData = createPcmData(samplesPerSec, channels, gen);
-	ASSERT_THAT(pcmData, Not(nullptr));
+	auto pcmData = createPcmData(samplesPerSec, channels, gen);
+	ASSERT_THAT(pcmData, NotNull());
 	pcmData->generate(key, 1.0f, 0.0f);
 	auto bytesPerSample = pcmData->getBitsPerSample() / 8;
 	ASSERT_EQ(pcmData->getBlockAlign(), bytesPerSample * channels);
 
 	// IPcmSample created from 1-cycle data in IPcmData.
 	std::unique_ptr<IPcmSample> pcmSampleSrc(createPcmSample(pcmData));
-	ASSERT_THAT(pcmSampleSrc.get(), Not(nullptr));
+	ASSERT_THAT(pcmSampleSrc, NotNull());
 	ASSERT_EQ(pcmSampleSrc->getSampleCount(), pcmData->getSamplesPerCycle());
 
 	// Allocate buffer enough for duration, and copy generated samples to the buffer.
@@ -211,7 +211,7 @@ TEST_P(PcmDataBufferUnitTest, buffer)
 
 	// IPcmSample created from the buffer.
 	std::unique_ptr<IPcmSample> pcmSampleDest(createPcmSample(sp.type, buffer.get(), bufferSize));
-	ASSERT_THAT(pcmSampleDest.get(), Not(nullptr));
+	ASSERT_THAT(pcmSampleDest, NotNull());
 	auto samplesInBuffer = pcmSampleDest->getSampleCount();
 	ASSERT_EQ(samplesInBuffer, bufferSize / bytesPerSample);
 

@@ -70,8 +70,8 @@ TEST_P(PcmDataEnumeratorUnitTest, WaveGenerator)
 	static const WORD channels = 2;
 	auto gen = wp.factory(sp.type, 0);
 	ASSERT_THAT(gen, NotNull());
-	CComPtr<IPcmData> pcmData(createPcmData(samplesPerSec, channels, gen));
-	ASSERT_THAT(pcmData.p, NotNull());
+	auto pcmData(createPcmData(samplesPerSec, channels, gen));
+	ASSERT_THAT(pcmData, NotNull());
 
 	EXPECT_EQ(pcmData->getSamplesPerSec(), samplesPerSec);
 	EXPECT_EQ(pcmData->getChannels(), channels);

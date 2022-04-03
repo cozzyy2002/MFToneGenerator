@@ -72,22 +72,26 @@ static const PcmDataEnumerator::WaveFormProperty waveGeneratorProperties[] = {
 }
 #pragma endregion
 
-IPcmData* createPcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
+std::shared_ptr <IPcmData> createPcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
 {
 	if(!waveGenerator) { return nullptr; }
 
+	IPcmData* p = nullptr;
 	switch(waveGenerator->getSampleDataType()) {
 	case IPcmData::SampleDataType::PCM_8bits:
-		return new PcmData<UINT8>(samplesPerSec, channels, waveGenerator);
+		p = new PcmData<UINT8>(samplesPerSec, channels, waveGenerator);
+		break;
 	case IPcmData::SampleDataType::PCM_16bits:
-		return new PcmData<INT16>(samplesPerSec, channels, waveGenerator);
+		p = new PcmData<INT16>(samplesPerSec, channels, waveGenerator);
+		break;
 	case IPcmData::SampleDataType::PCM_24bits:
-		return new PcmData<INT24>(samplesPerSec, channels, waveGenerator);
+		p = new PcmData<INT24>(samplesPerSec, channels, waveGenerator);
+		break;
 	case IPcmData::SampleDataType::IEEE_Float:
-		return new PcmData<float>(samplesPerSec, channels, waveGenerator);
-	default:
-		return nullptr;
+		p = new PcmData<float>(samplesPerSec, channels, waveGenerator);
+		break;
 	}
+	return std::shared_ptr<IPcmData>(p);
 }
 
 IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty)

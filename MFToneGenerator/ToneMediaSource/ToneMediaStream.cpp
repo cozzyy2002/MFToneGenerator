@@ -6,7 +6,7 @@
 
 #pragma region Implementation of IMFMediaEventGenerator
 
-ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, IPcmData* pcmData)
+ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, std::shared_ptr<IPcmData>& pcmData)
 	: m_mediaSource(mediaSource), m_sd(sd), m_sampleTime(0), m_pcmData(pcmData), m_unknownImpl(this)
 {
 }
@@ -40,7 +40,7 @@ HRESULT ToneMediaStream::stop()
 
 HRESULT ToneMediaStream::shutdown()
 {
-	m_pcmData.Release();
+	m_pcmData.reset();
 	m_eventGenerator.shutdown();
 
 	return S_OK;

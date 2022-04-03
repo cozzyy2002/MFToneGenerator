@@ -90,7 +90,7 @@ public:
 //   Note:
 //		This function should be called after IPcmData::generate() that creates internal buffer.
 //		After IPcmData::generate() is called again, re-create IPcmSample object because the method re-creates the internal buffer.
-IPcmSample* createPcmSample(IPcmData* pcmData);
+IPcmSample* createPcmSample(std::shared_ptr<IPcmData>& pcmData);
 
 // Creates IPcmSample object to access buffer specified as arguments.
 //   Note:

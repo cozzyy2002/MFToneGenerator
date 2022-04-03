@@ -60,7 +60,7 @@ public:
 
 		// Create IPcmSample object using the buffer.
 		testee.reset(createPcmSample(const_cast<T*>(testSamples), testSamplesCount));
-		ASSERT_THAT(testee.get(), Not(nullptr));
+		ASSERT_THAT(testee, NotNull());
 	}
 };
 
@@ -82,7 +82,7 @@ TYPED_TEST(PcmSampleTypedTest, buffer_size)
 {
 	TypeParam buffer[3];
 	this->testee.reset(createPcmSample(buffer));
-	ASSERT_THAT(this->testee.get(), Not(nullptr));
+	ASSERT_THAT(this->testee, NotNull());
 	ASSERT_EQ(this->testee->getSampleCount(), ARRAYSIZE(buffer));
 }
 
@@ -163,7 +163,7 @@ TYPED_TEST(PcmSampleTypedTest, assignment)
 {
 	TypeParam dest = (TypeParam)0xab;
 	std::unique_ptr<IPcmSample> destPcmSample(createPcmSample(&dest, 1));
-	ASSERT_THAT(destPcmSample.get(), Not(nullptr));
+	ASSERT_THAT(destPcmSample, NotNull());
 	auto destValue = (*destPcmSample)[0];
 	for(size_t i = 0; i < this->testSamplesCount; i++) {
 		auto& testSample = this->testSamples[i];
@@ -215,7 +215,7 @@ TYPED_TEST(PcmSampleTypedTest, assignment_type_error)
 		break;
 	}
 
-	ASSERT_THAT(sourceSamples.get(), Not(nullptr));
+	ASSERT_THAT(sourceSamples, NotNull());
 
 	auto sourceValue = (*sourceSamples)[0];
 	destValue = sourceValue;
@@ -225,25 +225,26 @@ TYPED_TEST(PcmSampleTypedTest, assignment_type_error)
 // createPcmSample() with Null IPcmData parameter should return null.
 TEST(PcmSampleUnitTest, IPcmData_null)
 {
-	std::unique_ptr<IPcmSample> testee(createPcmSample(nullptr));
-	ASSERT_EQ(testee.get(), nullptr);
+	std::shared_ptr<IPcmData> nullPcmData;
+	std::unique_ptr<IPcmSample> testee(createPcmSample(nullPcmData));
+	ASSERT_THAT(testee, IsNull());
 }
 
 // createPcmSample() with Null IPcmData that has not been called generate() method, should return null.
 TEST(PcmSampleUnitTest, IPcmData_not_generated)
 {
 	auto gen = createSineWaveGenerator(IPcmData::SampleDataType::PCM_16bits);
-	CComPtr<IPcmData> pcmData(createPcmData(44100, 1, gen));
+	ASSERT_THAT(gen, NotNull());
+	auto pcmData(createPcmData(44100, 1, gen));
 	std::unique_ptr<IPcmSample> testee(createPcmSample(pcmData));
-	ASSERT_EQ(testee.get(), nullptr);
+	ASSERT_THAT(testee, IsNull());
 }
 
 // createPcmSample() with unknown sample data type parameter should return null.
 TEST(PcmSampleUnitTest, error_unknown_data_type)
 {
-	BYTE buffer[10];
+	BYTE buffer[12];
 	std::unique_ptr<IPcmSample> testee(createPcmSample(IPcmData::SampleDataType::Unknown, buffer, sizeof(buffer)));
-	ASSERT_EQ(testee.get(), nullptr);
 }
 
 // createPcmSample() with Null buffer parameter should return null.
@@ -254,13 +255,13 @@ TEST(PcmSampleUnitTest, error_buffer_null)
 	std::unique_ptr<IPcmSample> testee;
 
 	testee.reset(createPcmSample<INT16>(nullptr, bufferSize));
-	ASSERT_EQ(testee.get(), nullptr);
+	ASSERT_THAT(testee, IsNull());
 
 	testee.reset(createPcmSample((INT24*)nullptr, bufferSize));
-	ASSERT_EQ(testee.get(), nullptr);
+	ASSERT_THAT(testee, IsNull());
 
 	testee.reset(createPcmSample(IPcmData::SampleDataType::IEEE_Float, nullptr, bufferSize));
-	ASSERT_EQ(testee.get(), nullptr);
+	ASSERT_THAT(testee, IsNull());
 }
 
 // createPcmSample() with illegal boundary buffer size parameter should return null.
@@ -276,8 +277,8 @@ TYPED_TEST(PcmSampleTypedTest, error_buffer_size)
 	if(sampleDataType == IPcmData::SampleDataType::PCM_8bits) return;
 
 	testee.reset(createPcmSample(sampleDataType, buffer, sizeof(buffer)));
-	ASSERT_EQ(testee.get(), nullptr);
+	ASSERT_THAT(testee, IsNull());
 
 	testee.reset(createPcmSample<TypeParam>(buffer, sizeof(buffer)));
-	ASSERT_EQ(testee.get(), nullptr);
+	ASSERT_THAT(testee, IsNull());
 }

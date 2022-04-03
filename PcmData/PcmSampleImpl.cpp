@@ -1,6 +1,6 @@
 #include "PcmSampleImpl.h"
 
-IPcmSample* createPcmSample(IPcmData* pcmData)
+IPcmSample* createPcmSample(std::shared_ptr<IPcmData>& pcmData)
 {
 	if(!pcmData) return nullptr;
 	if(!pcmData->getSamplesPerCycle()) return nullptr;	// pcmData->generate() has not been called.

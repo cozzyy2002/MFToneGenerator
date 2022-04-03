@@ -103,7 +103,7 @@ void CMFToneGeneratorDlg::onStarted(bool canPause)
 
 void CMFToneGeneratorDlg::onStopped()
 {
-	m_pcmData.Release();
+	m_pcmData.reset();
 
 	DragAcceptFiles(TRUE);
 	m_startStopButton.SetWindowText(_T("Start"));

@@ -47,7 +47,7 @@ HRESULT Context::shutdown()
     return HR_EXPECT_OK(BaseClass::shutdown());
 }
 
-HRESULT Context::startTone(IPcmData* pcmData)
+HRESULT Context::startTone(std::shared_ptr<IPcmData>& pcmData)
 {
     return HR_EXPECT_OK(triggerEvent(new StartToneEvent(pcmData)));
 }

@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 
 	std::cout << "Creating WaveGenerator for " << waveFormProperty->name << "," << sampleDataTypeProperty->bitsPerSample << " bits per sample, Parameter=" << param << std::endl;
 	auto gen = waveFormProperty->factory(sampleDataTypeProperty->type, param);
-	CComPtr<IPcmData> pcmData(createPcmData(samplesPerSecond, channels, gen));
+	auto pcmData(createPcmData(samplesPerSecond, channels, gen));
 
 	std::cout << "Generating " << pcmData->getWaveFormTypeName() << "(" << pcmData->getSampleDataTypeName() << ") to " << wavFileName
 		<< "\nSamples Per Second=" << samplesPerSecond

@@ -10,8 +10,6 @@
 
 #include <memory>
 
-class IPcmData;
-
 // CMFToneGeneratorDlg dialog
 class CMFToneGeneratorDlg : public CDialogEx, public statemachine::IContext::ICallback
 {
@@ -55,7 +53,7 @@ protected:
 	const std::vector<PcmDataEnumerator::WaveFormProperty>& m_WaveFormProperties;
 
 	std::unique_ptr<statemachine::IContext> m_context;
-	CComPtr<IPcmData> m_pcmData;
+	std::shared_ptr<IPcmData> m_pcmData;
 
 	enum class Status
 	{

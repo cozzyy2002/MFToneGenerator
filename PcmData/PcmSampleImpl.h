@@ -4,8 +4,6 @@
 #include "PcmDataImpl.h"
 #include "INT24.h"
 
-#include <atlbase.h>
-
 namespace
 {
 
@@ -220,7 +218,7 @@ template<typename T>
 class PcmSampleImpl : public IPcmSample
 {
 public:
-	PcmSampleImpl(IPcmData* pcmData);
+	PcmSampleImpl(std::shared_ptr<IPcmData>& pcmData);
 	PcmSampleImpl(T* buffer, size_t sampleCount);
 
 	virtual IPcmData* getPcmData() const override { return m_pcmData; }
@@ -231,15 +229,19 @@ public:
 	virtual WORD getFormatTag() const override { return PcmData<T>::FormatTag; }
 
 protected:
-	CComPtr<PcmData<T>> m_pcmData;
+	// shared_ptr to manage life time of IPcmData instance.
+	std::shared_ptr<IPcmData> m_pcmDataPtr;
+
+	// Pointer to template instance.
+	PcmData<T>* m_pcmData;
 
 	T* m_buffer;
 	size_t m_sampleCount;
 };
 
 template<typename T>
-PcmSampleImpl<T>::PcmSampleImpl(IPcmData* pcmData)
-	: m_pcmData((PcmData<T>*)pcmData)
+PcmSampleImpl<T>::PcmSampleImpl(std::shared_ptr <IPcmData>& pcmData)
+	: m_pcmDataPtr(pcmData), m_pcmData((PcmData<T>*)pcmData.get())
 	, m_buffer(nullptr), m_sampleCount(0)
 {
 	if(m_pcmData) {

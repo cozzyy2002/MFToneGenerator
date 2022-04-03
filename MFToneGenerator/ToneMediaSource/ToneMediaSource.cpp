@@ -3,7 +3,7 @@
 #include "ToneMediaSource.h"
 #include "ToneMediaStream.h"
 
-ToneMediaSource::ToneMediaSource(IPcmData* pcmData)
+ToneMediaSource::ToneMediaSource(std::shared_ptr<IPcmData>& pcmData)
 	: m_pcmData(pcmData), m_unknownImpl(this)
 {
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "framework.h"
-#include <Unknwn.h>
+#include <memory>
 #include <vector>
 
 class IWaveGenerator;
@@ -9,7 +9,7 @@ class IWaveGenerator;
 /*
  * IPcmData interface.
  */
-class IPcmData : public IUnknown
+class IPcmData
 {
 public:
 	virtual ~IPcmData() {}
@@ -88,7 +88,7 @@ public:
 };
 
 // Factory functions.
-IPcmData* createPcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
+std::shared_ptr<IPcmData> createPcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator);
 IWaveGenerator* createSquareWaveGenerator(IPcmData::SampleDataType sampleDataType, float duty = PcmDataEnumerator::DefaultDuty);
 IWaveGenerator* createSineWaveGenerator(IPcmData::SampleDataType sampleDataType, float notUsed = 0);
 IWaveGenerator* createTriangleWaveGenerator(IPcmData::SampleDataType sampleDataType, float peakPosition = PcmDataEnumerator::DefaultPeakPosition);

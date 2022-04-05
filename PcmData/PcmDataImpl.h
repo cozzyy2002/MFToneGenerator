@@ -74,9 +74,7 @@ public:
 	PcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)
 		: m_samplesPerSec(samplesPerSec), m_channels(channels)
 		, m_waveGenerator((WaveGenerator<T>*)waveGenerator)
-		, m_samplesPerCycle(0), m_currentPosition(0)
-	{}
-	virtual ~PcmData() {}
+		, m_samplesPerCycle(0), m_currentPosition(0) {}
 
 	virtual HRESULT copyTo(void* destBuffer, size_t destSize) override;
 	virtual void generate(float key, float level, float phaseShift) override;

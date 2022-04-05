@@ -50,7 +50,10 @@ public:
 	virtual size_t getSamplesPerCycle() const = 0;		// Available after generate() method is called.
 
 	// Returns required buffer size in bytes for given duration(mSec).
-	// If duration == 0, size for 1 cycle samples is returned.
+	// If duration == 0:
+	//		Returns size for 1 cycle samples.
+	//		In this case, call after generate(key, ...) method,
+	//		because the size depends on the key in addition to the creattion parameters.
 	virtual size_t getSampleBufferSize(size_t duration) const = 0;
 };
 

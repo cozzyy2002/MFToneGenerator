@@ -83,7 +83,7 @@ public:
 		const char* name;
 		Factory factory;
 		FactoryParameter parameter;
-		float defaultPrameter;
+		float defaultParameter;
 	};
 
 	static const std::vector<SampleDataTypeProperty>& getSampleDatatypeProperties();

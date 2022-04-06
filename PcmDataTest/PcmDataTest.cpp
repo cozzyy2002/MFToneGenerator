@@ -10,8 +10,8 @@
 
 int main(int argc, char* argv[])
 {
-	auto duty = 0.5f;
-	auto peakPosition = 0.5f;
+	auto duty = PcmDataEnumerator::DefaultDuty;
+	auto peakPosition = PcmDataEnumerator::DefaultPeakPosition;
 	DWORD samplesPerSecond = 44100;
 	WORD channels = 1;
 	WORD key = 440;

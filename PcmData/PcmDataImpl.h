@@ -266,7 +266,7 @@ void SineWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WORD c
  *
  * Override of WaveGenerator::generate() method generates Triangle wave.
  * This class exposes constructor that has peakPosition parameter.
- * If ((peakPosition <= 0.0f) || ( 1.0f <= peakPosition)), generate() method generates Sawtooth wave.
+ * If ((peakPosition <= 0.0f) || (1.0f <= peakPosition) || (0.5f == peakPosition)), generate() method generates Sawtooth wave.
  */
 template<typename T>
 class TriangleWaveGenerator : public WaveGenerator<T>
@@ -293,17 +293,26 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WO
 	bool up;
 	double value;
 	if(m_peakPosition == 0.0f) {
-		upDelta = height * channels;
+		upDelta = height;
 		up = false;
 		value = highValue;
 	} else if(m_peakPosition == 1.0f) {
-		downDelta = height * channels;
+		downDelta = height;
 		up = true;
 		value = lowValue;
-	} else {
-		upDelta /= m_peakPosition;
-		downDelta /= (1.0f - m_peakPosition);
+	} else if(m_peakPosition == 0.5f) {
+		downDelta = height;
 		up = true;
+		value = zeroValue;
+	} else if(m_peakPosition < 0.5f) {
+		upDelta /= (m_peakPosition * 2);
+		downDelta /= (1.0f - (m_peakPosition * 2));
+		up = true;
+		value = zeroValue;
+	} else {
+		upDelta /= (1.0f - ((1 - m_peakPosition) * 2));
+		downDelta /= ((1 - m_peakPosition) * 2);
+		up = false;
 		value = zeroValue;
 	}
 

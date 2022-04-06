@@ -42,7 +42,7 @@ template<> const float PcmData<float>::LowValue = -0.8f;
 #pragma region Implementation of PcmDataEnumerator
 
 /*static*/ const float PcmDataEnumerator::DefaultDuty = 0.5f;
-/*static*/ const float PcmDataEnumerator::DefaultPeakPosition = 0.5f;
+/*static*/ const float PcmDataEnumerator::DefaultPeakPosition = 0.25f;
 
 static const PcmDataEnumerator::SampleDataTypeProperty sampleDataTypeProperties[] = {
 	{ WaveGenerator<UINT8>::SampleDataType, WaveGenerator<UINT8>::SampleDataTypeName, PcmData<UINT8>::FormatTag, sizeof(UINT8) * 8 },

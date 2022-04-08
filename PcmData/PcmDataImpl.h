@@ -323,14 +323,14 @@ void TriangleWaveGenerator<T>::generate(T* cycleData, size_t samplesPerCycle, WO
 		cycleData[pos] = (T)value;
 		if(up) {
 			value += upDelta;
-			if(highValue < value) {
+			if(highValue <= value) {
 				value = highValue;
 				up = false;
 			}
 		}
 		else {
 			value -= downDelta;
-			if(value < lowValue) {
+			if(value <= lowValue) {
 				value = lowValue;
 				up = true;
 			}

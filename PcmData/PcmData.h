@@ -88,6 +88,9 @@ public:
 
 	static const std::vector<SampleDataTypeProperty>& getSampleDatatypeProperties();
 	static const std::vector<WaveFormProperty>& getWaveFormProperties();
+
+	static const SampleDataTypeProperty& getSampleDataTypeProperty(IPcmData::SampleDataType);
+	static const WaveFormProperty& getWaveFormProperty(IPcmData::WaveFormType);
 };
 
 // Factory functions.

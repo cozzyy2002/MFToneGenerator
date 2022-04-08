@@ -70,6 +70,34 @@ static const PcmDataEnumerator::WaveFormProperty waveGeneratorProperties[] = {
 	static std::vector<WaveFormProperty> ret(&ar[0], &ar[ARRAYSIZE(ar)]);
 	return ret;
 }
+
+/*static*/ const PcmDataEnumerator::SampleDataTypeProperty& PcmDataEnumerator::getSampleDataTypeProperty(IPcmData::SampleDataType type)
+{
+	for(auto& sp : getSampleDatatypeProperties()) {
+		if(sp.type == type) return sp;
+	}
+
+	static const SampleDataTypeProperty unknown = {
+		IPcmData::SampleDataType::Unknown,
+		"UnknownSampleDataType"
+	};
+	return unknown;
+}
+
+/*static*/ const PcmDataEnumerator::WaveFormProperty& PcmDataEnumerator::getWaveFormProperty(IPcmData::WaveFormType type)
+{
+	for(auto& wp : getWaveFormProperties()) {
+		if(wp.type == type) return wp;
+	}
+
+	static const WaveFormProperty unknown = {
+		IPcmData::WaveFormType::Unknown,
+		"UnknownWaveForm",
+		[](IPcmData::SampleDataType, float) { return (IWaveGenerator*)nullptr; }
+	};
+	return unknown;
+}
+
 #pragma endregion
 
 std::shared_ptr <IPcmData> createPcmData(DWORD samplesPerSec, WORD channels, IWaveGenerator* waveGenerator)

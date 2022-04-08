@@ -14,8 +14,11 @@ using PcmDataUnitTestDataType = std::tuple<
 	DWORD,											// Samples/Second
 	WORD,											// Channels
 	float,											// Key
-	float											// Phase shift
+	float,											// Phase shift
+	float											// WaveGenerator parameter
 >;
+
+static const float DefaultWaveGeneratorParam = -1.0f;
 
 class PcmDataUnitTest : public TestWithParam<PcmDataUnitTestDataType>
 {
@@ -26,23 +29,29 @@ public:
 	const WORD channels;
 	const float key;
 	const float phaseShift;
+	float waveGeneratorPram;
 
 	INT32 highValue;
 	INT32 zeroValue;
 	INT32 lowValue;
 	INT32 positiveHeight;
 	INT32 negativeHeight;
+	INT32 difference;
 
 	PcmDataUnitTest()
 		: sp(std::get<0>(GetParam())), wp(std::get<1>(GetParam()))
 		, samplesPerSec(std::get<2>(GetParam())), channels(std::get<3>(GetParam()))
 		, key(std::get<4>(GetParam())), phaseShift(std::get<5>(GetParam()))
 	{
+		waveGeneratorPram = std::get<6>(GetParam());
+		if(waveGeneratorPram == DefaultWaveGeneratorParam) waveGeneratorPram = wp.defaultParameter;
+
 		highValue = IPcmSample::getHighValue(sp.type).getInt32();
 		zeroValue = IPcmSample::getZeroValue(sp.type).getInt32();
 		lowValue = IPcmSample::getLowValue(sp.type).getInt32();
 		positiveHeight = highValue - zeroValue;
 		negativeHeight = zeroValue - lowValue;
+		difference = positiveHeight + negativeHeight;
 	}
 
 	void getExpectedTotal(size_t sampleCount, double& unsignedTotal) {
@@ -83,10 +92,12 @@ public:
 			auto channels(std::get<3>(params.param));
 			auto key(std::get<4>(params.param));
 			auto phaseShift(std::get<5>(params.param));
+			auto param(std::get<6>(params.param));
+			if(param == DefaultWaveGeneratorParam) param = 0;
 
 			char buff[100];
-			auto len = sprintf_s(buff, "%d_%s_%s_%dHz_%dch_%d_%d",
-				params.index, wp.name, sp.name, samplesPerSec, channels, (int)key, (int)(phaseShift * 100));
+			auto len = sprintf_s(buff, "%d_%s_%s_%dHz_%dch_%d_%d_%d",
+				params.index, wp.name, sp.name, samplesPerSec, channels, (int)key, (int)(phaseShift * 100), (int)(param * 100));
 			std::replace(buff, &buff[len], ' ', '_');
 			return buff;
 		}
@@ -96,7 +107,7 @@ public:
 TEST_P(PcmDataUnitTest, total)
 {
 	// Create IPcmData object and generate 1-cycle PCM samples.
-	auto gen = wp.factory(sp.type, wp.defaultPrameter);
+	auto gen = wp.factory(sp.type, waveGeneratorPram);
 	auto pcmData = createPcmData(samplesPerSec, channels, gen);
 	ASSERT_THAT(pcmData, NotNull());
 	pcmData->generate(key, 1.0f, phaseShift);
@@ -114,8 +125,8 @@ TEST_P(PcmDataUnitTest, total)
 	ASSERT_EQ(pcmSample->getSampleCount(), sampleCount);
 	for(WORD ch = 0; ch < channels; ch++) {
 		getTotal(pcmSample.get(), ch, unsignedTotal, signedTotal);
-		EXPECT_NEAR(unsignedTotal, expectedTotal, positiveHeight + negativeHeight)	<< "PcmData: Unsigned total: channel=" << (ch + 1);
-		EXPECT_NEAR(signedTotal, 0, positiveHeight)									<< "PcmData: Signed total: chennel=" << (ch + 1);
+		EXPECT_NEAR(unsignedTotal, expectedTotal, difference)	<< "PcmData: Unsigned total: channel=" << (ch + 1);
+		EXPECT_NEAR(signedTotal, 0, difference)					<< "PcmData: Signed total: chennel=" << (ch + 1);
 	}
 
 	// Copy samples generated to the buffer.
@@ -130,19 +141,33 @@ TEST_P(PcmDataUnitTest, total)
 	ASSERT_EQ(pcmSample->getSampleCount(), sampleCount);
 	for(WORD ch = 0; ch < channels; ch++) {
 		getTotal(pcmSample.get(), ch, unsignedTotal, signedTotal);
-		EXPECT_NEAR(unsignedTotal, expectedTotal, positiveHeight + negativeHeight)	<< "Copied buffer: Unsigned total: channel=" << (ch + 1);
-		EXPECT_NEAR(signedTotal, 0, positiveHeight)									<< "Copied buffer: Signed total: channel=" << (ch + 1);
+		EXPECT_NEAR(unsignedTotal, expectedTotal, difference)	<< "Copied buffer: Unsigned total: channel=" << (ch + 1);
+		EXPECT_NEAR(signedTotal, 0, difference)					<< "Copied buffer: Signed total: channel=" << (ch + 1);
 	}
 }
 
-INSTANTIATE_TEST_SUITE_P(all, PcmDataUnitTest,
+INSTANTIATE_TEST_SUITE_P(AllWaveForm, PcmDataUnitTest,
 	Combine(
 		ValuesIn(PcmDataEnumerator::getSampleDatatypeProperties()),
 		ValuesIn(PcmDataEnumerator::getWaveFormProperties()),
 		Values(44100, 32000),										// Samples/Second
 		Values(1, 2, 4),											// Channels
 		Values(440, 600),											// Key
-		Values(0, 0.2, 0.5)											// Phase shift
+		Values(0, 0.2, 0.5),										// Phase shift
+		Values(DefaultWaveGeneratorParam)
+	),
+	PcmDataUnitTest::Name()
+);
+
+INSTANTIATE_TEST_SUITE_P(TriangleWaveForm, PcmDataUnitTest,
+	Combine(
+		ValuesIn(PcmDataEnumerator::getSampleDatatypeProperties()),
+		Values(PcmDataEnumerator::getWaveFormProperty(IPcmData::WaveFormType::TriangleWave)),
+		Values(44100, 32000),										// Samples/Second
+		Values(1),													// Channels
+		Values(440, 600),											// Key
+		Values(0),													// Phase shift
+		Values(0, 0.3, 0.5, 0.8, 1)									// Peak position
 	),
 	PcmDataUnitTest::Name()
 );

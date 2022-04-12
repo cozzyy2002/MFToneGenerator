@@ -30,36 +30,28 @@ IPcmData::SampleDataType getSampleDataType()
 template<typename T>
 struct TestSample
 {
-	static const T Samples[];
-	static const size_t SamplesCount;
+	static T Samples[];
 };
 
-template<> const UINT8 TestSample<UINT8>::Samples[] = { 0, 0x40, 0x60, 0x80, 0xa0, 0xc0, 0xff };
-template<> const size_t TestSample<UINT8>::SamplesCount = ARRAYSIZE(Samples);
-
-template<> const INT16 TestSample<INT16>::Samples[] = { (INT16)0xa000, (INT16)0xc000, 0, 0x6000, 0x7fff, (INT16)0xffff };
-template<> const size_t TestSample<INT16>::SamplesCount = ARRAYSIZE(Samples);
-
-template<> const INT24 TestSample<INT24>::Samples[] = { 0xa00000, 0xc00000, 0, 0x600000, 0x7fffff, 0xffffff };
-template<> const size_t TestSample<INT24>::SamplesCount = ARRAYSIZE(Samples);
-
-template<> const float TestSample<float>::Samples[] = { -1.0f, -0.4f, -0.8f, 0, 0.4f, 0.8f, 1.0f };
-template<> const size_t TestSample<float>::SamplesCount = ARRAYSIZE(Samples);
+template<> UINT8 TestSample<UINT8>::Samples[] = { 0, 0x40, 0x60, 0x80, 0xa0, 0xc0, 0xff };
+template<> INT16 TestSample<INT16>::Samples[] = { (INT16)0xa000, (INT16)0xc000, 0, 0x6000, 0x7fff, (INT16)0xffff };
+template<> INT24 TestSample<INT24>::Samples[] = { 0xa00000, 0xc00000, 0, 0x600000, 0x7fffff, 0xffffff };
+template<> float TestSample<float>::Samples[] = { -1.0f, -0.4f, -0.8f, 0, 0.4f, 0.8f, 1.0f };
 
 template<typename T>
 class PcmSampleTypedTest : public Test
 {
 public:
 	std::unique_ptr<IPcmSample> testee;
-	const T* testSamples;
+	T* testSamples;
 	size_t testSamplesCount;
 
 	void SetUp() {
 		testSamples = TestSample<T>::Samples;
-		testSamplesCount = TestSample<T>::SamplesCount;
+		testSamplesCount = ARRAYSIZE(TestSample<T>::Samples);
 
 		// Create IPcmSample object using the buffer.
-		testee.reset(createPcmSample(const_cast<T*>(testSamples), testSamplesCount));
+		testee.reset(createPcmSample(TestSample<T>::Samples));
 		ASSERT_THAT(testee, NotNull());
 	}
 };
@@ -87,7 +79,7 @@ TYPED_TEST(PcmSampleTypedTest, buffer_size)
 }
 
 // Test for INT32/double operator of IPcmSample::Value class.
-// The operator should return value as same as sample data passed to createPcmSample() functio.
+// The operator should return value as same as sample data passed to createPcmSample() function.
 TYPED_TEST(PcmSampleTypedTest, to_int_float)
 {
 	for(size_t i = 0; i < this->testSamplesCount; i++) {
@@ -171,11 +163,12 @@ TYPED_TEST(PcmSampleTypedTest, assignment)
 		// Value::operator=(INT32 or double)
 		destValue = this->testSamples[i];
 		EXPECT_EQ(dest, testSample);
+		dest = (TypeParam)0xcd;
 
 		// Value::operator=(const Value&)
-		dest = (TypeParam)0xcd;
 		destValue = (*this->testee)[i];
 		EXPECT_EQ(dest, testSample);
+		dest = (TypeParam)0xef;
 	}
 }
 
@@ -251,7 +244,7 @@ TEST(PcmSampleUnitTest, error_unknown_data_type)
 TEST(PcmSampleUnitTest, error_buffer_null)
 {
 	// Buffer size that fits all sample data size.
-	static const size_t bufferSize = 4;
+	static const size_t bufferSize = 12;
 	std::unique_ptr<IPcmSample> testee;
 
 	testee.reset(createPcmSample<INT16>(nullptr, bufferSize));

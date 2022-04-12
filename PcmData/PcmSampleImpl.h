@@ -268,7 +268,7 @@ IPcmSample::Value PcmSampleImpl<T>::operator[](size_t index) const
 template<typename T>
 bool PcmSampleImpl<T>::isValid(size_t index) const
 {
-	return (index < m_sampleCount);
+	return (m_buffer && (index < m_sampleCount));
 }
 
 template<typename T>
@@ -277,6 +277,8 @@ size_t PcmSampleImpl<T>::getSampleCount() const
 	return m_sampleCount;
 }
 
+// Creates IPcmSample object from type T buffer and sample count(not byte size).
+// This function is instantiated by createPcmSample(void*, size_t) template function below.
 template<typename T>
 IPcmSample* createPcmSample(T* buffer, size_t sampleCount)
 {
@@ -286,6 +288,9 @@ IPcmSample* createPcmSample(T* buffer, size_t sampleCount)
 	return new PcmSampleImpl<T>(buffer, sampleCount);
 }
 
+// Creates IPcmSample object from void buffer and byte size.
+// This function for all sample data type is instantiated by
+// createPcmSample(IPcmData::SampleDataType, void*, size_t) function(See PcmSampleImpl.cpp)
 template<typename T>
 IPcmSample* createPcmSample(void* buffer, size_t size)
 {

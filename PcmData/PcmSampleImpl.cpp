@@ -14,7 +14,8 @@ IPcmSample* createPcmSample(std::shared_ptr<IPcmData>& pcmData)
 		return new PcmSampleImpl<INT24>(pcmData);
 	case IPcmData::SampleDataType::IEEE_Float:
 		return new PcmSampleImpl<float>(pcmData);
-	default: return nullptr;
+	default:
+		return nullptr;
 	}
 }
 
@@ -29,7 +30,8 @@ IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffe
 		return createPcmSample<INT24>(buffer, size);
 	case IPcmData::SampleDataType::IEEE_Float:
 		return createPcmSample<float>(buffer, size);
-	default: return nullptr;
+	default:
+		return nullptr;
 	}
 }
 

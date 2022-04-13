@@ -27,16 +27,12 @@ IPcmData::SampleDataType getSampleDataType()
 	}
 }
 
-template<typename T>
-struct TestSample
-{
-	static T Samples[];
-};
+template<typename T> T Samples[];
 
-template<> UINT8 TestSample<UINT8>::Samples[] = { 0, 0x40, 0x60, 0x80, 0xa0, 0xc0, 0xff };
-template<> INT16 TestSample<INT16>::Samples[] = { (INT16)0xa000, (INT16)0xc000, 0, 0x6000, 0x7fff, (INT16)0xffff };
-template<> INT24 TestSample<INT24>::Samples[] = { 0xa00000, 0xc00000, 0, 0x600000, 0x7fffff, 0xffffff };
-template<> float TestSample<float>::Samples[] = { -1.0f, -0.4f, -0.8f, 0, 0.4f, 0.8f, 1.0f };
+template<> UINT8 Samples<UINT8>[] = { 0, 0x40, 0x60, 0x80, 0xa0, 0xc0, 0xff };
+template<> INT16 Samples<INT16>[] = { (INT16)0xa000, (INT16)0xc000, 0, 0x6000, 0x7fff, (INT16)0xffff };
+template<> INT24 Samples<INT24>[] = { 0xa00000, 0xc00000, 0, 0x600000, 0x7fffff, 0xffffff };
+template<> float Samples<float>[] = { -1.0f, -0.4f, -0.8f, 0, 0.4f, 0.8f, 1.0f };
 
 template<typename T>
 class PcmSampleTypedTest : public Test
@@ -46,12 +42,13 @@ public:
 	T* testSamples;
 	size_t testSamplesCount;
 
-	void SetUp() {
-		testSamples = TestSample<T>::Samples;
-		testSamplesCount = ARRAYSIZE(TestSample<T>::Samples);
+	PcmSampleTypedTest()
+		: testSamples(Samples<T>)
+		, testSamplesCount(ARRAYSIZE(Samples<T>)) {}
 
+	void SetUp() {
 		// Create IPcmSample object using the buffer.
-		testee.reset(createPcmSample(TestSample<T>::Samples));
+		testee.reset(createPcmSample(Samples<T>));
 		ASSERT_THAT(testee, NotNull());
 	}
 };

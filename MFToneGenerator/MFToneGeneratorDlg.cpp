@@ -181,6 +181,7 @@ void CMFToneGeneratorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER_PEAK_POSITION, m_peakPosition);
 	DDX_Control(pDX, IDC_SLIDER_LEVEL, m_level);
 	DDX_Control(pDX, IDC_SLIDER_PHASE_SHIFT, m_phaseShift);
+	DDX_Control(pDX, IDC_PICTURE_VIDEO, m_PictureVideo);
 }
 
 BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
@@ -200,6 +201,7 @@ BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_A2, &CMFToneGeneratorDlg::OnBnClickedButtonA2)
 	ON_BN_CLICKED(IDC_BUTTON_E2, &CMFToneGeneratorDlg::OnBnClickedButtonE2)
 	ON_CBN_SELCHANGE(IDC_COMBO_WAVE_FORM, &CMFToneGeneratorDlg::OnCbnSelchangeComboWaveForm)
+	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
 
@@ -467,4 +469,11 @@ void CMFToneGeneratorDlg::OnCbnSelchangeComboWaveForm()
 	auto& wp = m_WaveFormProperties[sel];
 	m_duty.EnableWindow((wp.parameter == PcmDataEnumerator::FactoryParameter::Duty) ? TRUE : FALSE);
 	m_peakPosition.EnableWindow((wp.parameter == PcmDataEnumerator::FactoryParameter::PeakPosition) ? TRUE : FALSE);
+}
+
+
+void CMFToneGeneratorDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	__super::OnGetMinMaxInfo(lpMMI);
+	lpMMI->ptMinTrackSize = POINT({ 640, 460 });
 }

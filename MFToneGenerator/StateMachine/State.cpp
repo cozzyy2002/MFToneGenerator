@@ -19,7 +19,7 @@ HRESULT StoppedState::handleEvent(Context* context, Event* event, State** nextSt
     case Event::Type::StartFile:
     {
         auto ev = (StartFileEvent*)event;
-        context->setAudioFileName(ev->fileName.c_str());
+        context->setMediaFileName(ev->fileName.c_str(), ev->hwnd);
     }
     HR_EXPECT_OK(context->setupSession());
     break;

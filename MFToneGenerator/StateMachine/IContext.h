@@ -27,7 +27,7 @@ public:
 	virtual HRESULT setup() = 0;
 	virtual HRESULT shutdown() = 0;
 	virtual HRESULT startTone(std::shared_ptr<IPcmData>& pcmData) = 0;
-	virtual HRESULT startFile(LPCTSTR fileName) = 0;
+	virtual HRESULT startFile(LPCTSTR fileName, HWND hwnd) = 0;
 	virtual HRESULT stop() = 0;
 	virtual HRESULT pauseResume() = 0;
 };

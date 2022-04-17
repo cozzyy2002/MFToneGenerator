@@ -356,7 +356,7 @@ void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 		CFileDialog dlg(TRUE);
 		if(dlg.DoModal() == IDOK) {
 			auto fileName = dlg.GetPathName();
-			m_context->startFile(fileName.GetString());
+			m_context->startFile(fileName.GetString(), m_PictureVideo.GetSafeHwnd());
 		}
 	}
 		break;

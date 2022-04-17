@@ -26,7 +26,7 @@ public:
 	virtual HRESULT setup() override;
 	virtual HRESULT shutdown() override;
 	virtual HRESULT startTone(std::shared_ptr<IPcmData>& pcmData) override;
-	virtual HRESULT startFile(LPCTSTR fileName) override;
+	virtual HRESULT startFile(LPCTSTR fileName, HWND hwnd) override;
 	virtual HRESULT stop() override;
 	virtual HRESULT pauseResume() override;
 #pragma endregion
@@ -34,12 +34,14 @@ public:
 	void setPcmData(std::shared_ptr<IPcmData>& pcmData)
 	{
 		m_pcmData = pcmData;
-		m_audioFileName.clear();
+		m_mediaFileName.clear();
+		m_hwnd = NULL;
 	}
-	void setAudioFileName(LPCTSTR fileName)
+	void setMediaFileName(LPCTSTR fileName, HWND hwnd)
 	{
 		m_pcmData.reset();
-		m_audioFileName = fileName;
+		m_mediaFileName = fileName;
+		m_hwnd = hwnd;
 	}
 	HRESULT setupSession();
 	HRESULT startSession();
@@ -55,7 +57,8 @@ protected:
 	using BaseClass = tsm::AsyncContext<Event, State>;
 	ICallback* m_callback;
 	std::shared_ptr<IPcmData> m_pcmData;
-	std::tstring m_audioFileName;
+	std::tstring m_mediaFileName;
+	HWND m_hwnd;
 	CComPtr<IMFMediaSource> m_source;
 	CComPtr<IMFMediaSession> m_session;
 

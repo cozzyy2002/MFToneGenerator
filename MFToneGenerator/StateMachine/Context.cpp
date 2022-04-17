@@ -52,9 +52,9 @@ HRESULT Context::startTone(std::shared_ptr<IPcmData>& pcmData)
     return HR_EXPECT_OK(triggerEvent(new StartToneEvent(pcmData)));
 }
 
-HRESULT Context::startFile(LPCTSTR fileName)
+HRESULT Context::startFile(LPCTSTR fileName, HWND hwnd)
 {
-    return HR_EXPECT_OK(triggerEvent(new StartFileEvent(fileName)));
+    return HR_EXPECT_OK(triggerEvent(new StartFileEvent(fileName, hwnd)));
 }
 
 HRESULT Context::stop()
@@ -74,13 +74,13 @@ HRESULT Context::setupSession()
 
     if(m_pcmData) {
         m_source = new ToneMediaSource(m_pcmData);
-    } else if(!m_audioFileName.empty()) {
+    } else if(!m_mediaFileName.empty()) {
         CComPtr<IMFSourceResolver> resolver;
         HR_ASSERT_OK(MFCreateSourceResolver(&resolver));
 
         MF_OBJECT_TYPE objectType;
         CComPtr<IUnknown> unk;
-        auto audioFileName = m_audioFileName.c_str();
+        auto audioFileName = m_mediaFileName.c_str();
         CT2W url(audioFileName);
         auto hr = HR_EXPECT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
         if(FAILED(hr)) {
@@ -112,8 +112,22 @@ HRESULT Context::setupSession()
         CComPtr<IMFStreamDescriptor> sd;
         BOOL isSelected;
         HR_ASSERT_OK(pd->GetStreamDescriptorByIndex(isd, &isSelected, &sd));
+        if(!isSelected) { continue; }
 
-        if(isSelected) {
+        CComPtr<IMFMediaTypeHandler> mth;
+        HR_ASSERT_OK(sd->GetMediaTypeHandler(&mth));
+        GUID majorType;
+        HR_ASSERT_OK(mth->GetMajorType(&majorType));
+        CComPtr<IMFActivate> activate;
+        if(majorType == MFMediaType_Audio) {
+            // Create the audio renderer.
+            HR_ASSERT_OK(MFCreateAudioRendererActivate(&activate));
+        } else if((majorType == MFMediaType_Video) && m_hwnd) {
+            // Create the video renderer, if the rendering window has been specified.
+            HR_ASSERT_OK(MFCreateVideoRendererActivate(m_hwnd, &activate));
+        }
+
+        if(activate) {
             // Create Topology Node for Media Source.
             CComPtr<IMFTopologyNode> sourceNode;
             HR_ASSERT_OK(MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &sourceNode));
@@ -123,15 +137,15 @@ HRESULT Context::setupSession()
             HR_ASSERT_OK(topology->AddNode(sourceNode));
 
             // Create Topology Node for Media Sink.
-            CComPtr<IMFActivate> activate;
-            HR_ASSERT_OK(MFCreateAudioRendererActivate(&activate));
             CComPtr<IMFTopologyNode> sinkNode;
             HR_ASSERT_OK(MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &sinkNode));
             HR_ASSERT_OK(sinkNode->SetObject(activate));
             HR_ASSERT_OK(topology->AddNode(sinkNode));
 
             sourceNode->ConnectOutput(0, sinkNode, 0);
-            break;
+        } else {
+            // No appropriate renderer for this media stream.
+            pd->DeselectStream(isd);
         }
     }
     HR_ASSERT_OK(m_session->SetTopology(0, topology));

@@ -67,9 +67,10 @@ public:
 class StartFileEvent : public Event
 {
 public:
-	StartFileEvent(LPCTSTR fileName) : Event(Type::StartFile), fileName(fileName) {}
+	StartFileEvent(LPCTSTR fileName, HWND hwnd) : Event(Type::StartFile), fileName(fileName), hwnd(hwnd) {}
 
 	const std::tstring fileName;
+	HWND hwnd;
 };
 
 class SessionEvent : public Event

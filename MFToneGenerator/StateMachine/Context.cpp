@@ -67,33 +67,39 @@ HRESULT Context::pauseResume()
     return HR_EXPECT_OK(triggerEvent(new Event(Event::Type::PauseResume)));
 }
 
-HRESULT Context::setupSession()
+HRESULT Context::setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData)
+{
+    m_pcmData = pcmData;
+    return setupSession(new ToneMediaSource(m_pcmData));
+}
+
+HRESULT Context::setupMediaFileSession(LPCTSTR fileName, HWND hwnd)
+{
+    CComPtr<IMFSourceResolver> resolver;
+    HR_ASSERT_OK(MFCreateSourceResolver(&resolver));
+
+    MF_OBJECT_TYPE objectType;
+    CComPtr<IUnknown> unk;
+    CT2W url(fileName);
+    auto hr = HR_EXPECT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
+    if(FAILED(hr)) {
+        auto msg(format(hr, fileName));
+        log(_T("%s: %s"), fileName, msg.c_str());
+        callback([hr, &msg](ICallback* callback) { callback->onError(_T("CreateObjectFromURL()"), hr, msg.c_str()); });
+        return hr;
+    }
+
+    CComPtr<IMFMediaSource> mediaSource;
+    HR_ASSERT_OK(unk->QueryInterface(&mediaSource));
+    return setupSession(mediaSource, hwnd);
+}
+
+HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
 {
     // Media Session should not be created yet.
     HR_ASSERT(!m_session, E_ILLEGAL_METHOD_CALL);
 
-    if(m_pcmData) {
-        m_source = new ToneMediaSource(m_pcmData);
-    } else if(!m_mediaFileName.empty()) {
-        CComPtr<IMFSourceResolver> resolver;
-        HR_ASSERT_OK(MFCreateSourceResolver(&resolver));
-
-        MF_OBJECT_TYPE objectType;
-        CComPtr<IUnknown> unk;
-        auto audioFileName = m_mediaFileName.c_str();
-        CT2W url(audioFileName);
-        auto hr = HR_EXPECT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
-        if(FAILED(hr)) {
-            auto msg(format(hr, audioFileName));
-            log(_T("%s: %s"), audioFileName, msg.c_str());
-            callback([hr, &msg](ICallback* callback) { callback->onError(_T("CreateObjectFromURL()"), hr, msg.c_str()); });
-            return hr;
-        }
-        HR_ASSERT_OK(unk->QueryInterface(&m_source));
-    } else {
-        // IPcmData nor Audio Filename is not specified.
-        return E_UNEXPECTED;
-    }
+    m_source = mediaSource;
     print(m_source);
 
     HR_ASSERT_OK(MFCreateMediaSession(nullptr, &m_session));
@@ -122,9 +128,9 @@ HRESULT Context::setupSession()
         if(majorType == MFMediaType_Audio) {
             // Create the audio renderer.
             HR_ASSERT_OK(MFCreateAudioRendererActivate(&activate));
-        } else if((majorType == MFMediaType_Video) && m_hwnd) {
+        } else if((majorType == MFMediaType_Video) && hwnd) {
             // Create the video renderer, if the rendering window has been specified.
-            HR_ASSERT_OK(MFCreateVideoRendererActivate(m_hwnd, &activate));
+            HR_ASSERT_OK(MFCreateVideoRendererActivate(hwnd, &activate));
         }
 
         if(activate) {

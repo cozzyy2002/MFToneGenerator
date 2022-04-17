@@ -31,19 +31,8 @@ public:
 	virtual HRESULT pauseResume() override;
 #pragma endregion
 
-	void setPcmData(std::shared_ptr<IPcmData>& pcmData)
-	{
-		m_pcmData = pcmData;
-		m_mediaFileName.clear();
-		m_hwnd = NULL;
-	}
-	void setMediaFileName(LPCTSTR fileName, HWND hwnd)
-	{
-		m_pcmData.reset();
-		m_mediaFileName = fileName;
-		m_hwnd = hwnd;
-	}
-	HRESULT setupSession();
+	HRESULT setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData);
+	HRESULT setupMediaFileSession(LPCTSTR fileName, HWND hwnd);
 	HRESULT startSession();
 	HRESULT stopSession();
 	HRESULT closeSession();
@@ -57,10 +46,10 @@ protected:
 	using BaseClass = tsm::AsyncContext<Event, State>;
 	ICallback* m_callback;
 	std::shared_ptr<IPcmData> m_pcmData;
-	std::tstring m_mediaFileName;
-	HWND m_hwnd;
 	CComPtr<IMFMediaSource> m_source;
 	CComPtr<IMFMediaSession> m_session;
+
+	HRESULT setupSession(IMFMediaSource* mediaSource, HWND hwnd = NULL);
 
 	class MediaSessionCallback : public IMFAsyncCallback, public Logger
 	{

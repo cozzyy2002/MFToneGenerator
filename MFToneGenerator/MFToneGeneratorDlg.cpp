@@ -352,13 +352,19 @@ void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 	switch(m_status)
 	{
 	case Status::Stopped:
-	{
-		CFileDialog dlg(TRUE);
-		if(dlg.DoModal() == IDOK) {
-			auto fileName = dlg.GetPathName();
-			m_context->startFile(fileName.GetString(), m_PictureVideo.GetSafeHwnd());
+		{
+			static const TCHAR filter[] =
+				_T("Video Files|*.wmv;*.mp4;*.avi;*.mov;*.mpg|")
+				_T("Audio Files|*.wma;*.mp3;*.aac;*.asf;*.mid;*.wav|")
+				_T("All Files|*.*|")
+				_T("|");
+			DWORD flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+			CFileDialog dlg(TRUE, NULL, NULL, flags, filter);
+			if(dlg.DoModal() == IDOK) {
+				auto fileName = dlg.GetPathName();
+				m_context->startFile(fileName.GetString(), m_PictureVideo.GetSafeHwnd());
+			}
 		}
-	}
 		break;
 
 	case Status::Playing:

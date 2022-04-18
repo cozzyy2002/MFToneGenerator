@@ -45,7 +45,6 @@ public:
 protected:
 	using BaseClass = tsm::AsyncContext<Event, State>;
 	ICallback* m_callback;
-	std::shared_ptr<IPcmData> m_pcmData;
 	CComPtr<IMFMediaSource> m_source;
 	CComPtr<IMFMediaSession> m_session;
 

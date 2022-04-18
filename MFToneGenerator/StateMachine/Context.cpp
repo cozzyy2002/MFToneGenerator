@@ -69,8 +69,7 @@ HRESULT Context::pauseResume()
 
 HRESULT Context::setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData)
 {
-    m_pcmData = pcmData;
-    return setupSession(new ToneMediaSource(m_pcmData));
+    return setupSession(new ToneMediaSource(pcmData));
 }
 
 HRESULT Context::setupMediaFileSession(LPCTSTR fileName, HWND hwnd)

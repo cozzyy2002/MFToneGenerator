@@ -69,7 +69,8 @@ HRESULT Context::pauseResume()
 
 HRESULT Context::setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData)
 {
-    return setupSession(new ToneMediaSource(pcmData));
+    CComPtr<IMFMediaSource> source(new ToneMediaSource(pcmData));
+    return setupSession(source);
 }
 
 HRESULT Context::setupMediaFileSession(LPCTSTR fileName, HWND hwnd)
@@ -98,15 +99,15 @@ HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
     // Media Session should not be created yet.
     HR_ASSERT(!m_session, E_ILLEGAL_METHOD_CALL);
 
-    m_source = mediaSource;
-    print(m_source);
-
     HR_ASSERT_OK(MFCreateMediaSession(nullptr, &m_session));
     m_mediaSessionCallback = new MediaSessionCallback(this, m_session);
     HR_ASSERT_OK(m_mediaSessionCallback->beginGetEvent());
 
     CComPtr <IMFTopology> topology;
     HR_ASSERT_OK(MFCreateTopology(&topology));
+
+    m_source = mediaSource;
+    print(m_source);
 
     // Create Topology Node for Media Source and Media Sink.
     CComPtr<IMFPresentationDescriptor> pd;
@@ -150,6 +151,7 @@ HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
             sourceNode->ConnectOutput(0, sinkNode, 0);
         } else {
             // No appropriate renderer for this media stream.
+            log(_T("Deselecting unsupported stream %d. Major Type = %s"), isd, toString(majorType).c_str());
             pd->DeselectStream(isd);
         }
     }

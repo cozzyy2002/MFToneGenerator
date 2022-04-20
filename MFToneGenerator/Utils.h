@@ -21,7 +21,8 @@ public:
 	std::tstring format_v(LPCTSTR fmt, va_list args) const;
 	std::tstring format(LPCTSTR fmt, ...) const;
     std::tstring format(HRESULT hr, ...) const;
-    std::tstring operator()(REFGUID guid) const;
+    std::tstring toString(REFGUID guid) const;
+    std::tstring operator()(REFGUID guid) const { return toString(guid); }
 };
 
 class Logger : public StringFormatter

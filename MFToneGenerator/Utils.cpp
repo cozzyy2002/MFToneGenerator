@@ -38,7 +38,7 @@ std::tstring StringFormatter::format(HRESULT hr, ...) const
 	return msg;
 }
 
-std::tstring StringFormatter::operator()(REFGUID guid) const
+std::tstring StringFormatter::toString(REFGUID guid) const
 {
 	LPOLESTR olestr;
 	auto hr = StringFromCLSID(guid, &olestr);

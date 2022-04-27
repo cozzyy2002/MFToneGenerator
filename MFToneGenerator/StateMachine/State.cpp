@@ -12,7 +12,7 @@ HRESULT StoppedState::handleEvent(Context* context, Event* event, State** nextSt
     case Event::Type::StartTone:
         {
             auto ev = (StartToneEvent*)event;
-            HR_EXPECT_OK(context->setupPcmDataSession(ev->pcmData));
+            HR_EXPECT_OK(context->setupPcmDataSession(ev->pcmData, ev->hwnd));
         }
         break;
     case Event::Type::StartFile:

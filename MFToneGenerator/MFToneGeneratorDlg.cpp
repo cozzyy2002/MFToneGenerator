@@ -425,7 +425,7 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 		// NOTE: Calling IContext::startTone() causes calling IPcmData::copyTo() that should be called after IPcmData::generate() bellow.
 		//       WindowProcStateMachine used by Context, performs methods of Context on the UI thread as same as this method.
 		//       So the calling sequence is assured.
-		m_context->startTone(m_pcmData);
+		m_context->startTone(m_pcmData, m_PictureVideo.GetSafeHwnd());
 	}
 
 	auto level = (float)m_level.GetPos() / SliderMaxValue;

@@ -47,9 +47,9 @@ HRESULT Context::shutdown()
     return HR_EXPECT_OK(BaseClass::shutdown());
 }
 
-HRESULT Context::startTone(std::shared_ptr<IPcmData>& pcmData)
+HRESULT Context::startTone(std::shared_ptr<IPcmData>& pcmData, HWND hwnd /*= NULL*/)
 {
-    return HR_EXPECT_OK(triggerEvent(new StartToneEvent(pcmData)));
+    return HR_EXPECT_OK(triggerEvent(new StartToneEvent(pcmData, hwnd)));
 }
 
 HRESULT Context::startFile(LPCTSTR fileName, HWND hwnd)
@@ -67,10 +67,10 @@ HRESULT Context::pauseResume()
     return HR_EXPECT_OK(triggerEvent(new Event(Event::Type::PauseResume)));
 }
 
-HRESULT Context::setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData)
+HRESULT Context::setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData, HWND hwnd /*= NULL*/)
 {
     CComPtr<IMFMediaSource> source(new ToneMediaSource(pcmData));
-    return setupSession(source);
+    return setupSession(source, hwnd);
 }
 
 HRESULT Context::setupMediaFileSession(LPCTSTR fileName, HWND hwnd)

@@ -25,13 +25,13 @@ public:
 
 	virtual HRESULT setup() override;
 	virtual HRESULT shutdown() override;
-	virtual HRESULT startTone(std::shared_ptr<IPcmData>& pcmData) override;
+	virtual HRESULT startTone(std::shared_ptr<IPcmData>& pcmData, HWND hwnd = NULL) override;
 	virtual HRESULT startFile(LPCTSTR fileName, HWND hwnd) override;
 	virtual HRESULT stop() override;
 	virtual HRESULT pauseResume() override;
 #pragma endregion
 
-	HRESULT setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData);
+	HRESULT setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData, HWND hwnd = NULL);
 	HRESULT setupMediaFileSession(LPCTSTR fileName, HWND hwnd);
 	HRESULT startSession();
 	HRESULT stopSession();

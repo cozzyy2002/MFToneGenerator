@@ -59,9 +59,10 @@ protected:
 class StartToneEvent : public Event
 {
 public:
-	StartToneEvent(std::shared_ptr<IPcmData>& pcmData) : Event(Type::StartTone), pcmData(pcmData) {}
+	StartToneEvent(std::shared_ptr<IPcmData>& pcmData, HWND hwnd = NULL) : Event(Type::StartTone), pcmData(pcmData), hwnd(hwnd) {}
 
 	std::shared_ptr<IPcmData> pcmData;
+	HWND hwnd;
 };
 
 class StartFileEvent : public Event

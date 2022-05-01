@@ -75,7 +75,7 @@ HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor
 			return E_UNEXPECTED;
 		}
 		PROPVARIANT value = { VT_UNKNOWN };
-		HR_ASSERT_OK(stream.QueryInterface(&value.punkVal));
+		value.punkVal = stream;
 		m_eventGenerator.QueueEvent(MENewStream, &value);
 		HR_ASSERT_OK(stream->start(pvarStartPosition));
 	}

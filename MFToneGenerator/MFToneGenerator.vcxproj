@@ -248,6 +248,7 @@
     <ClInclude Include="StateMachine\State.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ToneMediaSource\MediaEventGenerator.h" />
+    <ClInclude Include="ToneMediaSource\ToneAudioStream.h" />
     <ClInclude Include="ToneMediaSource\ToneMediaSource.h" />
     <ClInclude Include="ToneMediaSource\ToneMediaStream.h" />
     <ClInclude Include="Utils.h" />
@@ -265,6 +266,7 @@
     <ClCompile Include="StateMachine\Event.cpp" />
     <ClCompile Include="StateMachine\State.cpp" />
     <ClCompile Include="ToneMediaSource\MediaEventGenerator.cpp" />
+    <ClCompile Include="ToneMediaSource\ToneAudioStream.cpp" />
     <ClCompile Include="ToneMediaSource\ToneMediaSource.cpp" />
     <ClCompile Include="ToneMediaSource\ToneMediaStream.cpp" />
     <ClCompile Include="Utils.cpp" />

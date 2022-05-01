@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include "ToneMediaSource.h"
-#include "ToneMediaStream.h"
+#include "ToneAudioStream.h"
 
 ToneMediaSource::ToneMediaSource(std::shared_ptr<IPcmData>& pcmData)
 	: m_pcmData(pcmData), m_unknownImpl(this)
@@ -31,35 +31,18 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 	HR_ASSERT_OK(checkShutdown());
 
 	if(!m_pd) {
-		// Create MediaType
-		const DWORD nSamplesPerSec = m_pcmData->getSamplesPerSec();
-		const WORD nBlockAlign = m_pcmData->getBlockAlign();
-		WAVEFORMATEX waveFormat = {
-			m_pcmData->getFormatTag(),			// wFormatTag
-			m_pcmData->getChannels(),			// nChannels
-			nSamplesPerSec,						// nSamplesPerSec
-			nSamplesPerSec * nBlockAlign,		// nAvgBytesPerSec
-			nBlockAlign,						// nBlockAlign
-			m_pcmData->getBitsPerSample(),		// wBitsPerSample
-			0,									// cbSize(No extra information)
-		};
+		// Create Mediatype and StreamDesctiptor for ToneMediaStream(Audio stream)
+		CComPtr<IMFStreamDescriptor> sdAudio;
+		HR_ASSERT_OK(ToneAudioStream::createStreamDescriptor(m_pcmData.get(), &sdAudio));
 
-		CComPtr<IMFMediaType> mediaType;
-		HR_ASSERT_OK(MFCreateMediaType(&mediaType));
-		HR_ASSERT_OK(MFInitMediaTypeFromWaveFormatEx(mediaType, &waveFormat, sizeof(waveFormat)));
-
-		// Create StreamDesctiptor and set current MediaType
-		CComPtr<IMFStreamDescriptor> sd;
-		IMFMediaType* mediaTypes[] = { mediaType.p };
-		HR_ASSERT_OK(MFCreateStreamDescriptor(1, ARRAYSIZE(mediaTypes), mediaTypes, &sd));
-		CComPtr<IMFMediaTypeHandler> mth;
-		sd->GetMediaTypeHandler(&mth);
-		mth->SetCurrentMediaType(mediaType);
-
-		// Create PresentationDesctiptor and select the only MediaStream.
-		IMFStreamDescriptor* sds[] = { sd.p };
+		// Create PresentationDesctiptor and select all streams.
+		IMFStreamDescriptor* sds[] = { sdAudio.p };
 		HR_ASSERT_OK(MFCreatePresentationDescriptor(ARRAYSIZE(sds), sds, &m_pd));
-		m_pd->SelectStream(0);
+		DWORD sdCount;
+		HR_ASSERT_OK(m_pd->GetStreamDescriptorCount(&sdCount));
+		for (DWORD i = 0; i < sdCount; i++) {
+			m_pd->SelectStream(i);
+		}
 	}
 
 	return HR_EXPECT_OK(m_pd->Clone(ppPresentationDescriptor));
@@ -74,15 +57,14 @@ HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor
 	HR_ASSERT_OK(pPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &sd));
 	HR_ASSERT(selected, E_UNEXPECTED);
 
-	m_mediaStream = new ToneMediaStream(this, sd, m_pcmData);
+	m_mediaStream = new ToneAudioStream(this, sd, m_pcmData);
 
 	PROPVARIANT value = { VT_UNKNOWN };
 	HR_ASSERT_OK(m_mediaStream.QueryInterface(&value.punkVal));
 	m_eventGenerator.QueueEvent(MENewStream, &value);
 	m_eventGenerator.QueueEvent(MESourceStarted, pvarStartPosition);
 
-	HR_ASSERT_OK(m_mediaStream->start());
-	m_mediaStream->QueueEvent(MEStreamStarted, pvarStartPosition);
+	HR_ASSERT_OK(m_mediaStream->start(pvarStartPosition));
 
 	return S_OK;
 }
@@ -92,7 +74,6 @@ HRESULT __stdcall ToneMediaSource::Stop(void)
 	m_eventGenerator.QueueEvent(MESourceStopped);
 
 	m_mediaStream->stop();
-	m_mediaStream->QueueEvent(MEStreamStopped);
 
 	return S_OK;
 }

@@ -7,25 +7,36 @@
 class ToneMediaSource;
 
 /**
- * Custom Media Stream generates Tone Wave.
+ * Base class of custom Media Streams.
  */
 class ToneMediaStream : public IMFMediaStream, DoNotCopy
 {
-public:
-    ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, std::shared_ptr<IPcmData>& pcmData);
+protected:
+    ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd);
 
-    HRESULT start();
-    HRESULT stop();
-    HRESULT shutdown();
-    HRESULT QueueEvent(MediaEventType met, const PROPVARIANT* pvValue = nullptr) { return m_eventGenerator.QueueEvent(met, pvValue); }
+public:
+    virtual ~ToneMediaStream() {}
+
+    virtual HRESULT start(const PROPVARIANT* pvarStartPosition) = 0;
+    virtual HRESULT stop() = 0;
+    virtual HRESULT shutdown() = 0;
 
 protected:
     ToneMediaSource* m_mediaSource;
     CComPtr<IMFStreamDescriptor> m_sd;
-    float m_key;
 
-    // PCM data generator.
-    std::shared_ptr<IPcmData> m_pcmData;
+    template<DWORD Count>
+    static HRESULT createStreamDescriptor(IMFMediaType* (&mediaTypes)[Count], IMFStreamDescriptor** ppsd) {
+        HR_ASSERT(0 < Count, E_INVALIDARG);
+
+        static DWORD streamId = 1;
+        HR_ASSERT_OK(MFCreateStreamDescriptor(streamId++, Count, mediaTypes, ppsd));
+        CComPtr<IMFMediaTypeHandler> mth;
+        (*ppsd)->GetMediaTypeHandler(&mth);
+        mth->SetCurrentMediaType(mediaTypes[0]);
+
+        return S_OK;
+    }
 
 #pragma region Implementation of IMFMediaStream
 public:
@@ -33,8 +44,7 @@ public:
         /* [out] */ __RPC__deref_out_opt IMFMediaSource** ppMediaSource) override;
     virtual HRESULT STDMETHODCALLTYPE GetStreamDescriptor(
         /* [out] */ __RPC__deref_out_opt IMFStreamDescriptor** ppStreamDescriptor) override;
-    virtual /* [local] */ HRESULT STDMETHODCALLTYPE RequestSample(
-        /* [in] */ IUnknown* pToken) override;
+    // Note: RequestSample() method should be implemented by derived class.
 
 protected:
     LONGLONG m_sampleTime;

@@ -11,7 +11,7 @@ public:
     virtual HRESULT stop() override;
     virtual HRESULT shutdown() override;
 
-    static HRESULT createStreamDescriptor(IPcmData* pPcmData, IMFStreamDescriptor** ppsd);
+    static HRESULT createStreamDescriptor(IPcmData* pPcmData, DWORD streamId, IMFStreamDescriptor** ppsd);
 
 #pragma region Implementation of IMFMediaStream
     virtual /* [local] */ HRESULT STDMETHODCALLTYPE RequestSample(

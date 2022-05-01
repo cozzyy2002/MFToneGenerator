@@ -26,11 +26,10 @@ protected:
     CComPtr<IMFStreamDescriptor> m_sd;
 
     template<DWORD Count>
-    static HRESULT createStreamDescriptor(IMFMediaType* (&mediaTypes)[Count], IMFStreamDescriptor** ppsd) {
+    static HRESULT createStreamDescriptor(IMFMediaType* (&mediaTypes)[Count], DWORD streamId, IMFStreamDescriptor** ppsd) {
         HR_ASSERT(0 < Count, E_INVALIDARG);
 
-        static DWORD streamId = 1;
-        HR_ASSERT_OK(MFCreateStreamDescriptor(streamId++, Count, mediaTypes, ppsd));
+        HR_ASSERT_OK(MFCreateStreamDescriptor(streamId, Count, mediaTypes, ppsd));
         CComPtr<IMFMediaTypeHandler> mth;
         (*ppsd)->GetMediaTypeHandler(&mth);
         mth->SetCurrentMediaType(mediaTypes[0]);

@@ -33,7 +33,7 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 	if(!m_pd) {
 		// Create Mediatype and StreamDesctiptor for ToneMediaStream(Audio stream)
 		CComPtr<IMFStreamDescriptor> sdAudio;
-		HR_ASSERT_OK(ToneAudioStream::createStreamDescriptor(m_pcmData.get(), &sdAudio));
+		HR_ASSERT_OK(ToneAudioStream::createStreamDescriptor(m_pcmData.get(), (DWORD)StreamId::ToneAudio, &sdAudio));
 
 		// Create PresentationDesctiptor and select all streams.
 		IMFStreamDescriptor* sds[] = { sdAudio.p };
@@ -50,30 +50,48 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 
 HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor* pPresentationDescriptor, __RPC__in_opt const GUID* pguidTimeFormat, __RPC__in_opt const PROPVARIANT* pvarStartPosition)
 {
-	HR_ASSERT(!m_mediaStream, E_ILLEGAL_METHOD_CALL);
+	HR_ASSERT(m_mediaStreams.size() == 0, E_ILLEGAL_METHOD_CALL);
 
-	CComPtr<IMFStreamDescriptor> sd;
-	BOOL selected;
-	HR_ASSERT_OK(pPresentationDescriptor->GetStreamDescriptorByIndex(0, &selected, &sd));
-	HR_ASSERT(selected, E_UNEXPECTED);
+	Logger logger;
+	DWORD sdCount;
+	m_pd->GetStreamDescriptorCount(&sdCount);
+	for (DWORD isd = 0; isd < sdCount; isd++) {
+		CComPtr<IMFStreamDescriptor> sd;
+		BOOL selected;
+		HR_ASSERT_OK(pPresentationDescriptor->GetStreamDescriptorByIndex(isd, &selected, &sd));
+		if(!selected) continue;
 
-	m_mediaStream = new ToneAudioStream(this, sd, m_pcmData);
+		CComPtr<ToneMediaStream> stream;
+		DWORD streamId;
+		sd->GetStreamIdentifier(&streamId);
+		switch ((StreamId)streamId) {
+		case StreamId::ToneAudio:
+			logger.log(_T("Size of ToneAudioStream = %d"), sizeof(ToneAudioStream));
+			stream = new ToneAudioStream(this, sd, m_pcmData);
+			m_mediaStreams.push_back(stream);
+			break;
+		default:
+			// Unknonw Stream ID
+			return E_UNEXPECTED;
+		}
+		PROPVARIANT value = { VT_UNKNOWN };
+		HR_ASSERT_OK(stream.QueryInterface(&value.punkVal));
+		m_eventGenerator.QueueEvent(MENewStream, &value);
+		HR_ASSERT_OK(stream->start(pvarStartPosition));
+	}
 
-	PROPVARIANT value = { VT_UNKNOWN };
-	HR_ASSERT_OK(m_mediaStream.QueryInterface(&value.punkVal));
-	m_eventGenerator.QueueEvent(MENewStream, &value);
 	m_eventGenerator.QueueEvent(MESourceStarted, pvarStartPosition);
-
-	HR_ASSERT_OK(m_mediaStream->start(pvarStartPosition));
 
 	return S_OK;
 }
 
 HRESULT __stdcall ToneMediaSource::Stop(void)
 {
-	m_eventGenerator.QueueEvent(MESourceStopped);
+	for(auto stream : m_mediaStreams) {
+		stream->stop();
+	}
 
-	m_mediaStream->stop();
+	m_eventGenerator.QueueEvent(MESourceStopped);
 
 	return S_OK;
 }
@@ -85,12 +103,12 @@ HRESULT __stdcall ToneMediaSource::Pause(void)
 
 HRESULT __stdcall ToneMediaSource::Shutdown(void)
 {
-	m_eventGenerator.shutdown();
-
-	if(m_mediaStream) {
-		m_mediaStream->shutdown();
-		m_mediaStream.Release();
+	for (auto stream : m_mediaStreams) {
+		stream->shutdown();
 	}
+	m_mediaStreams.clear();
+
+	m_eventGenerator.shutdown();
 
 	return S_OK;
 }

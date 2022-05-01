@@ -7,7 +7,7 @@ ToneAudioStream::ToneAudioStream(ToneMediaSource* mediaSource, IMFStreamDescript
 {
 }
 
-/*static*/ HRESULT ToneAudioStream::createStreamDescriptor(IPcmData* pPcmData, IMFStreamDescriptor** ppsd)
+/*static*/ HRESULT ToneAudioStream::createStreamDescriptor(IPcmData* pPcmData, DWORD streamId, IMFStreamDescriptor** ppsd)
 {
 	const DWORD nSamplesPerSec = pPcmData->getSamplesPerSec();
 	const WORD nBlockAlign = pPcmData->getBlockAlign();
@@ -26,7 +26,7 @@ ToneAudioStream::ToneAudioStream(ToneMediaSource* mediaSource, IMFStreamDescript
 	HR_ASSERT_OK(MFInitMediaTypeFromWaveFormatEx(mediaType, &waveFormat, sizeof(waveFormat)));
 
 	IMFMediaType* mediaTypes[] = { mediaType.p };
-	return ToneMediaStream::createStreamDescriptor(mediaTypes, ppsd);
+	return ToneMediaStream::createStreamDescriptor(mediaTypes, streamId, ppsd);
 }
 
 HRESULT __stdcall ToneAudioStream::RequestSample(IUnknown* pToken)

@@ -13,7 +13,6 @@ class ToneMediaSource : public IMFMediaSource, DoNotCopy
 {
 public:
     ToneMediaSource(std::shared_ptr<IPcmData>& pcmData);
-    ToneMediaStream* getMediaStream() { return m_mediaStream; }
 
 protected:
     HRESULT checkShutdown();
@@ -35,8 +34,12 @@ public:
     virtual HRESULT STDMETHODCALLTYPE Shutdown(void) override;
 
 protected:
+    enum class StreamId {
+        ToneAudio = 1,
+        ToneVideo = 2
+    };
     CComPtr<IMFPresentationDescriptor> m_pd;
-    CComPtr<ToneMediaStream> m_mediaStream;
+    std::vector<CComPtr<ToneMediaStream>> m_mediaStreams;
 #pragma endregion
 
 #pragma region Implementation of IMFMediaEventGenerator

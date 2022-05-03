@@ -3,6 +3,7 @@
 #include "MediaEventGenerator.h"
 #include "PcmData/PcmData.h"
 #include "Utils.h"
+#include <map>
 
 class ToneMediaStream;
 
@@ -39,7 +40,7 @@ protected:
         ToneVideo = 2
     };
     CComPtr<IMFPresentationDescriptor> m_pd;
-    std::vector<CComPtr<ToneMediaStream>> m_mediaStreams;
+    std::map<StreamId, CComPtr<ToneMediaStream>> m_mediaStreams;
 #pragma endregion
 
 #pragma region Implementation of IMFMediaEventGenerator

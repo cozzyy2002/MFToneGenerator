@@ -50,9 +50,6 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 
 HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor* pPresentationDescriptor, __RPC__in_opt const GUID* pguidTimeFormat, __RPC__in_opt const PROPVARIANT* pvarStartPosition)
 {
-	HR_ASSERT(m_mediaStreams.size() == 0, E_ILLEGAL_METHOD_CALL);
-
-	Logger logger;
 	DWORD sdCount;
 	m_pd->GetStreamDescriptorCount(&sdCount);
 	for (DWORD isd = 0; isd < sdCount; isd++) {
@@ -62,21 +59,28 @@ HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor
 		if(!selected) continue;
 
 		CComPtr<ToneMediaStream> stream;
-		DWORD streamId;
-		sd->GetStreamIdentifier(&streamId);
-		switch ((StreamId)streamId) {
-		case StreamId::ToneAudio:
-			logger.log(_T("Size of ToneAudioStream = %d"), sizeof(ToneAudioStream));
-			stream = new ToneAudioStream(this, sd, m_pcmData);
-			m_mediaStreams.push_back(stream);
-			break;
-		default:
-			// Unknonw Stream ID
-			return E_UNEXPECTED;
+		DWORD dwStreamId;
+		sd->GetStreamIdentifier(&dwStreamId);
+		auto streamId = (StreamId)dwStreamId;
+		auto it = m_mediaStreams.find(streamId);
+		auto isNewStream = (it == m_mediaStreams.end());
+		MediaEventType met = isNewStream ? MENewStream : MEUpdatedStream;
+		if (isNewStream) {
+			switch (streamId) {
+			case StreamId::ToneAudio:
+				stream = new ToneAudioStream(this, sd, m_pcmData);
+				m_mediaStreams[streamId] = stream;
+				break;
+			default:
+				// Unknonw Stream ID
+				return E_UNEXPECTED;
+			}
+		} else {
+			stream = it->second;
 		}
 		PROPVARIANT value = { VT_UNKNOWN };
 		value.punkVal = stream;
-		m_eventGenerator.QueueEvent(MENewStream, &value);
+		m_eventGenerator.QueueEvent(met, &value);
 		HR_ASSERT_OK(stream->start(pvarStartPosition));
 	}
 
@@ -87,8 +91,8 @@ HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor
 
 HRESULT __stdcall ToneMediaSource::Stop(void)
 {
-	for(auto stream : m_mediaStreams) {
-		stream->stop();
+	for(auto& pair : m_mediaStreams) {
+		pair.second->stop();
 	}
 
 	m_eventGenerator.QueueEvent(MESourceStopped);
@@ -103,8 +107,8 @@ HRESULT __stdcall ToneMediaSource::Pause(void)
 
 HRESULT __stdcall ToneMediaSource::Shutdown(void)
 {
-	for (auto stream : m_mediaStreams) {
-		stream->shutdown();
+	for (auto& pair : m_mediaStreams) {
+		pair.second->shutdown();
 	}
 	m_mediaStreams.clear();
 

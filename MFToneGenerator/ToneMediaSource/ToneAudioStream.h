@@ -13,11 +13,7 @@ protected:
     virtual HRESULT onStart(const PROPVARIANT* pvarStartPosition) override;
     virtual HRESULT onStop() override;
     virtual HRESULT onShutdown() override;
-
-#pragma region Implementation of IMFMediaStream
-    virtual /* [local] */ HRESULT STDMETHODCALLTYPE RequestSample(
-        /* [in] */ IUnknown* pToken) override;
-#pragma endregion
+    virtual HRESULT onRequestSample(IMFSample* sample) override;
 
 protected:
     float m_key;

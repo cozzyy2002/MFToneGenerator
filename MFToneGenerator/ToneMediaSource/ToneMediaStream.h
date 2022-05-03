@@ -40,6 +40,7 @@ protected:
     virtual HRESULT onStart(const PROPVARIANT* pvarStartPosition) = 0;
     virtual HRESULT onStop() = 0;
     virtual HRESULT onShutdown() = 0;
+    virtual HRESULT onRequestSample(IMFSample* sample) = 0;
 
 #pragma region Implementation of IMFMediaStream
 public:
@@ -47,7 +48,8 @@ public:
         /* [out] */ __RPC__deref_out_opt IMFMediaSource** ppMediaSource) override;
     virtual HRESULT STDMETHODCALLTYPE GetStreamDescriptor(
         /* [out] */ __RPC__deref_out_opt IMFStreamDescriptor** ppStreamDescriptor) override;
-    // Note: RequestSample() method should be implemented by derived class.
+    virtual /* [local] */ HRESULT STDMETHODCALLTYPE RequestSample(
+        /* [in] */ IUnknown* pToken) override;
 
 protected:
     LONGLONG m_sampleTime;

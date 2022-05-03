@@ -4,11 +4,26 @@
 #include "ToneMediaSource.h"
 
 
-#pragma region Implementation of IMFMediaEventGenerator
-
 ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd)
 	: m_mediaSource(mediaSource), m_sd(sd), m_sampleTime(0), m_unknownImpl(this)
 {
+}
+
+HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
+{
+	// Create IMFSample contains the buffer.
+	CComPtr<IMFSample> sample;
+	HR_ASSERT_OK(MFCreateSample(&sample));
+	if (pToken) {
+		sample->SetUnknown(MFSampleExtension_Token, pToken);
+	}
+	HR_ASSERT_OK(onRequestSample(sample));
+
+	// Send MEMediaSample Event with the sample as Event Value.
+	PROPVARIANT value = { VT_UNKNOWN };
+	value.punkVal = sample;
+	m_eventGenerator.QueueEvent(MEMediaSample, &value);
+	return S_OK;
 }
 
 HRESULT ToneMediaStream::start(const PROPVARIANT* pvarStartPosition)
@@ -51,6 +66,8 @@ HRESULT __stdcall ToneMediaStream::GetStreamDescriptor(__RPC__deref_out_opt IMFS
 {
 	return HR_EXPECT_OK(m_sd.CopyTo(ppStreamDescriptor));
 }
+
+#pragma region Implementation of IMFMediaEventGenerator
 
 HRESULT __stdcall ToneMediaStream::GetEvent(DWORD dwFlags, __RPC__deref_out_opt IMFMediaEvent** ppEvent)
 {

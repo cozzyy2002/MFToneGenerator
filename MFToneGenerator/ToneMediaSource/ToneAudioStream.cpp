@@ -29,7 +29,7 @@ ToneAudioStream::ToneAudioStream(ToneMediaSource* mediaSource, IMFStreamDescript
 	return ToneMediaStream::createStreamDescriptor(mediaTypes, streamId, ppsd);
 }
 
-HRESULT __stdcall ToneAudioStream::RequestSample(IUnknown* pToken)
+HRESULT ToneAudioStream::onRequestSample(IMFSample* sample)
 {
 	if (!m_pcmData) { return S_FALSE; }
 
@@ -46,22 +46,14 @@ HRESULT __stdcall ToneAudioStream::RequestSample(IUnknown* pToken)
 	HR_ASSERT_OK(buffer->Unlock());
 	HR_ASSERT_OK(buffer->SetCurrentLength(size));
 
-	// Create IMFSample contains the buffer.
-	CComPtr<IMFSample> sample;
-	HR_ASSERT_OK(MFCreateSample(&sample));
+	// Add the buffer to IMFSample object.
 	sample->AddBuffer(buffer);
-	if (pToken) {
-		sample->SetUnknown(MFSampleExtension_Token, pToken);
-	}
+
 	LONGLONG sampleDuration = (LONGLONG)duration * 10000;	// 100-nanosecond units.
 	sample->SetSampleDuration(sampleDuration);
 	sample->SetSampleTime(m_sampleTime);
 	m_sampleTime += sampleDuration;
 
-	// Send MEMediaSample Event with the sample as Event Value.
-	PROPVARIANT value = { VT_UNKNOWN };
-	value.punkVal = sample;
-	m_eventGenerator.QueueEvent(MEMediaSample, &value);
 	return S_OK;
 }
 

@@ -66,6 +66,9 @@
     <ClInclude Include="ToneMediaSource\ToneAudioStream.h">
       <Filter>ToneMediaSource</Filter>
     </ClInclude>
+    <ClInclude Include="ToneMediaSource\ToneVideoStream.h">
+      <Filter>ToneMediaSource</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MFToneGenerator.cpp">
@@ -99,6 +102,9 @@
       <Filter>ToneMediaSource</Filter>
     </ClCompile>
     <ClCompile Include="ToneMediaSource\ToneAudioStream.cpp">
+      <Filter>ToneMediaSource</Filter>
+    </ClCompile>
+    <ClCompile Include="ToneMediaSource\ToneVideoStream.cpp">
       <Filter>ToneMediaSource</Filter>
     </ClCompile>
   </ItemGroup>

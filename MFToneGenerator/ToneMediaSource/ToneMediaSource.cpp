@@ -2,6 +2,7 @@
 
 #include "ToneMediaSource.h"
 #include "ToneAudioStream.h"
+#include "ToneVideoStream.h"
 
 ToneMediaSource::ToneMediaSource(std::shared_ptr<IPcmData>& pcmData)
 	: m_pcmData(pcmData), m_unknownImpl(this)
@@ -31,12 +32,16 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 	HR_ASSERT_OK(checkShutdown());
 
 	if(!m_pd) {
-		// Create Mediatype and StreamDesctiptor for ToneMediaStream(Audio stream)
+		// Create StreamDesctiptor for ToneAudioStream(Audio stream)
 		CComPtr<IMFStreamDescriptor> sdAudio;
 		HR_ASSERT_OK(ToneAudioStream::createStreamDescriptor(m_pcmData.get(), (DWORD)StreamId::ToneAudio, &sdAudio));
 
+		// Create StreamDesctiptor for ToneVideoStream(Video stream)
+		CComPtr<IMFStreamDescriptor> sdVideo;
+		HR_ASSERT_OK(ToneVideoStream::createStreamDescriptor((DWORD)StreamId::ToneVideo, &sdVideo));
+
 		// Create PresentationDesctiptor and select all streams.
-		IMFStreamDescriptor* sds[] = { sdAudio.p };
+		IMFStreamDescriptor* sds[] = { sdAudio.p, sdVideo.p };
 		HR_ASSERT_OK(MFCreatePresentationDescriptor(ARRAYSIZE(sds), sds, &m_pd));
 		DWORD sdCount;
 		HR_ASSERT_OK(m_pd->GetStreamDescriptorCount(&sdCount));
@@ -69,6 +74,10 @@ HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor
 			switch (streamId) {
 			case StreamId::ToneAudio:
 				stream = new ToneAudioStream(this, sd, m_pcmData);
+				m_mediaStreams[streamId] = stream;
+				break;
+			case StreamId::ToneVideo:
+				stream = new ToneVideoStream(this, sd);
 				m_mediaStreams[streamId] = stream;
 				break;
 			default:

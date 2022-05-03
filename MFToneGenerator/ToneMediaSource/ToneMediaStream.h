@@ -17,9 +17,9 @@ protected:
 public:
     virtual ~ToneMediaStream() {}
 
-    virtual HRESULT start(const PROPVARIANT* pvarStartPosition) = 0;
-    virtual HRESULT stop() = 0;
-    virtual HRESULT shutdown() = 0;
+    HRESULT start(const PROPVARIANT* pvarStartPosition);
+    HRESULT stop();
+    HRESULT shutdown();
 
 protected:
     ToneMediaSource* m_mediaSource;
@@ -36,6 +36,10 @@ protected:
 
         return S_OK;
     }
+
+    virtual HRESULT onStart(const PROPVARIANT* pvarStartPosition) = 0;
+    virtual HRESULT onStop() = 0;
+    virtual HRESULT onShutdown() = 0;
 
 #pragma region Implementation of IMFMediaStream
 public:

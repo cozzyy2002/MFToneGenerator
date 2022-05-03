@@ -7,11 +7,12 @@ class ToneAudioStream : public ToneMediaStream
 public:
     ToneAudioStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, std::shared_ptr<IPcmData>& pcmData);
 
-    virtual HRESULT start(const PROPVARIANT* pvarStartPosition) override;
-    virtual HRESULT stop() override;
-    virtual HRESULT shutdown() override;
-
     static HRESULT createStreamDescriptor(IPcmData* pPcmData, DWORD streamId, IMFStreamDescriptor** ppsd);
+
+protected:
+    virtual HRESULT onStart(const PROPVARIANT* pvarStartPosition) override;
+    virtual HRESULT onStop() override;
+    virtual HRESULT onShutdown() override;
 
 #pragma region Implementation of IMFMediaStream
     virtual /* [local] */ HRESULT STDMETHODCALLTYPE RequestSample(

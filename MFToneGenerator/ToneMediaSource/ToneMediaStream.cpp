@@ -11,6 +11,33 @@ ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescript
 {
 }
 
+HRESULT ToneMediaStream::start(const PROPVARIANT* pvarStartPosition)
+{
+	HR_ASSERT_OK(onStart(pvarStartPosition));
+
+	m_eventGenerator.QueueEvent(MEStreamStarted, pvarStartPosition);
+
+	return S_OK;
+}
+
+HRESULT ToneMediaStream::stop()
+{
+	HR_ASSERT_OK(onStop());
+
+	m_eventGenerator.QueueEvent(MEStreamStopped);
+
+	return S_OK;
+}
+
+HRESULT ToneMediaStream::shutdown()
+{
+	HR_EXPECT_OK(onShutdown());
+
+	m_eventGenerator.shutdown();
+
+	return S_OK;
+}
+
 HRESULT __stdcall ToneMediaStream::GetMediaSource(__RPC__deref_out_opt IMFMediaSource** ppMediaSource)
 {
 	HR_ASSERT(ppMediaSource, E_POINTER);

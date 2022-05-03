@@ -65,7 +65,7 @@ HRESULT __stdcall ToneAudioStream::RequestSample(IUnknown* pToken)
 	return S_OK;
 }
 
-HRESULT ToneAudioStream::start(const PROPVARIANT* pvarStartPosition)
+HRESULT ToneAudioStream::onStart(const PROPVARIANT* pvarStartPosition)
 {
 	m_sampleTime = 0;
 
@@ -82,22 +82,18 @@ HRESULT ToneAudioStream::start(const PROPVARIANT* pvarStartPosition)
 	HR_ASSERT(pWaveFormat->wBitsPerSample == m_pcmData->getBitsPerSample(), MF_E_NOT_AVAILABLE);
 	HR_ASSERT(pWaveFormat->nBlockAlign == m_pcmData->getBlockAlign(), MF_E_NOT_AVAILABLE);
 
-	m_eventGenerator.QueueEvent(MEStreamStarted, pvarStartPosition);
-
 	return S_OK;
 }
 
-HRESULT ToneAudioStream::stop()
+HRESULT ToneAudioStream::onStop()
 {
-	m_eventGenerator.QueueEvent(MEStreamStopped);
-
+	// Nothing to do.
 	return S_OK;
 }
 
-HRESULT ToneAudioStream::shutdown()
+HRESULT ToneAudioStream::onShutdown()
 {
 	m_pcmData.reset();
-	m_eventGenerator.shutdown();
 
 	return S_OK;
 }

@@ -41,7 +41,7 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 		HR_ASSERT_OK(ToneVideoStream::createStreamDescriptor((DWORD)StreamId::ToneVideo, &sdVideo));
 
 		// Create PresentationDesctiptor and select all streams.
-		IMFStreamDescriptor* sds[] = { sdAudio.p, sdVideo.p };
+		IMFStreamDescriptor* sds[] = { sdAudio, sdVideo };
 		HR_ASSERT_OK(MFCreatePresentationDescriptor(ARRAYSIZE(sds), sds, &m_pd));
 		DWORD sdCount;
 		HR_ASSERT_OK(m_pd->GetStreamDescriptorCount(&sdCount));

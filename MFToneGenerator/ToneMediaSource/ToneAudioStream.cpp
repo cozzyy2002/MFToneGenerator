@@ -25,7 +25,7 @@ ToneAudioStream::ToneAudioStream(ToneMediaSource* mediaSource, IMFStreamDescript
 	HR_ASSERT_OK(MFCreateMediaType(&mediaType));
 	HR_ASSERT_OK(MFInitMediaTypeFromWaveFormatEx(mediaType, &waveFormat, sizeof(waveFormat)));
 
-	IMFMediaType* mediaTypes[] = { mediaType.p };
+	IMFMediaType* mediaTypes[] = { mediaType };
 	return ToneMediaStream::createStreamDescriptor(mediaTypes, streamId, ppsd);
 }
 

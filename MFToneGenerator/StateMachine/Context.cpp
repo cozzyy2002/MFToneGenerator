@@ -291,7 +291,7 @@ void print(IMFMediaSource* mediaSource)
     DWORD sdCount;
     pd->GetStreamDescriptorCount(&sdCount);
     log.log(_T("IMFMediaSource: %d Stream Desctiptors, Characteristics=0x%08x [%s]"), sdCount, characts, strCharacts.c_str());
-    print(pd, _T("Attributes of IMFPresentationDescriptor"));
+    print(pd, _T("IMFPresentationDescriptor"));
     for(DWORD i = 0; i < sdCount; i++) {
         BOOL isSelected;
         CComPtr<IMFStreamDescriptor> sd;
@@ -306,7 +306,7 @@ void print(IMFStreamDescriptor* sd, DWORD index)
     DWORD id;
     sd->GetStreamIdentifier(&id);
     log.log(_T("IMFStreamDescriptor %d: Identifier=%d"), index, id);
-    print(sd, _T("Attributes of IMFStreamDescriptor"));
+    print(sd, _T("IMFStreamDescriptor"));
 }
 
 void print(IMFAttributes* attr, LPCTSTR title)
@@ -315,7 +315,7 @@ void print(IMFAttributes* attr, LPCTSTR title)
     UINT32 count;
     attr->GetCount(&count);
 
-    log.log(_T("%s: %d Items"), title, count);
+    log.log(_T("Attributes of %s: %d Items"), title, count);
     for(UINT32 i = 0; i < count; i++) {
         GUID key;
         PROPVARIANT value;

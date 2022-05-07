@@ -152,7 +152,7 @@ HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
             sourceNode->ConnectOutput(0, sinkNode, 0);
         } else {
             // No appropriate renderer for this media stream.
-            log(_T("Deselecting unsupported stream %d. Major Type = %s"), isd, toString(majorType).c_str());
+            log(_T("Deselecting unsupported stream %d. Major Type = %s"), isd, guidToString(majorType).c_str());
             pd->DeselectStream(isd);
         }
     }
@@ -310,7 +310,7 @@ void print(IMFStreamDescriptor* sd, DWORD index)
     sd->GetMediaTypeHandler(&mth);
     GUID majorType;
     mth->GetMajorType(&majorType);
-    log.log(_T("IMFStreamDescriptor %d: Identifier=%d, MajorType=%s"), index, id, log.toString(majorType).c_str());
+    log.log(_T("IMFStreamDescriptor %d: Identifier=%d, MajorType=%s"), index, id, guidToString(majorType).c_str());
     print(sd, _T("IMFStreamDescriptor"));
     DWORD cmt;
     mth->GetMediaTypeCount(&cmt);
@@ -337,35 +337,35 @@ void print(IMFAttributes* attr, LPCTSTR title)
         std::tstring strValue;
         switch(value.vt) {
         case MF_ATTRIBUTE_UINT32:
-            strValue = log.format(_T("MF_ATTRIBUTE_UINT32(%d) %u"), value.vt, value.uintVal);
+            strValue = log.format(_T("MF_ATTRIBUTE_UINT32(%d) = %u"), value.vt, value.uintVal);
             break;
         case MF_ATTRIBUTE_UINT64:
-            strValue = log.format(_T("MF_ATTRIBUTE_UINT64(%d) %d - %d"), value.vt, value.uhVal.HighPart, value.uhVal.LowPart);
+            strValue = log.format(_T("MF_ATTRIBUTE_UINT64(%d) = %d - %d"), value.vt, value.uhVal.HighPart, value.uhVal.LowPart);
             break;
         case MF_ATTRIBUTE_DOUBLE:
-            strValue = log.format(_T("MF_ATTRIBUTE_DOUBLE(%d) %f"), value.vt, value.dblVal);
+            strValue = log.format(_T("MF_ATTRIBUTE_DOUBLE(%d) = %f"), value.vt, value.dblVal);
             break;
         case MF_ATTRIBUTE_GUID:
-            strValue = log.format(_T("MF_ATTRIBUTE_GUID(%d) %s"), value.vt, guidToString(*value.puuid).c_str());
+            strValue = log.format(_T("MF_ATTRIBUTE_GUID(%d) = %s"), value.vt, guidToString(*value.puuid).c_str());
             break;
         case MF_ATTRIBUTE_STRING:
             {
                 CW2T tValue(value.pwszVal);
-                strValue = log.format(_T("MF_ATTRIBUTE_STRING(%d) `%s`"), value.vt, (LPCTSTR)tValue);
+                strValue = log.format(_T("MF_ATTRIBUTE_STRING(%d) = `%s`"), value.vt, (LPCTSTR)tValue);
             }
             break;
         case MF_ATTRIBUTE_BLOB:
             strValue = log.format(_T("MF_ATTRIBUTE_BLOB(%d)"), value.vt);
             break;
         case MF_ATTRIBUTE_IUNKNOWN:
-            strValue = log.format(_T("MF_ATTRIBUTE_IUNKNOWN(%d) 0x%p"), value.vt, value.punkVal);
+            strValue = log.format(_T("MF_ATTRIBUTE_IUNKNOWN(%d) = 0x%p"), value.vt, value.punkVal);
             break;
         default:
             strValue = log.format(_T("Unknown type %d"), value.vt);
             break;
         }
 
-        log.log(_T("  %2d %s %s"), i, guidToString(key).c_str(), strValue.c_str());
+        log.log(_T("  %2d %s:%s"), i, guidToString(key).c_str(), strValue.c_str());
         PropVariantClear(&value);
     }
 }
@@ -383,6 +383,7 @@ static const GuidName guidNames[] = {
     ITEM(MF_MT_COMPRESSED),
     ITEM(MF_MT_FIXED_SIZE_SAMPLES),
     ITEM(MF_MT_MAJOR_TYPE),
+    ITEM(MF_MT_SAMPLE_SIZE),
     ITEM(MF_MT_SUBTYPE),
 
     // Audio Format Attributes of Media Type.
@@ -392,6 +393,7 @@ static const GuidName guidNames[] = {
     ITEM(MF_MT_AUDIO_CHANNEL_MASK),
     ITEM(MF_MT_AUDIO_FLOAT_SAMPLES_PER_SECOND),
     ITEM(MF_MT_AUDIO_NUM_CHANNELS),
+    ITEM(MF_MT_AUDIO_PREFER_WAVEFORMATEX),
     ITEM(MF_MT_AUDIO_SAMPLES_PER_SECOND),
     ITEM(MF_MT_AUDIO_VALID_BITS_PER_SAMPLE),
     ITEM(MF_MT_ORIGINAL_WAVE_FORMAT_TAG),
@@ -403,6 +405,7 @@ static const GuidName guidNames[] = {
     ITEM(MF_MT_FRAME_SIZE),
     ITEM(MF_MT_INTERLACE_MODE),
     ITEM(MF_MT_VIDEO_ROTATION),
+    ITEM(MF_MT_PIXEL_ASPECT_RATIO),
 
     // Major Media Types.
     ITEM(MFMediaType_Audio),

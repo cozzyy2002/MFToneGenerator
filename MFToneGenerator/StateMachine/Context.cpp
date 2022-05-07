@@ -10,6 +10,7 @@ namespace statemachine {
 static void print(IMFMediaSource*);
 static void print(IMFStreamDescriptor*, DWORD index);
 static void print(IMFAttributes*, LPCTSTR title);
+static std::tstring guidToString(REFGUID guid);
 
 /*static*/ IContext* IContext::create(HWND hWnd, UINT msg)
 {
@@ -305,8 +306,20 @@ void print(IMFStreamDescriptor* sd, DWORD index)
     Logger log;
     DWORD id;
     sd->GetStreamIdentifier(&id);
-    log.log(_T("IMFStreamDescriptor %d: Identifier=%d"), index, id);
+    CComPtr<IMFMediaTypeHandler> mth;
+    sd->GetMediaTypeHandler(&mth);
+    GUID majorType;
+    mth->GetMajorType(&majorType);
+    log.log(_T("IMFStreamDescriptor %d: Identifier=%d, MajorType=%s"), index, id, log.toString(majorType).c_str());
     print(sd, _T("IMFStreamDescriptor"));
+    DWORD cmt;
+    mth->GetMediaTypeCount(&cmt);
+    for(DWORD i = 0; i < cmt; i++) {
+        CComPtr<IMFMediaType> mt;
+        mth->GetMediaTypeByIndex(i, &mt);
+        auto title = log.format(_T("IMFMediaType[%d]"), i);
+        print(mt, title.c_str());
+    }
 }
 
 void print(IMFAttributes* attr, LPCTSTR title)
@@ -321,32 +334,97 @@ void print(IMFAttributes* attr, LPCTSTR title)
         PROPVARIANT value;
         attr->GetItemByIndex(i, &key, &value);
 
-        OLECHAR wstrKey[50];
-        StringFromGUID2(key, wstrKey, ARRAYSIZE(wstrKey));
-        CW2T tstrKey(wstrKey);
-
         std::tstring strValue;
         switch(value.vt) {
-        case VT_UI4:
-            strValue = log.format(_T("VT_UI4(%d) %u"), VT_UI4, value.uintVal);
+        case MF_ATTRIBUTE_UINT32:
+            strValue = log.format(_T("MF_ATTRIBUTE_UINT32(%d) %u"), value.vt, value.uintVal);
             break;
-        case VT_UI8:
-            strValue = log.format(_T("VT_UI8(%d) %u"), VT_UI8, value.bVal);
+        case MF_ATTRIBUTE_UINT64:
+            strValue = log.format(_T("MF_ATTRIBUTE_UINT64(%d) %d - %d"), value.vt, value.uhVal.HighPart, value.uhVal.LowPart);
             break;
-        case VT_LPWSTR:
-        {
-            CW2T tValue(value.pwszVal);
-            strValue = log.format(_T("VT_LPWSTR(%d) `%s`"), VT_LPWSTR, (LPCTSTR)tValue);
-        }
-        break;
+        case MF_ATTRIBUTE_DOUBLE:
+            strValue = log.format(_T("MF_ATTRIBUTE_DOUBLE(%d) %f"), value.vt, value.dblVal);
+            break;
+        case MF_ATTRIBUTE_GUID:
+            strValue = log.format(_T("MF_ATTRIBUTE_GUID(%d) %s"), value.vt, guidToString(*value.puuid).c_str());
+            break;
+        case MF_ATTRIBUTE_STRING:
+            {
+                CW2T tValue(value.pwszVal);
+                strValue = log.format(_T("MF_ATTRIBUTE_STRING(%d) `%s`"), value.vt, (LPCTSTR)tValue);
+            }
+            break;
+        case MF_ATTRIBUTE_BLOB:
+            strValue = log.format(_T("MF_ATTRIBUTE_BLOB(%d)"), value.vt);
+            break;
+        case MF_ATTRIBUTE_IUNKNOWN:
+            strValue = log.format(_T("MF_ATTRIBUTE_IUNKNOWN(%d) 0x%p"), value.vt, value.punkVal);
+            break;
         default:
             strValue = log.format(_T("Unknown type %d"), value.vt);
             break;
         }
 
-        log.log(_T("  %2d %s %s"), i, (LPCTSTR)tstrKey, strValue.c_str());
+        log.log(_T("  %2d %s %s"), i, guidToString(key).c_str(), strValue.c_str());
         PropVariantClear(&value);
     }
+}
+
+struct GuidName {
+    REFGUID guid;
+    LPCTSTR name;
+};
+
+static const GuidName guidNames[] = {
+#define ITEM(x) { x, _T(#x) }
+    // General Format Attributes of Media Type.
+    ITEM(MF_MT_ALL_SAMPLES_INDEPENDENT),
+    ITEM(MF_MT_AM_FORMAT_TYPE),
+    ITEM(MF_MT_COMPRESSED),
+    ITEM(MF_MT_FIXED_SIZE_SAMPLES),
+    ITEM(MF_MT_MAJOR_TYPE),
+    ITEM(MF_MT_SUBTYPE),
+
+    // Audio Format Attributes of Media Type.
+    ITEM(MF_MT_AUDIO_AVG_BYTES_PER_SECOND),
+    ITEM(MF_MT_AUDIO_BITS_PER_SAMPLE),
+    ITEM(MF_MT_AUDIO_BLOCK_ALIGNMENT),
+    ITEM(MF_MT_AUDIO_CHANNEL_MASK),
+    ITEM(MF_MT_AUDIO_FLOAT_SAMPLES_PER_SECOND),
+    ITEM(MF_MT_AUDIO_NUM_CHANNELS),
+    ITEM(MF_MT_AUDIO_SAMPLES_PER_SECOND),
+    ITEM(MF_MT_AUDIO_VALID_BITS_PER_SAMPLE),
+    ITEM(MF_MT_ORIGINAL_WAVE_FORMAT_TAG),
+
+    // Video Format Attributes of Media Type.
+    ITEM(MF_MT_AVG_BITRATE),
+    ITEM(MF_MT_DEFAULT_STRIDE),
+    ITEM(MF_MT_FRAME_RATE),
+    ITEM(MF_MT_FRAME_SIZE),
+    ITEM(MF_MT_INTERLACE_MODE),
+    ITEM(MF_MT_VIDEO_ROTATION),
+
+    // Major Media Types.
+    ITEM(MFMediaType_Audio),
+    ITEM(MFMediaType_Video),
+
+    // Subtypes.
+    ITEM(MFAudioFormat_PCM),
+    ITEM(MFAudioFormat_MPEG),
+    ITEM(MFVideoFormat_RGB24),
+#undef ITEM
+};
+
+/*static*/ std::tstring guidToString(REFGUID guid)
+{
+    StringFormatter fmt;
+    for(auto& x : guidNames) {
+        if(x.guid == guid) {
+            return fmt.format(_T("%s(%s)"), x.name, fmt.toString(guid).c_str());
+        }
+    }
+
+    return fmt.toString(guid);
 }
 
 }

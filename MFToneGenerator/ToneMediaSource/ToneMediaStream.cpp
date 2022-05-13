@@ -28,6 +28,10 @@ HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 
 HRESULT ToneMediaStream::start(const PROPVARIANT* pvarStartPosition)
 {
+	CComPtr<IMFMediaTypeHandler> mth;
+	HR_ASSERT_OK(m_sd->GetMediaTypeHandler(&mth));
+	m_mediaType.Release();
+	HR_ASSERT_OK(mth->GetCurrentMediaType(&m_mediaType));
 	HR_ASSERT_OK(onStart(pvarStartPosition));
 
 	m_eventGenerator.QueueEvent(MEStreamStarted, pvarStartPosition);

@@ -24,15 +24,17 @@ public:
 protected:
     ToneMediaSource* m_mediaSource;
     CComPtr<IMFStreamDescriptor> m_sd;
+    CComPtr<IMFMediaType> m_mediaType;
 
     template<DWORD Count>
-    static HRESULT createStreamDescriptor(IMFMediaType* (&mediaTypes)[Count], DWORD streamId, IMFStreamDescriptor** ppsd) {
+    static HRESULT createStreamDescriptor(IMFMediaType* (&mediaTypes)[Count], DWORD streamId, IMFStreamDescriptor** ppsd, DWORD currentIndex = 0)
+    {
         HR_ASSERT(0 < Count, E_INVALIDARG);
 
         HR_ASSERT_OK(MFCreateStreamDescriptor(streamId, Count, mediaTypes, ppsd));
         CComPtr<IMFMediaTypeHandler> mth;
         (*ppsd)->GetMediaTypeHandler(&mth);
-        mth->SetCurrentMediaType(mediaTypes[0]);
+        mth->SetCurrentMediaType(mediaTypes[currentIndex]);
 
         return S_OK;
     }

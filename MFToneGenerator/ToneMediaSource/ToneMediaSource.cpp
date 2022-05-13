@@ -77,7 +77,7 @@ HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor
 				m_mediaStreams[streamId] = stream;
 				break;
 			case StreamId::ToneVideo:
-				stream = new ToneVideoStream(this, sd);
+				stream = new ToneVideoStream(this, sd, m_pcmData);
 				m_mediaStreams[streamId] = stream;
 				break;
 			default:

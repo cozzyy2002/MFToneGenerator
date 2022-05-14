@@ -270,18 +270,18 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 		}
 	}
 
-	std::tuple<CSliderCtrl*, const float&> sliders[] = {
-		std::make_tuple<CSliderCtrl*, const float&>(&m_duty, PcmDataEnumerator::DefaultDuty),
-		std::make_tuple<CSliderCtrl*, const float&>(&m_peakPosition, PcmDataEnumerator::DefaultPeakPosition),
-		std::make_tuple<CSliderCtrl*, const float&>(&m_level, 0.5),
-		std::make_tuple<CSliderCtrl*, const float&>(&m_phaseShift, 0.5),
+	std::pair<CSliderCtrl*, const float> sliders[] = {
+		{ &m_duty, PcmDataEnumerator::DefaultDuty },
+		{ &m_peakPosition, PcmDataEnumerator::DefaultPeakPosition },
+		{ &m_level, 0.5f },
+		{ &m_phaseShift, 0.5f },
 	};
 
 	for(auto& p : sliders) {
-		auto ctrl = std::get<0>(p);
+		auto ctrl = p.first;
 		ctrl->SetRange(0, SliderMaxValue, FALSE);
 		ctrl->SetTicFreq(SliderMaxValue / 10);
-		ctrl->SetPos((int)(SliderMaxValue * std::get<1>(p)));
+		ctrl->SetPos((int)(SliderMaxValue * p.second));
 	}
 
 	m_context.reset(statemachine::IContext::create(m_hWnd, WM_USER));

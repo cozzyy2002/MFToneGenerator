@@ -7,6 +7,7 @@
 #include "MFToneGenerator.h"
 #include "MFToneGeneratorDlg.h"
 #include "afxdialogex.h"
+#include <ToneMediaSource/ToneVideoStream.h>
 
 #include <utility>
 
@@ -91,6 +92,7 @@ CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	, m_statusMessage(_T(""))
 	, m_sampleDataTypeProperties(PcmDataEnumerator::getSampleDatatypeProperties())
 	, m_WaveFormProperties(PcmDataEnumerator::getWaveFormProperties())
+	, m_showInPane(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -182,6 +184,7 @@ void CMFToneGeneratorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER_LEVEL, m_level);
 	DDX_Control(pDX, IDC_SLIDER_PHASE_SHIFT, m_phaseShift);
 	DDX_Control(pDX, IDC_PICTURE_VIDEO, m_PictureVideo);
+	DDX_Check(pDX, IDC_CHECK_SHOW_IN_PANE, m_showInPane);
 }
 
 BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
@@ -431,6 +434,8 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 	auto level = (float)m_level.GetPos() / SliderMaxValue;
 	auto phaseShift = (float)m_phaseShift.GetPos() / SliderMaxValue;
 	m_pcmData->generate(key, level, phaseShift);
+
+	ToneVideoStream::showInPane = (m_showInPane ? true : false);
 }
 
 void CMFToneGeneratorDlg::OnBnClickedButtonE4()

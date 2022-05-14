@@ -9,6 +9,7 @@ public:
     ToneVideoStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, std::shared_ptr<IPcmData>& pcmData);
 
     static HRESULT createStreamDescriptor(DWORD streamId, IMFStreamDescriptor** ppsd);
+    static bool showInPane;
 
 protected:
     virtual HRESULT onStart(const PROPVARIANT* pvarStartPosition) override;

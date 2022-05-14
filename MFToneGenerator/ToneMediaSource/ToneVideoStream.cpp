@@ -2,6 +2,8 @@
 
 #include "ToneVideoStream.h"
 
+/*static*/ bool ToneVideoStream::showInPane = false;
+
 static const Pixel WhitePixel(0xff, 0xff, 0xff);
 static const Pixel RedPixel(0xff, 0, 0);
 static const Pixel GreenPixel(0, 0xff, 0);
@@ -129,7 +131,15 @@ void ToneVideoStream::drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi)
 	size_t sampleIndex = 0;
 	for(LONG i = 0; i < bi.biWidth; i++) {
 		for(WORD ch = 0; ch < channels; ch++) {
-			auto row = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() * bi.biHeight / valueHeight + (bi.biHeight / 2);
+			auto row = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() * bi.biHeight / valueHeight;
+			if(showInPane) {
+				// Show wave form of each channel in it's pane.
+				row /= channels;
+				row += ((bi.biHeight / channels / 2) + (bi.biHeight / channels * (channels - 1 - ch)));
+			} else {
+				// Show wave form of all channels in palis.
+				row += (bi.biHeight / 2);
+			}
 			auto col = i;
 			pixelArray[row][col] = pixels[sampleIndex % channels % ARRAYSIZE(pixels)];
 			sampleIndex++;

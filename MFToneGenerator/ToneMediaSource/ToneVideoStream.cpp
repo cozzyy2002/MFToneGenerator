@@ -16,7 +16,7 @@ static HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEA
 
 ToneVideoStream::ToneVideoStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, std::shared_ptr<IPcmData>& pcmData)
 	: ToneMediaStream(mediaSource, sd)
-	, m_pcmData(pcmData)
+	, m_pcmData(pcmData), m_startSampleIndex(0)
 {
 }
 
@@ -132,11 +132,12 @@ void ToneVideoStream::drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi)
 		m_sampleBuffer.reset(new BYTE[bufferSize]);
 		m_pcmData->copyTo(m_sampleBuffer.get(), bufferSize);
 		m_pcmSample.reset(createPcmSample(sampleDataType, m_sampleBuffer.get(), bufferSize));
+		m_startSampleIndex = 0;
 	}
 
 	PixelArray pixelArray((Pixel*)buffer, bi.biWidth, bi.biHeight);
 	auto sampleCount = m_pcmSample->getSampleCount();
-	size_t sampleIndex = 0;
+	size_t sampleIndex = m_startSampleIndex;
 	for(LONG i = 0; i < bi.biWidth; i++) {
 		for(WORD ch = 0; ch < channels; ch++) {
 			auto row = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() * bi.biHeight / valueHeight;
@@ -153,6 +154,8 @@ void ToneVideoStream::drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi)
 			sampleIndex++;
 		}
 	}
+
+	m_startSampleIndex = (m_startSampleIndex + channels) % sampleCount;
 }
 
 HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi)

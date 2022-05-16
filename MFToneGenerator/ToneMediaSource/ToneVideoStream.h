@@ -23,6 +23,11 @@ protected:
     std::unique_ptr<BYTE[]> m_sampleBuffer;
     std::unique_ptr<BYTE[]> m_background;
 
+    // Sample index of m_pcmSample to draw wave form at first column of pixel.
+    // This value is updated in evry invoking drawWaveForm() method
+    // so that wave form moves from right to left.
+    size_t m_startSampleIndex;
+
     void drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi);
 };
 

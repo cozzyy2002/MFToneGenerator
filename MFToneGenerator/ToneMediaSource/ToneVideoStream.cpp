@@ -15,7 +15,8 @@ static const Pixel pixels[] = {BlackPixel, RedPixel, GreenPixel, BluePixel};
 static HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi);
 
 ToneVideoStream::ToneVideoStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, std::shared_ptr<IPcmData>& pcmData)
-	: ToneMediaStream(mediaSource, sd), m_pcmSample(createPcmSample(pcmData))
+	: ToneMediaStream(mediaSource, sd)
+	, m_pcmData(pcmData)
 {
 }
 
@@ -42,16 +43,14 @@ HRESULT ToneVideoStream::onStart(const PROPVARIANT* pvarStartPosition)
 {
 	BITMAPINFOHEADER bi;
 	HR_ASSERT_OK(initializeBitmapInfoHeader(m_mediaType, bi));
-	m_videoFrame.reset(new BYTE[bi.biSizeImage]);
+	m_background.reset(new BYTE[bi.biSizeImage]);
 
 	// Fill video frame buffer with background pixel.
-	auto buffer = (Pixel*)m_videoFrame.get();
+	auto buffer = (Pixel*)m_background.get();
 	for(DWORD i = 0; i < (bi.biSizeImage / sizeof(Pixel)); i++) {
 		*(buffer++) = WhitePixel;
 	}
 
-	// Draw wave form.
-	drawWaveForm(m_videoFrame.get(), bi);
 	return S_OK;
 }
 
@@ -82,7 +81,9 @@ HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 	HR_ASSERT_OK(MFCreateMemoryBuffer(bi.biSizeImage, &buffer));
 	HR_ASSERT_OK(buffer->Lock(&rawBuffer, nullptr, nullptr));
 
-	CopyMemory(rawBuffer, m_videoFrame.get(), bi.biSizeImage);
+	// Draw wave form on the background.
+	CopyMemory(rawBuffer, m_background.get(), bi.biSizeImage);
+	drawWaveForm(rawBuffer, bi);
 
 	HR_ASSERT_OK(buffer->Unlock());
 	HR_ASSERT_OK(buffer->SetCurrentLength(bi.biSizeImage));
@@ -119,25 +120,25 @@ protected:
 
 void ToneVideoStream::drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi)
 {
-	auto pcmData = m_pcmSample->getPcmData();
-	auto sampleDataType = pcmData->getSampleDataType();
-	auto channels = pcmData->getChannels();
+	std::unique_ptr<IPcmSample> pcmSample(createPcmSample(m_pcmData));
+	auto sampleDataType = m_pcmData->getSampleDataType();
+	auto channels = m_pcmData->getChannels();
 	const auto highValue = IPcmSample::getHighValue(sampleDataType);
 	const auto lowValue = IPcmSample::getLowValue(sampleDataType);
 	const auto valueHeight = highValue.getInt32() - lowValue.getInt32();
 
 	PixelArray pixelArray((Pixel*)buffer, bi.biWidth, bi.biHeight);
-	auto sampleCount = m_pcmSample->getSampleCount();
+	auto sampleCount = pcmSample->getSampleCount();
 	size_t sampleIndex = 0;
 	for(LONG i = 0; i < bi.biWidth; i++) {
 		for(WORD ch = 0; ch < channels; ch++) {
-			auto row = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() * bi.biHeight / valueHeight;
+			auto row = (*pcmSample)[sampleIndex % sampleCount].getInt32() * bi.biHeight / valueHeight;
 			if(showInPane) {
 				// Show wave form of each channel in it's pane.
 				row /= channels;
 				row += ((bi.biHeight / channels / 2) + (bi.biHeight / channels * (channels - 1 - ch)));
 			} else {
-				// Show wave form of all channels in palis.
+				// Show wave form of all channels in piles.
 				row += (bi.biHeight / 2);
 			}
 			auto col = i;

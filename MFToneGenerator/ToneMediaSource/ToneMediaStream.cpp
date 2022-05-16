@@ -3,6 +3,7 @@
 #include "ToneMediaStream.h"
 #include "ToneMediaSource.h"
 
+#include <thread>
 
 ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd)
 	: m_mediaSource(mediaSource), m_sd(sd), m_sampleTime(0), m_unknownImpl(this)
@@ -11,18 +12,53 @@ ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescript
 
 HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 {
-	// Create IMFSample contains the buffer.
+	{
+		// Add the token to end of the queue.
+		CriticalSection lock(m_tokensLock);
+		m_tokens.push_back(pToken);
+	}
+
+	// Create IMFSample to be passed to onRequestSample() method of derived class.
 	CComPtr<IMFSample> sample;
 	HR_ASSERT_OK(MFCreateSample(&sample));
-	if (pToken) {
-		sample->SetUnknown(MFSampleExtension_Token, pToken);
-	}
-	HR_ASSERT_OK(onRequestSample(sample));
 
-	// Send MEMediaSample Event with the sample as Event Value.
-	PROPVARIANT value = { VT_UNKNOWN };
-	value.punkVal = sample;
-	m_eventGenerator.QueueEvent(MEMediaSample, &value);
+	// Call onRequestSample() method of derived class on the worker thread.
+	std::thread workerthread([this](CComPtr<IMFSample> sample)
+		{
+			CComPtr<IUnknown> token;
+			{
+				CriticalSection lock(m_tokensLock);
+				if(!m_tokens.empty()) {
+					// Retrieve a token from top of the queue.
+					token = m_tokens.front();
+					m_tokens.pop_front();
+				} else {
+					// No token exists in the queue.
+					// Created sample is disdarded.
+					return;
+				}
+			}
+
+			auto hr = HR_EXPECT_OK(onRequestSample(sample));
+			if(hr == S_OK) {
+				// Ready to deliver sample.
+				// Send MEMediaSample Event with the sample as Event Value.
+				if(token) {
+					sample->SetUnknown(MFSampleExtension_Token, token);
+				}
+				PROPVARIANT value = { VT_UNKNOWN };
+				value.punkVal = sample;
+				m_eventGenerator.QueueEvent(MEMediaSample, &value);
+			} else if(FAILED(hr)) {
+				// Error has occurred.
+				m_eventGenerator.QueueEvent(MEError, GUID_NULL, hr, nullptr);
+			}
+			// NOTE: In case hr == S_FALSE, do nothing.
+		},
+		sample);
+
+	workerthread.detach();
+
 	return S_OK;
 }
 
@@ -43,6 +79,7 @@ HRESULT ToneMediaStream::stop()
 {
 	HR_ASSERT_OK(onStop());
 
+	m_tokens.clear();
 	m_eventGenerator.QueueEvent(MEStreamStopped);
 
 	return S_OK;

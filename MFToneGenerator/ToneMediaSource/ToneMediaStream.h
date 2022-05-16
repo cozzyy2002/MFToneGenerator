@@ -4,6 +4,8 @@
 #include "MediaEventGenerator.h"
 #include "Utils.h"
 
+#include <deque>
+
 class ToneMediaSource;
 
 /**
@@ -55,6 +57,9 @@ public:
 
 protected:
     LONGLONG m_sampleTime;
+
+    std::deque<CComPtr<IUnknown>> m_tokens;
+    CriticalSection::Object m_tokensLock;
 #pragma endregion
 
 #pragma region Implementation of IMFMediaEventGenerator

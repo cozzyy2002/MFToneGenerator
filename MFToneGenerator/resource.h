@@ -30,7 +30,6 @@
 #define IDC_SLIDER_PEAK_POSITION2       1019
 #define IDC_SLIDER_PHASE_SHIFT          1019
 #define IDC_PICTURE_VIDEO               1020
-#define IDC_CHECK_SHOW_IN_PAIN          1021
 #define IDC_CHECK_SHOW_IN_PANE          1021
 
 // Next default values for new objects

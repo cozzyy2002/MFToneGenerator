@@ -18,7 +18,9 @@ protected:
     virtual HRESULT onRequestSample(IMFSample* sample) override;
 
 protected:
-    std::shared_ptr<IPcmData>& m_pcmData;
+    std::shared_ptr<IPcmData> m_pcmData;
+    std::unique_ptr<IPcmSample> m_pcmSample;
+    std::unique_ptr<BYTE[]> m_sampleBuffer;
     std::unique_ptr<BYTE[]> m_background;
 
     void drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi);

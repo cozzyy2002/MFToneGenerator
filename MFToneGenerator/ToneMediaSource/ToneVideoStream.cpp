@@ -120,19 +120,26 @@ protected:
 
 void ToneVideoStream::drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi)
 {
-	std::unique_ptr<IPcmSample> pcmSample(createPcmSample(m_pcmData));
 	auto sampleDataType = m_pcmData->getSampleDataType();
 	auto channels = m_pcmData->getChannels();
 	const auto highValue = IPcmSample::getHighValue(sampleDataType);
 	const auto lowValue = IPcmSample::getLowValue(sampleDataType);
 	const auto valueHeight = highValue.getInt32() - lowValue.getInt32();
 
+	if(!m_pcmSample || (m_pcmSample->getSampleCount() != m_pcmData->getSamplesPerCycle())) {
+		// Copy 1-cycle samples to the buffer and create IPcmSample object that references the buffer.
+		auto bufferSize = m_pcmData->getSampleBufferSize(0);
+		m_sampleBuffer.reset(new BYTE[bufferSize]);
+		m_pcmData->copyTo(m_sampleBuffer.get(), bufferSize);
+		m_pcmSample.reset(createPcmSample(sampleDataType, m_sampleBuffer.get(), bufferSize));
+	}
+
 	PixelArray pixelArray((Pixel*)buffer, bi.biWidth, bi.biHeight);
-	auto sampleCount = pcmSample->getSampleCount();
+	auto sampleCount = m_pcmSample->getSampleCount();
 	size_t sampleIndex = 0;
 	for(LONG i = 0; i < bi.biWidth; i++) {
 		for(WORD ch = 0; ch < channels; ch++) {
-			auto row = (*pcmSample)[sampleIndex % sampleCount].getInt32() * bi.biHeight / valueHeight;
+			auto row = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() * bi.biHeight / valueHeight;
 			if(showInPane) {
 				// Show wave form of each channel in it's pane.
 				row /= channels;

@@ -12,17 +12,15 @@ HRESULT StoppedState::handleEvent(Context* context, Event* event, State** nextSt
     case Event::Type::StartTone:
         {
             auto ev = (StartToneEvent*)event;
-            context->setPcmData(ev->pcmData);
+            HR_EXPECT_OK(context->setupPcmDataSession(ev->pcmData, ev->hwnd));
         }
-        HR_EXPECT_OK(context->setupSession());
         break;
     case Event::Type::StartFile:
-    {
-        auto ev = (StartFileEvent*)event;
-        context->setAudioFileName(ev->fileName.c_str());
-    }
-    HR_EXPECT_OK(context->setupSession());
-    break;
+        {
+            auto ev = (StartFileEvent*)event;
+            HR_EXPECT_OK(context->setupMediaFileSession(ev->fileName.c_str(), ev->hwnd));
+        }
+        break;
     case Event::Type::MESessionTopologySet:
         HR_ASSERT_OK(context->startSession());
         break;

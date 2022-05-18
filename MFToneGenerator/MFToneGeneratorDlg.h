@@ -95,4 +95,8 @@ public:
 	CSliderCtrl m_level;
 	CSliderCtrl m_phaseShift;
 	afx_msg void OnCbnSelchangeComboWaveForm();
+	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
+	CStatic m_PictureVideo;
+	// Specify whether wave form of each channel is show in pane
+	BOOL m_showInPane;
 };

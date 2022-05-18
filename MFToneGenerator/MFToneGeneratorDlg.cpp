@@ -7,6 +7,7 @@
 #include "MFToneGenerator.h"
 #include "MFToneGeneratorDlg.h"
 #include "afxdialogex.h"
+#include <ToneMediaSource/ToneVideoStream.h>
 
 #include <utility>
 
@@ -91,6 +92,7 @@ CMFToneGeneratorDlg::CMFToneGeneratorDlg(CWnd* pParent /*=nullptr*/)
 	, m_statusMessage(_T(""))
 	, m_sampleDataTypeProperties(PcmDataEnumerator::getSampleDatatypeProperties())
 	, m_WaveFormProperties(PcmDataEnumerator::getWaveFormProperties())
+	, m_showInPane(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -181,6 +183,8 @@ void CMFToneGeneratorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER_PEAK_POSITION, m_peakPosition);
 	DDX_Control(pDX, IDC_SLIDER_LEVEL, m_level);
 	DDX_Control(pDX, IDC_SLIDER_PHASE_SHIFT, m_phaseShift);
+	DDX_Control(pDX, IDC_PICTURE_VIDEO, m_PictureVideo);
+	DDX_Check(pDX, IDC_CHECK_SHOW_IN_PANE, m_showInPane);
 }
 
 BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
@@ -200,6 +204,7 @@ BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_A2, &CMFToneGeneratorDlg::OnBnClickedButtonA2)
 	ON_BN_CLICKED(IDC_BUTTON_E2, &CMFToneGeneratorDlg::OnBnClickedButtonE2)
 	ON_CBN_SELCHANGE(IDC_COMBO_WAVE_FORM, &CMFToneGeneratorDlg::OnCbnSelchangeComboWaveForm)
+	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
 
@@ -265,18 +270,18 @@ BOOL CMFToneGeneratorDlg::OnInitDialog()
 		}
 	}
 
-	std::tuple<CSliderCtrl*, const float&> sliders[] = {
-		std::make_tuple<CSliderCtrl*, const float&>(&m_duty, PcmDataEnumerator::DefaultDuty),
-		std::make_tuple<CSliderCtrl*, const float&>(&m_peakPosition, PcmDataEnumerator::DefaultPeakPosition),
-		std::make_tuple<CSliderCtrl*, const float&>(&m_level, 0.5),
-		std::make_tuple<CSliderCtrl*, const float&>(&m_phaseShift, 0.5),
+	std::pair<CSliderCtrl*, const float> sliders[] = {
+		{ &m_duty, PcmDataEnumerator::DefaultDuty },
+		{ &m_peakPosition, PcmDataEnumerator::DefaultPeakPosition },
+		{ &m_level, 0.5f },
+		{ &m_phaseShift, 0.5f },
 	};
 
 	for(auto& p : sliders) {
-		auto ctrl = std::get<0>(p);
+		auto ctrl = p.first;
 		ctrl->SetRange(0, SliderMaxValue, FALSE);
 		ctrl->SetTicFreq(SliderMaxValue / 10);
-		ctrl->SetPos((int)(SliderMaxValue * std::get<1>(p)));
+		ctrl->SetPos((int)(SliderMaxValue * p.second));
 	}
 
 	m_context.reset(statemachine::IContext::create(m_hWnd, WM_USER));
@@ -350,13 +355,19 @@ void CMFToneGeneratorDlg::OnBnClickedButtonStartStop()
 	switch(m_status)
 	{
 	case Status::Stopped:
-	{
-		CFileDialog dlg(TRUE);
-		if(dlg.DoModal() == IDOK) {
-			auto fileName = dlg.GetPathName();
-			m_context->startFile(fileName.GetString());
+		{
+			static const TCHAR filter[] =
+				_T("Video Files|*.wmv;*.mp4;*.avi;*.mov;*.mpg|")
+				_T("Audio Files|*.wma;*.mp3;*.aac;*.asf;*.mid;*.wav|")
+				_T("All Files|*.*|")
+				_T("|");
+			DWORD flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+			CFileDialog dlg(TRUE, NULL, NULL, flags, filter);
+			if(dlg.DoModal() == IDOK) {
+				auto fileName = dlg.GetPathName();
+				m_context->startFile(fileName.GetString(), m_PictureVideo.GetSafeHwnd());
+			}
 		}
-	}
 		break;
 
 	case Status::Playing:
@@ -417,12 +428,14 @@ void CMFToneGeneratorDlg::OnKeyButtonClicked(float key)
 		// NOTE: Calling IContext::startTone() causes calling IPcmData::copyTo() that should be called after IPcmData::generate() bellow.
 		//       WindowProcStateMachine used by Context, performs methods of Context on the UI thread as same as this method.
 		//       So the calling sequence is assured.
-		m_context->startTone(m_pcmData);
+		m_context->startTone(m_pcmData, m_PictureVideo.GetSafeHwnd());
 	}
 
 	auto level = (float)m_level.GetPos() / SliderMaxValue;
 	auto phaseShift = (float)m_phaseShift.GetPos() / SliderMaxValue;
 	m_pcmData->generate(key, level, phaseShift);
+
+	ToneVideoStream::showInPane = (m_showInPane ? true : false);
 }
 
 void CMFToneGeneratorDlg::OnBnClickedButtonE4()
@@ -467,4 +480,11 @@ void CMFToneGeneratorDlg::OnCbnSelchangeComboWaveForm()
 	auto& wp = m_WaveFormProperties[sel];
 	m_duty.EnableWindow((wp.parameter == PcmDataEnumerator::FactoryParameter::Duty) ? TRUE : FALSE);
 	m_peakPosition.EnableWindow((wp.parameter == PcmDataEnumerator::FactoryParameter::PeakPosition) ? TRUE : FALSE);
+}
+
+
+void CMFToneGeneratorDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	__super::OnGetMinMaxInfo(lpMMI);
+	lpMMI->ptMinTrackSize = POINT({ 640, 460 });
 }

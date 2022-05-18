@@ -25,23 +25,14 @@ public:
 
 	virtual HRESULT setup() override;
 	virtual HRESULT shutdown() override;
-	virtual HRESULT startTone(std::shared_ptr<IPcmData>& pcmData) override;
-	virtual HRESULT startFile(LPCTSTR fileName) override;
+	virtual HRESULT startTone(std::shared_ptr<IPcmData>& pcmData, HWND hwnd = NULL) override;
+	virtual HRESULT startFile(LPCTSTR fileName, HWND hwnd) override;
 	virtual HRESULT stop() override;
 	virtual HRESULT pauseResume() override;
 #pragma endregion
 
-	void setPcmData(std::shared_ptr<IPcmData>& pcmData)
-	{
-		m_pcmData = pcmData;
-		m_audioFileName.clear();
-	}
-	void setAudioFileName(LPCTSTR fileName)
-	{
-		m_pcmData.reset();
-		m_audioFileName = fileName;
-	}
-	HRESULT setupSession();
+	HRESULT setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData, HWND hwnd = NULL);
+	HRESULT setupMediaFileSession(LPCTSTR fileName, HWND hwnd);
 	HRESULT startSession();
 	HRESULT stopSession();
 	HRESULT closeSession();
@@ -54,10 +45,10 @@ public:
 protected:
 	using BaseClass = tsm::AsyncContext<Event, State>;
 	ICallback* m_callback;
-	std::shared_ptr<IPcmData> m_pcmData;
-	std::tstring m_audioFileName;
 	CComPtr<IMFMediaSource> m_source;
 	CComPtr<IMFMediaSession> m_session;
+
+	HRESULT setupSession(IMFMediaSource* mediaSource, HWND hwnd = NULL);
 
 	class MediaSessionCallback : public IMFAsyncCallback, public Logger
 	{

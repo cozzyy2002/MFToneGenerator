@@ -10,6 +10,7 @@ namespace statemachine {
 static void print(IMFMediaSource*);
 static void print(IMFStreamDescriptor*, DWORD index);
 static void print(IMFAttributes*, LPCTSTR title);
+static std::tstring guidToString(REFGUID guid);
 
 /*static*/ IContext* IContext::create(HWND hWnd, UINT msg)
 {
@@ -47,14 +48,14 @@ HRESULT Context::shutdown()
     return HR_EXPECT_OK(BaseClass::shutdown());
 }
 
-HRESULT Context::startTone(std::shared_ptr<IPcmData>& pcmData)
+HRESULT Context::startTone(std::shared_ptr<IPcmData>& pcmData, HWND hwnd /*= NULL*/)
 {
-    return HR_EXPECT_OK(triggerEvent(new StartToneEvent(pcmData)));
+    return HR_EXPECT_OK(triggerEvent(new StartToneEvent(pcmData, hwnd)));
 }
 
-HRESULT Context::startFile(LPCTSTR fileName)
+HRESULT Context::startFile(LPCTSTR fileName, HWND hwnd)
 {
-    return HR_EXPECT_OK(triggerEvent(new StartFileEvent(fileName)));
+    return HR_EXPECT_OK(triggerEvent(new StartFileEvent(fileName, hwnd)));
 }
 
 HRESULT Context::stop()
@@ -67,34 +68,37 @@ HRESULT Context::pauseResume()
     return HR_EXPECT_OK(triggerEvent(new Event(Event::Type::PauseResume)));
 }
 
-HRESULT Context::setupSession()
+HRESULT Context::setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData, HWND hwnd /*= NULL*/)
+{
+    CComPtr<IMFMediaSource> source(new ToneMediaSource(pcmData));
+    return setupSession(source, hwnd);
+}
+
+HRESULT Context::setupMediaFileSession(LPCTSTR fileName, HWND hwnd)
+{
+    CComPtr<IMFSourceResolver> resolver;
+    HR_ASSERT_OK(MFCreateSourceResolver(&resolver));
+
+    MF_OBJECT_TYPE objectType;
+    CComPtr<IUnknown> unk;
+    CT2W url(fileName);
+    auto hr = HR_EXPECT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
+    if(FAILED(hr)) {
+        auto msg(format(hr, fileName));
+        log(_T("%s: %s"), fileName, msg.c_str());
+        callback([hr, &msg](ICallback* callback) { callback->onError(_T("CreateObjectFromURL()"), hr, msg.c_str()); });
+        return hr;
+    }
+
+    CComPtr<IMFMediaSource> mediaSource;
+    HR_ASSERT_OK(unk->QueryInterface(&mediaSource));
+    return setupSession(mediaSource, hwnd);
+}
+
+HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
 {
     // Media Session should not be created yet.
     HR_ASSERT(!m_session, E_ILLEGAL_METHOD_CALL);
-
-    if(m_pcmData) {
-        m_source = new ToneMediaSource(m_pcmData);
-    } else if(!m_audioFileName.empty()) {
-        CComPtr<IMFSourceResolver> resolver;
-        HR_ASSERT_OK(MFCreateSourceResolver(&resolver));
-
-        MF_OBJECT_TYPE objectType;
-        CComPtr<IUnknown> unk;
-        auto audioFileName = m_audioFileName.c_str();
-        CT2W url(audioFileName);
-        auto hr = HR_EXPECT_OK(resolver->CreateObjectFromURL(url, MF_RESOLUTION_MEDIASOURCE, nullptr, &objectType, &unk));
-        if(FAILED(hr)) {
-            auto msg(format(hr, audioFileName));
-            log(_T("%s: %s"), audioFileName, msg.c_str());
-            callback([hr, &msg](ICallback* callback) { callback->onError(_T("CreateObjectFromURL()"), hr, msg.c_str()); });
-            return hr;
-        }
-        HR_ASSERT_OK(unk->QueryInterface(&m_source));
-    } else {
-        // IPcmData nor Audio Filename is not specified.
-        return E_UNEXPECTED;
-    }
-    print(m_source);
 
     HR_ASSERT_OK(MFCreateMediaSession(nullptr, &m_session));
     m_mediaSessionCallback = new MediaSessionCallback(this, m_session);
@@ -102,6 +106,9 @@ HRESULT Context::setupSession()
 
     CComPtr <IMFTopology> topology;
     HR_ASSERT_OK(MFCreateTopology(&topology));
+
+    m_source = mediaSource;
+    print(m_source);
 
     // Create Topology Node for Media Source and Media Sink.
     CComPtr<IMFPresentationDescriptor> pd;
@@ -112,8 +119,22 @@ HRESULT Context::setupSession()
         CComPtr<IMFStreamDescriptor> sd;
         BOOL isSelected;
         HR_ASSERT_OK(pd->GetStreamDescriptorByIndex(isd, &isSelected, &sd));
+        if(!isSelected) { continue; }
 
-        if(isSelected) {
+        CComPtr<IMFMediaTypeHandler> mth;
+        HR_ASSERT_OK(sd->GetMediaTypeHandler(&mth));
+        GUID majorType;
+        HR_ASSERT_OK(mth->GetMajorType(&majorType));
+        CComPtr<IMFActivate> activate;
+        if(majorType == MFMediaType_Audio) {
+            // Create the audio renderer.
+            HR_ASSERT_OK(MFCreateAudioRendererActivate(&activate));
+        } else if((majorType == MFMediaType_Video) && hwnd) {
+            // Create the video renderer, if the rendering window has been specified.
+            HR_ASSERT_OK(MFCreateVideoRendererActivate(hwnd, &activate));
+        }
+
+        if(activate) {
             // Create Topology Node for Media Source.
             CComPtr<IMFTopologyNode> sourceNode;
             HR_ASSERT_OK(MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &sourceNode));
@@ -123,15 +144,16 @@ HRESULT Context::setupSession()
             HR_ASSERT_OK(topology->AddNode(sourceNode));
 
             // Create Topology Node for Media Sink.
-            CComPtr<IMFActivate> activate;
-            HR_ASSERT_OK(MFCreateAudioRendererActivate(&activate));
             CComPtr<IMFTopologyNode> sinkNode;
             HR_ASSERT_OK(MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &sinkNode));
             HR_ASSERT_OK(sinkNode->SetObject(activate));
             HR_ASSERT_OK(topology->AddNode(sinkNode));
 
             sourceNode->ConnectOutput(0, sinkNode, 0);
-            break;
+        } else {
+            // No appropriate renderer for this media stream.
+            log(_T("Deselecting unsupported stream %d. Major Type = %s"), isd, guidToString(majorType).c_str());
+            pd->DeselectStream(isd);
         }
     }
     HR_ASSERT_OK(m_session->SetTopology(0, topology));
@@ -270,7 +292,7 @@ void print(IMFMediaSource* mediaSource)
     DWORD sdCount;
     pd->GetStreamDescriptorCount(&sdCount);
     log.log(_T("IMFMediaSource: %d Stream Desctiptors, Characteristics=0x%08x [%s]"), sdCount, characts, strCharacts.c_str());
-    print(pd, _T("Attributes of IMFPresentationDescriptor"));
+    print(pd, _T("IMFPresentationDescriptor"));
     for(DWORD i = 0; i < sdCount; i++) {
         BOOL isSelected;
         CComPtr<IMFStreamDescriptor> sd;
@@ -284,8 +306,20 @@ void print(IMFStreamDescriptor* sd, DWORD index)
     Logger log;
     DWORD id;
     sd->GetStreamIdentifier(&id);
-    log.log(_T("IMFStreamDescriptor %d: Identifier=%d"), index, id);
-    print(sd, _T("Attributes of IMFStreamDescriptor"));
+    CComPtr<IMFMediaTypeHandler> mth;
+    sd->GetMediaTypeHandler(&mth);
+    GUID majorType;
+    mth->GetMajorType(&majorType);
+    log.log(_T("IMFStreamDescriptor %d: Identifier=%d, MajorType=%s"), index, id, guidToString(majorType).c_str());
+    print(sd, _T("IMFStreamDescriptor"));
+    DWORD cmt;
+    mth->GetMediaTypeCount(&cmt);
+    for(DWORD i = 0; i < cmt; i++) {
+        CComPtr<IMFMediaType> mt;
+        mth->GetMediaTypeByIndex(i, &mt);
+        auto title = log.format(_T("IMFMediaType[%d]"), i);
+        print(mt, title.c_str());
+    }
 }
 
 void print(IMFAttributes* attr, LPCTSTR title)
@@ -294,38 +328,106 @@ void print(IMFAttributes* attr, LPCTSTR title)
     UINT32 count;
     attr->GetCount(&count);
 
-    log.log(_T("%s: %d Items"), title, count);
+    log.log(_T("Attributes of %s: %d Items"), title, count);
     for(UINT32 i = 0; i < count; i++) {
         GUID key;
         PROPVARIANT value;
         attr->GetItemByIndex(i, &key, &value);
 
-        OLECHAR wstrKey[50];
-        StringFromGUID2(key, wstrKey, ARRAYSIZE(wstrKey));
-        CW2T tstrKey(wstrKey);
-
         std::tstring strValue;
         switch(value.vt) {
-        case VT_UI4:
-            strValue = log.format(_T("VT_UI4(%d) %u"), VT_UI4, value.uintVal);
+        case MF_ATTRIBUTE_UINT32:
+            strValue = log.format(_T("MF_ATTRIBUTE_UINT32(%d) = %u"), value.vt, value.uintVal);
             break;
-        case VT_UI8:
-            strValue = log.format(_T("VT_UI8(%d) %u"), VT_UI8, value.bVal);
+        case MF_ATTRIBUTE_UINT64:
+            strValue = log.format(_T("MF_ATTRIBUTE_UINT64(%d) = %d - %d"), value.vt, value.uhVal.HighPart, value.uhVal.LowPart);
             break;
-        case VT_LPWSTR:
-        {
-            CW2T tValue(value.pwszVal);
-            strValue = log.format(_T("VT_LPWSTR(%d) `%s`"), VT_LPWSTR, (LPCTSTR)tValue);
-        }
-        break;
+        case MF_ATTRIBUTE_DOUBLE:
+            strValue = log.format(_T("MF_ATTRIBUTE_DOUBLE(%d) = %f"), value.vt, value.dblVal);
+            break;
+        case MF_ATTRIBUTE_GUID:
+            strValue = log.format(_T("MF_ATTRIBUTE_GUID(%d) = %s"), value.vt, guidToString(*value.puuid).c_str());
+            break;
+        case MF_ATTRIBUTE_STRING:
+            {
+                CW2T tValue(value.pwszVal);
+                strValue = log.format(_T("MF_ATTRIBUTE_STRING(%d) = `%s`"), value.vt, (LPCTSTR)tValue);
+            }
+            break;
+        case MF_ATTRIBUTE_BLOB:
+            strValue = log.format(_T("MF_ATTRIBUTE_BLOB(%d)"), value.vt);
+            break;
+        case MF_ATTRIBUTE_IUNKNOWN:
+            strValue = log.format(_T("MF_ATTRIBUTE_IUNKNOWN(%d) = 0x%p"), value.vt, value.punkVal);
+            break;
         default:
             strValue = log.format(_T("Unknown type %d"), value.vt);
             break;
         }
 
-        log.log(_T("  %2d %s %s"), i, (LPCTSTR)tstrKey, strValue.c_str());
+        log.log(_T("  %2d %s:%s"), i, guidToString(key).c_str(), strValue.c_str());
         PropVariantClear(&value);
     }
+}
+
+struct GuidName {
+    REFGUID guid;
+    LPCTSTR name;
+};
+
+static const GuidName guidNames[] = {
+#define ITEM(x) { x, _T(#x) }
+    // General Format Attributes of Media Type.
+    ITEM(MF_MT_ALL_SAMPLES_INDEPENDENT),
+    ITEM(MF_MT_AM_FORMAT_TYPE),
+    ITEM(MF_MT_COMPRESSED),
+    ITEM(MF_MT_FIXED_SIZE_SAMPLES),
+    ITEM(MF_MT_MAJOR_TYPE),
+    ITEM(MF_MT_SAMPLE_SIZE),
+    ITEM(MF_MT_SUBTYPE),
+
+    // Audio Format Attributes of Media Type.
+    ITEM(MF_MT_AUDIO_AVG_BYTES_PER_SECOND),
+    ITEM(MF_MT_AUDIO_BITS_PER_SAMPLE),
+    ITEM(MF_MT_AUDIO_BLOCK_ALIGNMENT),
+    ITEM(MF_MT_AUDIO_CHANNEL_MASK),
+    ITEM(MF_MT_AUDIO_FLOAT_SAMPLES_PER_SECOND),
+    ITEM(MF_MT_AUDIO_NUM_CHANNELS),
+    ITEM(MF_MT_AUDIO_PREFER_WAVEFORMATEX),
+    ITEM(MF_MT_AUDIO_SAMPLES_PER_SECOND),
+    ITEM(MF_MT_AUDIO_VALID_BITS_PER_SAMPLE),
+    ITEM(MF_MT_ORIGINAL_WAVE_FORMAT_TAG),
+
+    // Video Format Attributes of Media Type.
+    ITEM(MF_MT_AVG_BITRATE),
+    ITEM(MF_MT_DEFAULT_STRIDE),
+    ITEM(MF_MT_FRAME_RATE),
+    ITEM(MF_MT_FRAME_SIZE),
+    ITEM(MF_MT_INTERLACE_MODE),
+    ITEM(MF_MT_VIDEO_ROTATION),
+    ITEM(MF_MT_PIXEL_ASPECT_RATIO),
+
+    // Major Media Types.
+    ITEM(MFMediaType_Audio),
+    ITEM(MFMediaType_Video),
+
+    // Subtypes.
+    ITEM(MFAudioFormat_PCM),
+    ITEM(MFAudioFormat_MPEG),
+    ITEM(MFVideoFormat_RGB24),
+#undef ITEM
+};
+
+/*static*/ std::tstring guidToString(REFGUID guid)
+{
+    StringFormatter fmt;
+    for(auto& x : guidNames) {
+        if(x.guid == guid) {
+            return fmt.format(_T("%s(%s)"), x.name, fmt.toString(guid).c_str());
+        }
+    }
+
+    return fmt.toString(guid);
 }
 
 }

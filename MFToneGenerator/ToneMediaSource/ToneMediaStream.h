@@ -4,28 +4,47 @@
 #include "MediaEventGenerator.h"
 #include "Utils.h"
 
+#include <deque>
+
 class ToneMediaSource;
 
 /**
- * Custom Media Stream generates Tone Wave.
+ * Base class of custom Media Streams.
  */
 class ToneMediaStream : public IMFMediaStream, DoNotCopy
 {
-public:
-    ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd, std::shared_ptr<IPcmData>& pcmData);
+protected:
+    ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd);
 
-    HRESULT start();
+public:
+    virtual ~ToneMediaStream() {}
+
+    HRESULT start(const PROPVARIANT* pvarStartPosition);
     HRESULT stop();
     HRESULT shutdown();
-    HRESULT QueueEvent(MediaEventType met, const PROPVARIANT* pvValue = nullptr) { return m_eventGenerator.QueueEvent(met, pvValue); }
 
 protected:
     ToneMediaSource* m_mediaSource;
     CComPtr<IMFStreamDescriptor> m_sd;
-    float m_key;
+    CComPtr<IMFMediaType> m_mediaType;
 
-    // PCM data generator.
-    std::shared_ptr<IPcmData> m_pcmData;
+    template<DWORD Count>
+    static HRESULT createStreamDescriptor(IMFMediaType* (&mediaTypes)[Count], DWORD streamId, IMFStreamDescriptor** ppsd, DWORD currentIndex = 0)
+    {
+        HR_ASSERT(0 < Count, E_INVALIDARG);
+
+        HR_ASSERT_OK(MFCreateStreamDescriptor(streamId, Count, mediaTypes, ppsd));
+        CComPtr<IMFMediaTypeHandler> mth;
+        (*ppsd)->GetMediaTypeHandler(&mth);
+        mth->SetCurrentMediaType(mediaTypes[currentIndex]);
+
+        return S_OK;
+    }
+
+    virtual HRESULT onStart(const PROPVARIANT* pvarStartPosition) = 0;
+    virtual HRESULT onStop() = 0;
+    virtual HRESULT onShutdown() = 0;
+    virtual HRESULT onRequestSample(IMFSample* sample) = 0;
 
 #pragma region Implementation of IMFMediaStream
 public:
@@ -38,6 +57,9 @@ public:
 
 protected:
     LONGLONG m_sampleTime;
+
+    std::deque<CComPtr<IUnknown>> m_tokens;
+    CriticalSection::Object m_tokensLock;
 #pragma endregion
 
 #pragma region Implementation of IMFMediaEventGenerator

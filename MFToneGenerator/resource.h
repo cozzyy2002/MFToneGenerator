@@ -29,6 +29,8 @@
 #define IDC_SLIDER_LEVEL                1018
 #define IDC_SLIDER_PEAK_POSITION2       1019
 #define IDC_SLIDER_PHASE_SHIFT          1019
+#define IDC_PICTURE_VIDEO               1020
+#define IDC_CHECK_SHOW_IN_PANE          1021
 
 // Next default values for new objects
 // 
@@ -36,7 +38,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1015
+#define _APS_NEXT_CONTROL_VALUE         1022
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

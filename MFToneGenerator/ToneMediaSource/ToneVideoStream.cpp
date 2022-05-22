@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 
 #include "ToneVideoStream.h"
 
@@ -25,7 +25,7 @@ static const BITMAPINFOHEADER bitmapInfoHeader = {
 	sizeof(BITMAPINFOHEADER),
 	480, 320,		// Width x Height(Bottom-Up DIB with the origin at the lower left corner.)
 	1,
-	24,				// BPP
+	Pixel::BitCount,	// BPP
 	BI_RGB,
 };
 
@@ -33,7 +33,7 @@ HRESULT ToneVideoStream::createStreamDescriptor(DWORD streamId, IMFStreamDescrip
 {
 	CComPtr<IMFVideoMediaType> mediaType;
 	auto& bi = bitmapInfoHeader;
-	MFCreateVideoMediaTypeFromBitMapInfoHeaderEx(&bi, bi.biSize, bi.biWidth, bi.biHeight, MFVideoInterlace_Progressive, 0, 1, 30, 0, &mediaType);
+	HR_ASSERT_OK(MFCreateVideoMediaTypeFromBitMapInfoHeaderEx(&bi, bi.biSize, bi.biWidth, bi.biHeight, MFVideoInterlace_Progressive, 0, 1, 30, 0, &mediaType));
 
 	IMFMediaType* mediaTypes[] = { mediaType };
 	return ToneMediaStream::createStreamDescriptor(mediaTypes, streamId, ppsd);
@@ -41,16 +41,7 @@ HRESULT ToneVideoStream::createStreamDescriptor(DWORD streamId, IMFStreamDescrip
 
 HRESULT ToneVideoStream::onStart(const PROPVARIANT* pvarStartPosition)
 {
-	BITMAPINFOHEADER bi;
-	HR_ASSERT_OK(initializeBitmapInfoHeader(m_mediaType, bi));
-	m_background.reset(new BYTE[bi.biSizeImage]);
-
-	// Fill video frame buffer with background pixel.
-	auto buffer = (Pixel*)m_background.get();
-	for(DWORD i = 0; i < (bi.biSizeImage / sizeof(Pixel)); i++) {
-		*(buffer++) = WhitePixel;
-	}
-
+	// Nothing to do.
 	return S_OK;
 }
 
@@ -81,8 +72,8 @@ HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 	HR_ASSERT_OK(MFCreateMemoryBuffer(bi.biSizeImage, &buffer));
 	HR_ASSERT_OK(buffer->Lock(&rawBuffer, nullptr, nullptr));
 
-	// Draw wave form on the background.
-	CopyMemory(rawBuffer, m_background.get(), bi.biSizeImage);
+	// Draw background and wave form on the background.
+	drawBackground(rawBuffer, bi);
 	drawWaveForm(rawBuffer, bi);
 
 	HR_ASSERT_OK(buffer->Unlock());
@@ -117,6 +108,49 @@ public:
 protected:
 	Pixel* m_buffer;
 };
+
+void ToneVideoStream::drawBackground(LPBYTE buffer, const BITMAPINFOHEADER& bi)
+{
+	// Create memory DC and select color Bitmap.
+	CDC dcSrc;
+	dcSrc.CreateCompatibleDC(NULL);
+	CBitmap hbitmapSrc;
+	auto bpp = dcSrc.GetDeviceCaps(BITSPIXEL);	// Bits/Pixel of display device.
+	hbitmapSrc.CreateBitmap(bi.biWidth, bi.biHeight, 1, bpp, NULL);
+	dcSrc.SelectObject(hbitmapSrc);
+
+	// Fill background with white.
+	dcSrc.PatBlt(0, 0, bi.biWidth, bi.biHeight, WHITENESS);
+
+	// Write text of each channel number using color as same as wave form.
+	CString textFormat(_T("———— Channel %d"));
+	auto textSize = dcSrc.GetTextExtent(textFormat);
+	auto channels = m_pcmData->getChannels();
+	int margin = 2;
+	int x = bi.biWidth - textSize.cx - margin;	// Right aligned.
+	int y = margin;
+	for(WORD ch = 0; ch < channels; ch++) {
+		CString text;
+		text.Format(textFormat, ch + 1);
+		dcSrc.SetTextColor(pixels[ch % ARRAYSIZE(pixels)].getColorRef());
+		dcSrc.TextOut(x, y, text);
+		y += (textSize.cy + margin);
+	}
+
+	// Copy contents of memory DC to the buffer.
+	CDC dcDest;
+	dcDest.CreateCompatibleDC(&dcSrc);
+	LPVOID dibBuffer;
+	auto hdib = CreateDIBSection(dcDest, (const BITMAPINFO*)&bi, DIB_RGB_COLORS, &dibBuffer, NULL, 0);
+	HR_EXPECT(hdib && dibBuffer, E_UNEXPECTED);
+	if(hdib) {
+		dcDest.SelectObject(hdib);
+		dcDest.BitBlt(0, 0, bi.biWidth, bi.biHeight, &dcSrc, 0, 0, SRCCOPY);
+		CopyMemory(buffer, dibBuffer, bi.biSizeImage);
+
+		DeleteObject(hdib);
+	}
+}
 
 void ToneVideoStream::drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi)
 {
@@ -162,7 +196,7 @@ HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi
 {
 	GUID subType;
 	mediaType->GetGUID(MF_MT_SUBTYPE, &subType);
-	HR_ASSERT(subType == MFVideoFormat_RGB24, MF_E_INVALIDMEDIATYPE);
+	HR_ASSERT(subType == Pixel::VideoSubType, MF_E_INVALIDMEDIATYPE);
 
 	ZeroMemory(&bi, sizeof(bi));
 	bi.biSize = sizeof(bi);
@@ -172,7 +206,7 @@ HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi
 	bi.biWidth = width;
 	bi.biHeight = height;
 	bi.biPlanes = 1;
-	bi.biBitCount = 24;		// Video Sub type == MFVideoFormat_RGB24
+	bi.biBitCount = Pixel::BitCount;
 	bi.biCompression = BI_RGB;
 	UINT32 imageSize;
 	HR_ASSERT_OK(MFCalculateImageSize(subType, width, height, &imageSize));
@@ -181,3 +215,6 @@ HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi
 
 	return S_OK;
 }
+
+/*static*/ REFGUID Pixel::VideoSubType = (sizeof(Pixel) == 3) ? MFVideoFormat_RGB24 : MFVideoFormat_RGB32;
+/*static*/ const WORD Pixel::BitCount = sizeof(Pixel) * 8;

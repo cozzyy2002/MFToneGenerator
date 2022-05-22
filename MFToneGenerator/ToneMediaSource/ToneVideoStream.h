@@ -21,13 +21,13 @@ protected:
     std::shared_ptr<IPcmData> m_pcmData;
     std::unique_ptr<IPcmSample> m_pcmSample;
     std::unique_ptr<BYTE[]> m_sampleBuffer;
-    std::unique_ptr<BYTE[]> m_background;
 
     // Sample index of m_pcmSample to draw wave form at first column of pixel.
     // This value is updated in evry invoking drawWaveForm() method
     // so that wave form moves from right to left.
     size_t m_startSampleIndex;
 
+    void drawBackground(LPBYTE buffer, const BITMAPINFOHEADER& bi);
     void drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi);
 };
 
@@ -36,8 +36,14 @@ struct Pixel
     Pixel() : data{ 0xff, 0xff, 0xff } {}
     Pixel(BYTE R, BYTE G, BYTE B) : data{ B, G, R } {}
 
+    static REFGUID VideoSubType;
+    static const WORD BitCount;
+
+    BYTE R() const { return data[2]; }
+    BYTE G() const { return data[1]; }
+    BYTE B() const { return data[0]; }
+    COLORREF getColorRef() const { return RGB(R(), G(), B()); }
+
+protected:
     BYTE data[3];
-    BYTE& R() { return data[2]; }
-    BYTE& G() { return data[1]; }
-    BYTE& B() { return data[0]; }
 };

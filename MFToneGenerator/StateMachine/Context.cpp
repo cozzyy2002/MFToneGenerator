@@ -108,7 +108,6 @@ HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
     HR_ASSERT_OK(MFCreateTopology(&topology));
 
     m_source = mediaSource;
-    print(m_source);
 
     // Create Topology Node for Media Source and Media Sink.
     CComPtr<IMFPresentationDescriptor> pd;
@@ -123,8 +122,10 @@ HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
 
         CComPtr<IMFMediaTypeHandler> mth;
         HR_ASSERT_OK(sd->GetMediaTypeHandler(&mth));
+        CComPtr<IMFMediaType> mt;
+        HR_ASSERT_OK(mth->GetCurrentMediaType(&mt));
         GUID majorType;
-        HR_ASSERT_OK(mth->GetMajorType(&majorType));
+        HR_ASSERT_OK(mt->GetMajorType(&majorType));
         CComPtr<IMFActivate> activate;
         if(majorType == MFMediaType_Audio) {
             // Create the audio renderer.
@@ -132,6 +133,15 @@ HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
         } else if((majorType == MFMediaType_Video) && hwnd) {
             // Create the video renderer, if the rendering window has been specified.
             HR_ASSERT_OK(MFCreateVideoRendererActivate(hwnd, &activate));
+
+            // Set frame size as same as HWND.
+            RECT rect;
+            GetClientRect(hwnd, &rect);
+            UINT32 width = rect.right - rect.left;
+            UINT32 height = rect.bottom - rect.top;
+            HR_ASSERT_OK(MFSetAttributeSize(mt, MF_MT_FRAME_SIZE, width, height));
+            //HR_ASSERT_OK(MFSetAttributeRatio(mt, MF_MT_PIXEL_ASPECT_RATIO, width, height));
+            HR_ASSERT_OK(mt->DeleteItem(MF_MT_PIXEL_ASPECT_RATIO));
         }
 
         if(activate) {
@@ -156,6 +166,9 @@ HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
             pd->DeselectStream(isd);
         }
     }
+
+    print(m_source);
+
     HR_ASSERT_OK(m_session->SetTopology(0, topology));
 
     return S_OK;

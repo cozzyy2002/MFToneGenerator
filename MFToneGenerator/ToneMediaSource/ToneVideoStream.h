@@ -27,8 +27,8 @@ protected:
     // so that wave form moves from right to left.
     size_t m_startSampleIndex;
 
-    void drawBackground(LPBYTE buffer, const BITMAPINFOHEADER& bi);
-    void drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi);
+    void drawBackground(CDC& dc, int width, int height);
+    void drawWaveForm(CDC& dc, int width, int height);
 };
 
 struct Pixel

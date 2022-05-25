@@ -64,17 +64,38 @@ HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 
 	BITMAPINFOHEADER bi;
 	HR_ASSERT_OK(initializeBitmapInfoHeader(m_mediaType, bi));
-	const LONG pixelCount = bi.biWidth * bi.biHeight;
 
-	// Copy wave form bitmap into IMFMediaBuffer.
+	// Create memory DC and select color Bitmap.
+	CDC dcSrc;
+	dcSrc.CreateCompatibleDC(NULL);
+	CBitmap hbitmapSrc;
+	auto bpp = dcSrc.GetDeviceCaps(BITSPIXEL);	// Bits/Pixel of display device.
+	hbitmapSrc.CreateBitmap(bi.biWidth, bi.biHeight, 1, bpp, NULL);
+	dcSrc.SelectObject(hbitmapSrc);
+
+	// Draw background and wave form on the background.
+	drawBackground(dcSrc, bi.biWidth, bi.biHeight);
+	drawWaveForm(dcSrc, bi.biWidth, bi.biHeight);
+
+	// Create IMFMediaBuffer.
 	CComPtr<IMFMediaBuffer> buffer;
 	BYTE* rawBuffer;
 	HR_ASSERT_OK(MFCreateMemoryBuffer(bi.biSizeImage, &buffer));
 	HR_ASSERT_OK(buffer->Lock(&rawBuffer, nullptr, nullptr));
 
-	// Draw background and wave form on the background.
-	drawBackground(rawBuffer, bi);
-	drawWaveForm(rawBuffer, bi);
+	// Copy contents of memory DC to the buffer.
+	CDC dcDest;
+	dcDest.CreateCompatibleDC(&dcSrc);
+	LPVOID dibBuffer;
+	auto hdib = CreateDIBSection(dcDest, (const BITMAPINFO*)&bi, DIB_RGB_COLORS, &dibBuffer, NULL, 0);
+	HR_EXPECT(hdib && dibBuffer, E_UNEXPECTED);
+	if(hdib) {
+		dcDest.SelectObject(hdib);
+		dcDest.BitBlt(0, 0, bi.biWidth, bi.biHeight, &dcSrc, 0, 0, SRCCOPY);
+		CopyMemory(rawBuffer, dibBuffer, bi.biSizeImage);
+
+		DeleteObject(hdib);
+	}
 
 	HR_ASSERT_OK(buffer->Unlock());
 	HR_ASSERT_OK(buffer->SetCurrentLength(bi.biSizeImage));
@@ -90,69 +111,28 @@ HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 	return S_OK;
 }
 
-class PixelArray
+void ToneVideoStream::drawBackground(CDC& dc, int width, int height)
 {
-public:
-	PixelArray(Pixel* buffer, UINT32 width, UINT32 height)
-		: m_buffer(buffer), width(width), height(height) {}
-
-	// Returns address of top pixel of the row.
-	// Then the Pixel at row/column can be accessed by `PixelArray[row][column]` as 2-dimensional array.
-	Pixel* operator[](UINT32 row) { return (&m_buffer[width * (row % height)]); }
-
-	Pixel& at(UINT32 row, UINT32 col) { return (*this)[row][col % width]; }
-
-	const UINT32 width;
-	const UINT32 height;
-
-protected:
-	Pixel* m_buffer;
-};
-
-void ToneVideoStream::drawBackground(LPBYTE buffer, const BITMAPINFOHEADER& bi)
-{
-	// Create memory DC and select color Bitmap.
-	CDC dcSrc;
-	dcSrc.CreateCompatibleDC(NULL);
-	CBitmap hbitmapSrc;
-	auto bpp = dcSrc.GetDeviceCaps(BITSPIXEL);	// Bits/Pixel of display device.
-	hbitmapSrc.CreateBitmap(bi.biWidth, bi.biHeight, 1, bpp, NULL);
-	dcSrc.SelectObject(hbitmapSrc);
-
 	// Fill background with white.
-	dcSrc.PatBlt(0, 0, bi.biWidth, bi.biHeight, WHITENESS);
+	dc.PatBlt(0, 0, width, height, WHITENESS);
 
 	// Write text of each channel number using color as same as wave form.
-	CString textFormat(_T("———— Channel %d"));
-	auto textSize = dcSrc.GetTextExtent(textFormat);
+	static const CString textFormat(_T("———— Channel %d"));
+	auto textSize = dc.GetTextExtent(textFormat);
 	auto channels = m_pcmData->getChannels();
 	int margin = 2;
-	int x = bi.biWidth - textSize.cx - margin;	// Right aligned.
+	int x = width - textSize.cx - margin;	// Right aligned.
 	int y = margin;
 	for(WORD ch = 0; ch < channels; ch++) {
 		CString text;
 		text.Format(textFormat, ch + 1);
-		dcSrc.SetTextColor(pixels[ch % ARRAYSIZE(pixels)].getColorRef());
-		dcSrc.TextOut(x, y, text);
+		dc.SetTextColor(pixels[ch % ARRAYSIZE(pixels)].getColorRef());
+		dc.TextOut(x, y, text);
 		y += (textSize.cy + margin);
-	}
-
-	// Copy contents of memory DC to the buffer.
-	CDC dcDest;
-	dcDest.CreateCompatibleDC(&dcSrc);
-	LPVOID dibBuffer;
-	auto hdib = CreateDIBSection(dcDest, (const BITMAPINFO*)&bi, DIB_RGB_COLORS, &dibBuffer, NULL, 0);
-	HR_EXPECT(hdib && dibBuffer, E_UNEXPECTED);
-	if(hdib) {
-		dcDest.SelectObject(hdib);
-		dcDest.BitBlt(0, 0, bi.biWidth, bi.biHeight, &dcSrc, 0, 0, SRCCOPY);
-		CopyMemory(buffer, dibBuffer, bi.biSizeImage);
-
-		DeleteObject(hdib);
 	}
 }
 
-void ToneVideoStream::drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi)
+void ToneVideoStream::drawWaveForm(CDC& dc, int width, int height)
 {
 	auto sampleDataType = m_pcmData->getSampleDataType();
 	auto channels = m_pcmData->getChannels();
@@ -169,22 +149,21 @@ void ToneVideoStream::drawWaveForm(LPBYTE buffer, const BITMAPINFOHEADER& bi)
 		m_startSampleIndex = 0;
 	}
 
-	PixelArray pixelArray((Pixel*)buffer, bi.biWidth, bi.biHeight);
 	auto sampleCount = m_pcmSample->getSampleCount();
 	size_t sampleIndex = m_startSampleIndex;
-	for(LONG i = 0; i < bi.biWidth; i++) {
+	for(LONG i = 0; i < width; i++) {
 		for(WORD ch = 0; ch < channels; ch++) {
-			auto row = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() * bi.biHeight / valueHeight;
+			auto row = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() * height / valueHeight;
 			if(showInPane) {
 				// Show wave form of each channel in it's pane.
 				row /= channels;
-				row += ((bi.biHeight / channels / 2) + (bi.biHeight / channels * (channels - 1 - ch)));
+				row += ((height / channels / 2) + (height / channels * (channels - 1 - ch)));
 			} else {
 				// Show wave form of all channels in piles.
-				row += (bi.biHeight / 2);
+				row += (height / 2);
 			}
 			auto col = i;
-			pixelArray[row][col] = pixels[sampleIndex % channels % ARRAYSIZE(pixels)];
+			dc.SetPixel(col, row, pixels[sampleIndex % channels % ARRAYSIZE(pixels)].getColorRef());
 			sampleIndex++;
 		}
 	}

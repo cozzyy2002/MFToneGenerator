@@ -6,7 +6,7 @@
 #include <thread>
 
 ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescriptor* sd)
-	: m_mediaSource(mediaSource), m_sd(sd), m_sampleTime(0), m_unknownImpl(this)
+	: m_mediaSource(mediaSource), m_sd(sd), m_sampleTime(0), m_threadCount(0), m_unknownImpl(this)
 {
 }
 
@@ -25,12 +25,11 @@ HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 	CComPtr<IMFSample> sample;
 	HR_ASSERT_OK(MFCreateSample(&sample));
 
+	InterlockedIncrement(&m_threadCount);
+
 	// Call onRequestSample() method of derived class on the worker thread.
 	std::thread workerthread([this](CComPtr<IMFSample> sample)
 		{
-			if(FAILED(HR_EXPECT(m_mediaSource->isStarted(), MF_E_MEDIA_SOURCE_WRONGSTATE))) { return; }
-			if(FAILED(HR_EXPECT_OK(m_eventGenerator.checkShutdown()))) { return; }
-
 			CComPtr<IUnknown> token;
 			{
 				CriticalSection lock(m_tokensLock);
@@ -60,6 +59,8 @@ HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 				m_eventGenerator.QueueEvent(MEError, GUID_NULL, hr, nullptr);
 			}
 			// NOTE: In case hr == S_FALSE, do nothing.
+
+			InterlockedDecrement(&m_threadCount);
 		},
 		sample);
 
@@ -85,7 +86,24 @@ HRESULT ToneMediaStream::stop()
 {
 	HR_ASSERT_OK(onStop());
 
-	m_tokens.clear();
+	{
+		CriticalSection lock(m_tokensLock);
+		m_tokens.clear();
+	}
+
+	// Wait for all threads invoked by RequestSample() to exit.
+	int waitTime = 10;
+	while(m_threadCount && waitTime--) {
+		Sleep(1);
+	}
+	auto threadCount = m_threadCount;
+	if(threadCount) {
+		Logger logger;
+		DWORD id;
+		m_sd->GetStreamIdentifier(&id);
+		logger.log(_T("Warning: %d threads are running in stream ID %d."), threadCount, id);
+	}
+
 	m_eventGenerator.QueueEvent(MEStreamStopped);
 
 	return S_OK;
@@ -94,12 +112,6 @@ HRESULT ToneMediaStream::stop()
 HRESULT ToneMediaStream::shutdown()
 {
 	HR_EXPECT_OK(onShutdown());
-
-	{
-		// Add the token to end of the queue.
-		CriticalSection lock(m_tokensLock);
-		m_tokens.clear();
-	}
 
 	m_eventGenerator.shutdown();
 

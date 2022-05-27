@@ -27,6 +27,7 @@ protected:
     ToneMediaSource* m_mediaSource;
     CComPtr<IMFStreamDescriptor> m_sd;
     CComPtr<IMFMediaType> m_mediaType;
+    long m_threadCount;
 
     template<DWORD Count>
     static HRESULT createStreamDescriptor(IMFMediaType* (&mediaTypes)[Count], DWORD streamId, IMFStreamDescriptor** ppsd, DWORD currentIndex = 0)

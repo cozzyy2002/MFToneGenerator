@@ -5,7 +5,7 @@
 #include "ToneVideoStream.h"
 
 ToneMediaSource::ToneMediaSource(std::shared_ptr<IPcmData>& pcmData)
-	: m_pcmData(pcmData), m_unknownImpl(this)
+	: m_pcmData(pcmData), m_isStarted(false), m_unknownImpl(this)
 {
 }
 
@@ -55,6 +55,8 @@ HRESULT __stdcall ToneMediaSource::CreatePresentationDescriptor(_Outptr_ IMFPres
 
 HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor* pPresentationDescriptor, __RPC__in_opt const GUID* pguidTimeFormat, __RPC__in_opt const PROPVARIANT* pvarStartPosition)
 {
+	HR_ASSERT_OK(checkShutdown());
+
 	DWORD sdCount;
 	m_pd->GetStreamDescriptorCount(&sdCount);
 	for (DWORD isd = 0; isd < sdCount; isd++) {
@@ -95,17 +97,21 @@ HRESULT __stdcall ToneMediaSource::Start(__RPC__in_opt IMFPresentationDescriptor
 
 	m_eventGenerator.QueueEvent(MESourceStarted, pvarStartPosition);
 
+	m_isStarted = true;
 	return S_OK;
 }
 
 HRESULT __stdcall ToneMediaSource::Stop(void)
 {
+	HR_ASSERT_OK(checkShutdown());
+
 	for(auto& pair : m_mediaStreams) {
 		pair.second->stop();
 	}
 
 	m_eventGenerator.QueueEvent(MESourceStopped);
 
+	m_isStarted = false;
 	return S_OK;
 }
 

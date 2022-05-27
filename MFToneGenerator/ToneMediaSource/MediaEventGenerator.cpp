@@ -67,12 +67,7 @@ HRESULT __stdcall MediaEventGenerator::EndGetEvent(IMFAsyncResult* pResult, _Out
 HRESULT __stdcall MediaEventGenerator::QueueEvent(MediaEventType met, __RPC__in REFGUID guidExtendedType, HRESULT hrStatus, __RPC__in_opt const PROPVARIANT* pvValue)
 {
 	CriticalSection lock(m_eventQueueLock);
-	if(FAILED(checkShutdown())) {
-		Logger logger;
-		logger.log(_T("Warning: Trying to Queue event (met=%d, GUID=%s, hr=0x%p, pv->vt=%d) after shutdown."),
-			met, logger(guidExtendedType).c_str(), hrStatus, pvValue ? pvValue->vt : 0xff);
-		return S_FALSE;
-	}
+	HR_ASSERT_OK(checkShutdown());
 
 	return HR_EXPECT_OK(m_eventQueue->QueueEventParamVar(met, guidExtendedType, hrStatus, pvValue));
 }

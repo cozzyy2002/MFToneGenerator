@@ -12,6 +12,9 @@ ToneMediaStream::ToneMediaStream(ToneMediaSource* mediaSource, IMFStreamDescript
 
 HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 {
+	HR_ASSERT_OK(m_eventGenerator.checkShutdown());
+	HR_ASSERT(m_mediaSource->isStarted(), MF_E_MEDIA_SOURCE_WRONGSTATE);
+
 	{
 		// Add the token to end of the queue.
 		CriticalSection lock(m_tokensLock);
@@ -25,6 +28,9 @@ HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 	// Call onRequestSample() method of derived class on the worker thread.
 	std::thread workerthread([this](CComPtr<IMFSample> sample)
 		{
+			if(FAILED(HR_EXPECT(m_mediaSource->isStarted(), MF_E_MEDIA_SOURCE_WRONGSTATE))) { return; }
+			if(FAILED(HR_EXPECT_OK(m_eventGenerator.checkShutdown()))) { return; }
+
 			CComPtr<IUnknown> token;
 			{
 				CriticalSection lock(m_tokensLock);
@@ -89,6 +95,12 @@ HRESULT ToneMediaStream::shutdown()
 {
 	HR_EXPECT_OK(onShutdown());
 
+	{
+		// Add the token to end of the queue.
+		CriticalSection lock(m_tokensLock);
+		m_tokens.clear();
+	}
+
 	m_eventGenerator.shutdown();
 
 	return S_OK;
@@ -97,6 +109,7 @@ HRESULT ToneMediaStream::shutdown()
 HRESULT __stdcall ToneMediaStream::GetMediaSource(__RPC__deref_out_opt IMFMediaSource** ppMediaSource)
 {
 	HR_ASSERT(ppMediaSource, E_POINTER);
+	HR_ASSERT_OK(m_eventGenerator.checkShutdown());
 
 	*ppMediaSource = m_mediaSource;
 	m_mediaSource->AddRef();
@@ -105,6 +118,8 @@ HRESULT __stdcall ToneMediaStream::GetMediaSource(__RPC__deref_out_opt IMFMediaS
 
 HRESULT __stdcall ToneMediaStream::GetStreamDescriptor(__RPC__deref_out_opt IMFStreamDescriptor** ppStreamDescriptor)
 {
+	HR_ASSERT_OK(m_eventGenerator.checkShutdown());
+
 	return HR_EXPECT_OK(m_sd.CopyTo(ppStreamDescriptor));
 }
 

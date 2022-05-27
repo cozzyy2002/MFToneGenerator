@@ -15,9 +15,13 @@ class ToneMediaSource : public IMFMediaSource, DoNotCopy
 public:
     ToneMediaSource(std::shared_ptr<IPcmData>& pcmData);
 
+    bool isStarted() const { return m_isStarted; }
+
 protected:
     HRESULT checkShutdown();
     std::shared_ptr<IPcmData> m_pcmData;
+
+    bool m_isStarted;
 
 #pragma region Implementation of IMFMediaSource
 public:

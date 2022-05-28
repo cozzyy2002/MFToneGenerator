@@ -30,6 +30,9 @@ HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 	// Call onRequestSample() method of derived class on the worker thread.
 	std::thread workerthread([this](CComPtr<IMFSample> sample)
 		{
+			// Smart pointer to decrement thread count on exit.
+			std::unique_ptr<long, void (*)(long*)> ptr(&m_threadCount, [](long* p) { InterlockedDecrement(p); });
+
 			CComPtr<IUnknown> token;
 			{
 				CriticalSection lock(m_tokensLock);
@@ -59,8 +62,6 @@ HRESULT __stdcall ToneMediaStream::RequestSample(IUnknown* pToken)
 				m_eventGenerator.QueueEvent(MEError, GUID_NULL, hr, nullptr);
 			}
 			// NOTE: In case hr == S_FALSE, do nothing.
-
-			InterlockedDecrement(&m_threadCount);
 		},
 		sample);
 

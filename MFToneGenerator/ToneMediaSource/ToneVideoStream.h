@@ -30,20 +30,3 @@ protected:
     void drawBackground(CDC& dc, int width, int height);
     void drawWaveForm(CDC& dc, int width, int height);
 };
-
-struct Pixel
-{
-    Pixel() : data{ 0xff, 0xff, 0xff } {}
-    Pixel(BYTE R, BYTE G, BYTE B) : data{ B, G, R } {}
-
-    static REFGUID VideoSubType;
-    static const WORD BitCount;
-
-    BYTE R() const { return data[2]; }
-    BYTE G() const { return data[1]; }
-    BYTE B() const { return data[0]; }
-    COLORREF getColorRef() const { return RGB(R(), G(), B()); }
-
-protected:
-    BYTE data[3];
-};

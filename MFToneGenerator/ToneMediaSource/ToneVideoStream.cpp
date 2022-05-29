@@ -4,13 +4,16 @@
 
 /*static*/ bool ToneVideoStream::showInPane = false;
 
-static const Pixel WhitePixel(0xff, 0xff, 0xff);
-static const Pixel RedPixel(0xff, 0, 0);
-static const Pixel GreenPixel(0, 0xff, 0);
-static const Pixel BluePixel(0, 0, 0xff);
-static const Pixel BlackPixel(0, 0, 0);
-
-static const Pixel pixels[] = {BlackPixel, RedPixel, GreenPixel, BluePixel};
+static const COLORREF colors[] = {
+	RGB(0 ,0 ,0),			// Black
+	RGB(0xff, 0x00, 0x00),	// Red
+	RGB(0xff, 0xff, 0x00),	// Yellow
+	RGB(0x00, 0xff, 0xff),	// Blue
+	RGB(0x80, 0x00, 0x80),	// Violet
+	RGB(0xff, 0xa5, 0x00),	// Orange
+	RGB(0x00, 0x80, 0x00),	// Green
+	RGB(0x00, 0x00, 0xff),	// Indigo
+};
 
 static HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi);
 
@@ -21,18 +24,18 @@ ToneVideoStream::ToneVideoStream(ToneMediaSource* mediaSource, IMFStreamDescript
 }
 
 
-static const BITMAPINFOHEADER bitmapInfoHeader = {
+static const BITMAPINFOHEADER defaultBitmapInfoHeader = {
 	sizeof(BITMAPINFOHEADER),
 	480, 320,		// Width x Height(Bottom-Up DIB with the origin at the lower left corner.)
 	1,
-	Pixel::BitCount,	// BPP
+	24,				// BPP
 	BI_RGB,
 };
 
 HRESULT ToneVideoStream::createStreamDescriptor(DWORD streamId, IMFStreamDescriptor** ppsd)
 {
 	CComPtr<IMFVideoMediaType> mediaType;
-	auto& bi = bitmapInfoHeader;
+	auto& bi = defaultBitmapInfoHeader;
 	HR_ASSERT_OK(MFCreateVideoMediaTypeFromBitMapInfoHeaderEx(&bi, bi.biSize, bi.biWidth, bi.biHeight, MFVideoInterlace_Progressive, 0, 1, 30, 0, &mediaType));
 
 	IMFMediaType* mediaTypes[] = { mediaType };
@@ -126,7 +129,7 @@ void ToneVideoStream::drawBackground(CDC& dc, int width, int height)
 	for(WORD ch = 0; ch < channels; ch++) {
 		CString text;
 		text.Format(textFormat, ch + 1);
-		dc.SetTextColor(pixels[ch % ARRAYSIZE(pixels)].getColorRef());
+		dc.SetTextColor(colors[ch % ARRAYSIZE(colors)]);
 		dc.TextOut(x, y, text);
 		y += (textSize.cy + margin);
 	}
@@ -157,13 +160,13 @@ void ToneVideoStream::drawWaveForm(CDC& dc, int width, int height)
 			if(showInPane) {
 				// Show wave form of each channel in it's pane.
 				row /= channels;
-				row += ((height / channels / 2) + (height / channels * (channels - 1 - ch)));
+				row += ((height / channels / 2) + (height / channels * ch));
 			} else {
 				// Show wave form of all channels in piles.
 				row += (height / 2);
 			}
 			auto col = i;
-			dc.SetPixel(col, row, pixels[sampleIndex % channels % ARRAYSIZE(pixels)].getColorRef());
+			dc.SetPixel(col, row, colors[sampleIndex % channels % ARRAYSIZE(colors)]);
 			sampleIndex++;
 		}
 	}
@@ -175,18 +178,14 @@ HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi
 {
 	GUID subType;
 	mediaType->GetGUID(MF_MT_SUBTYPE, &subType);
-	HR_ASSERT(subType == Pixel::VideoSubType, MF_E_INVALIDMEDIATYPE);
+	HR_ASSERT(subType == MFVideoFormat_RGB24, MF_E_INVALIDMEDIATYPE);
 
-	ZeroMemory(&bi, sizeof(bi));
-	bi.biSize = sizeof(bi);
+	bi = defaultBitmapInfoHeader;
 
 	UINT32 width, height;
 	HR_ASSERT_OK(MFGetAttributeSize(mediaType, MF_MT_FRAME_SIZE, &width, &height));
 	bi.biWidth = width;
 	bi.biHeight = height;
-	bi.biPlanes = 1;
-	bi.biBitCount = Pixel::BitCount;
-	bi.biCompression = BI_RGB;
 	UINT32 imageSize;
 	HR_ASSERT_OK(MFCalculateImageSize(subType, width, height, &imageSize));
 	HR_ASSERT(0 < imageSize, E_UNEXPECTED);
@@ -194,6 +193,3 @@ HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi
 
 	return S_OK;
 }
-
-/*static*/ REFGUID Pixel::VideoSubType = (sizeof(Pixel) == 3) ? MFVideoFormat_RGB24 : MFVideoFormat_RGB32;
-/*static*/ const WORD Pixel::BitCount = sizeof(Pixel) * 8;

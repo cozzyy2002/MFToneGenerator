@@ -139,8 +139,9 @@ void ToneVideoStream::drawWaveForm(CDC& dc, int width, int height)
 {
 	auto sampleDataType = m_pcmData->getSampleDataType();
 	auto channels = m_pcmData->getChannels();
-	const auto highValue = IPcmSample::getHighValue(sampleDataType);
-	const auto lowValue = IPcmSample::getLowValue(sampleDataType);
+	const auto& highValue = IPcmSample::getHighValue(sampleDataType);
+	const auto& lowValue = IPcmSample::getLowValue(sampleDataType);
+	const auto& zeroValue = IPcmSample::getZeroValue(sampleDataType);
 	const auto valueHeight = highValue.getInt32() - lowValue.getInt32();
 
 	if(!m_pcmSample || (m_pcmSample->getSampleCount() != m_pcmData->getSamplesPerCycle())) {
@@ -154,19 +155,19 @@ void ToneVideoStream::drawWaveForm(CDC& dc, int width, int height)
 
 	auto sampleCount = m_pcmSample->getSampleCount();
 	size_t sampleIndex = m_startSampleIndex;
-	for(LONG i = 0; i < width; i++) {
+	for(LONG x = 0; x < width; x++) {
 		for(WORD ch = 0; ch < channels; ch++) {
-			auto row = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() * height / valueHeight;
+			auto value = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() - zeroValue.getInt32();
+			auto y = value * height / valueHeight;
 			if(showInPane) {
 				// Show wave form of each channel in it's pane.
-				row /= channels;
-				row += ((height / channels / 2) + (height / channels * ch));
+				y /= channels;
+				y += ((height / channels / 2) + (height / channels * ch));
 			} else {
 				// Show wave form of all channels in piles.
-				row += (height / 2);
+				y += (height / 2);
 			}
-			auto col = i;
-			dc.SetPixel(col, row, colors[sampleIndex % channels % ARRAYSIZE(colors)]);
+			dc.SetPixel(x, y, colors[sampleIndex % channels % ARRAYSIZE(colors)]);
 			sampleIndex++;
 		}
 	}

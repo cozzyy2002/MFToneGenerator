@@ -4,6 +4,8 @@
 
 /*static*/ bool ToneVideoStream::showInPane = false;
 
+// Colors for channel number text and wave form of each channel.
+// First color is used for channel 1, second for channel 2, and so on.
 static const COLORREF colors[] = {
 	RGB(0 ,0 ,0),			// Black
 	RGB(0xff, 0x00, 0x00),	// Red
@@ -14,6 +16,9 @@ static const COLORREF colors[] = {
 	RGB(0x00, 0x80, 0x00),	// Green
 	RGB(0x00, 0x00, 0xff),	// Indigo
 };
+
+// Background color
+static const COLORREF bgColor(RGB(0xc0, 0xc0, 0xc0));
 
 static HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi);
 
@@ -116,8 +121,10 @@ HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 
 void ToneVideoStream::drawBackground(CDC& dc, int width, int height)
 {
-	// Fill background with white.
-	dc.PatBlt(0, 0, width, height, WHITENESS);
+	// Fill background.
+	CRect rect(0, 0, width, height);
+	CBrush bgBrush(bgColor);
+	dc.FillRect(rect, &bgBrush);
 
 	// Write text of each channel number using color as same as wave form.
 	static const CString textFormat(_T("———— Channel %d"));

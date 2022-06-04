@@ -122,9 +122,9 @@ HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 void ToneVideoStream::drawBackground(CDC& dc, int width, int height)
 {
 	// Fill background.
-	CRect rect(0, 0, width, height);
+	CRect bgRect(0, 0, width, height);
 	CBrush bgBrush(bgColor);
-	dc.FillRect(rect, &bgBrush);
+	dc.FillRect(bgRect, &bgBrush);
 
 	// Write text of each channel number using color as same as wave form.
 	static const CString textFormat(_T("———— Channel %d"));

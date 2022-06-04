@@ -165,7 +165,7 @@ void ToneVideoStream::drawWaveForm(CDC& dc, int width, int height)
 	for(LONG x = 0; x < width; x++) {
 		for(WORD ch = 0; ch < channels; ch++) {
 			auto value = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() - zeroValue.getInt32();
-			auto y = value * height / valueHeight;
+			auto y = (int)((double)value * height / valueHeight);
 			if(showInPane) {
 				// Show wave form of each channel in it's pane.
 				y /= channels;

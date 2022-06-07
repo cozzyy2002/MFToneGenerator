@@ -24,6 +24,9 @@ HRESULT StoppedState::handleEvent(Context* context, Event* event, State** nextSt
     case Event::Type::MESessionTopologySet:
         HR_ASSERT_OK(context->startSession());
         break;
+    case Event::Type::MESessionTopologyStatus:
+        HR_ASSERT_OK(context->onTopologyState((TopologyStatusEvent*)event));
+        break;
     case Event::Type::MESessionStarted:
         *nextState = new PlayingState();
         break;

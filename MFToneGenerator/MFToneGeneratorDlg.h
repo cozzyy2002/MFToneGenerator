@@ -99,4 +99,5 @@ public:
 	CStatic m_PictureVideo;
 	// Specify whether wave form of each channel is show in pane
 	BOOL m_showInPane;
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };

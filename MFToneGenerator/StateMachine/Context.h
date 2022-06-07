@@ -4,10 +4,12 @@
 #include "PcmData/PcmData.h"
 #include "Utils.h"
 #include <functional>
+#include <evr.h>
 
 namespace statemachine {
 
 class Event;
+class TopologyStatusEvent;
 class State;
 
 class Context : public IContext, public tsm::AsyncContext<Event, State>, public Logger
@@ -29,8 +31,10 @@ public:
 	virtual HRESULT startFile(LPCTSTR fileName, HWND hwnd) override;
 	virtual HRESULT stop() override;
 	virtual HRESULT pauseResume() override;
+	virtual HRESULT onResizeWindow() override;
 #pragma endregion
 
+#pragma region Methods used inside StateMachine.
 	HRESULT setupPcmDataSession(std::shared_ptr<IPcmData>& pcmData, HWND hwnd = NULL);
 	HRESULT setupMediaFileSession(LPCTSTR fileName, HWND hwnd);
 	HRESULT startSession();
@@ -39,6 +43,8 @@ public:
 	HRESULT shutdownSession();
 	HRESULT pauseSession();
 	HRESULT resumeSession();
+	HRESULT onTopologyState(TopologyStatusEvent*);
+#pragma endregion
 
 	virtual tsm::IStateMonitor* _getStateMonitor() override { return m_stateMonitor.get(); }
 
@@ -47,6 +53,8 @@ protected:
 	ICallback* m_callback;
 	CComPtr<IMFMediaSource> m_source;
 	CComPtr<IMFMediaSession> m_session;
+	CComPtr<IMFVideoDisplayControl> m_videoDisplayControl;
+	HWND m_hwnd;
 
 	HRESULT setupSession(IMFMediaSource* mediaSource, HWND hwnd = NULL);
 

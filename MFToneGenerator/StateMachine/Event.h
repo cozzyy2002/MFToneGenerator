@@ -86,4 +86,11 @@ protected:
 	CComPtr<IMFMediaEvent> m_mediaEvent;
 };
 
+class TopologyStatusEvent : public SessionEvent
+{
+public:
+	TopologyStatusEvent(IMFMediaEvent* mediaEvent, UINT32 status) : SessionEvent(Type::MESessionTopologyStatus, mediaEvent), status(status) {}
+
+	const UINT32 status;
+};
 }

@@ -97,15 +97,10 @@ std::tstring SessionEvent::toString() const
             break;
         case Type::MESessionTopologyStatus:
             {
-                UINT32 status;
-                auto hr = HR_EXPECT_OK(m_mediaEvent->GetUINT32(MF_EVENT_TOPOLOGY_STATUS, &status));
-                if(SUCCEEDED(hr)) {
-                    auto x = ValueName<UINT32>::find(topoStatus, status);
-                    std::tstring strStatus(x ? x->name : (format(_T("Unknown(%d)"), status).c_str()));
-                    m_string = format(_T("%s:%s"), Event::toString().c_str(), strStatus.c_str());
-                } else {
-                    m_string = format(_T("%s: IMFMediaEvent::GetUINT32(MF_EVENT_TOPOLOGY_STATUS) failed. Error=0x%p"), Event::toString().c_str(), hr);
-                }
+                UINT32 status = ((TopologyStatusEvent*)this)->status;
+                auto x = ValueName<UINT32>::find(topoStatus, status);
+                std::tstring strStatus(x ? x->name : (format(_T("Unknown(%d)"), status).c_str()));
+                m_string = format(_T("%s:%s"), Event::toString().c_str(), strStatus.c_str());
             }
             break;
         case Type::MEError:

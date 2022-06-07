@@ -18,7 +18,7 @@ static std::tstring guidToString(REFGUID guid);
 }
 
 Context::Context(HWND hWnd, UINT msg)
-    : m_callback(nullptr)
+    : m_callback(nullptr), m_hwnd(NULL)
 {
     HR_EXPECT_OK(MFStartup(MF_VERSION));
 
@@ -140,7 +140,6 @@ HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
             UINT32 width = rect.right - rect.left;
             UINT32 height = rect.bottom - rect.top;
             HR_ASSERT_OK(MFSetAttributeSize(mt, MF_MT_FRAME_SIZE, width, height));
-            //HR_ASSERT_OK(MFSetAttributeRatio(mt, MF_MT_PIXEL_ASPECT_RATIO, width, height));
             HR_ASSERT_OK(mt->DeleteItem(MF_MT_PIXEL_ASPECT_RATIO));
         }
 
@@ -171,6 +170,8 @@ HRESULT Context::setupSession(IMFMediaSource* mediaSource, HWND hwnd /*= NULL*/)
 
     HR_ASSERT_OK(m_session->SetTopology(0, topology));
 
+    m_videoDisplayControl.Release();
+    m_hwnd = hwnd;
     return S_OK;
 }
 
@@ -227,6 +228,34 @@ HRESULT Context::resumeSession()
     return startSession();
 }
 
+HRESULT Context::onTopologyState(TopologyStatusEvent* ev)
+{
+    switch(ev->status) {
+    case MF_TOPOSTATUS_READY:
+        if(m_hwnd && !m_videoDisplayControl) {
+            // Create IMFVideoDisplayControl for resizing window.
+            HR_ASSERT_OK(MFGetService(m_session, MR_VIDEO_RENDER_SERVICE, IID_PPV_ARGS(&m_videoDisplayControl)));
+        }
+        break;
+    }
+
+    return S_OK;
+}
+
+HRESULT Context::onResizeWindow()
+{
+    if(!m_hwnd) return S_FALSE;
+
+    HR_ASSERT(m_videoDisplayControl, E_ILLEGAL_METHOD_CALL);
+
+    // Resize output video to fit client area.
+    RECT rect;
+    WIN32_ASSERT(GetClientRect(m_hwnd, &rect));
+    HR_ASSERT_OK(m_videoDisplayControl->SetVideoPosition(nullptr, &rect));
+
+    return S_OK;
+}
+
 HRESULT Context::MediaSessionCallback::beginGetEvent()
 {
     return m_session->BeginGetEvent(this, nullptr);
@@ -242,7 +271,18 @@ HRESULT Context::MediaSessionCallback::Invoke(__RPC__in_opt IMFAsyncResult* pAsy
 
     auto data = Event::find(mediaEventType);
     if(data) {
-        HR_ASSERT_OK(m_context->triggerEvent(new SessionEvent(data->eventType, mediaEvent)));
+        switch(data->eventType) {
+        case Event::Type::MESessionTopologyStatus:
+            {
+                UINT32 status;
+                HR_ASSERT_OK(mediaEvent->GetUINT32(MF_EVENT_TOPOLOGY_STATUS, &status));
+                HR_ASSERT_OK(m_context->triggerEvent(new TopologyStatusEvent(mediaEvent, status)));
+            }
+            break;
+        default:
+            HR_ASSERT_OK(m_context->triggerEvent(new SessionEvent(data->eventType, mediaEvent)));
+            break;
+        }
     } else {
         log(_T("Unknown Media Session Event: MediaEventType=%d"), mediaEventType);
     }

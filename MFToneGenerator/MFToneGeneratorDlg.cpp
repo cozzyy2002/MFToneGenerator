@@ -205,6 +205,7 @@ BEGIN_MESSAGE_MAP(CMFToneGeneratorDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_E2, &CMFToneGeneratorDlg::OnBnClickedButtonE2)
 	ON_CBN_SELCHANGE(IDC_COMBO_WAVE_FORM, &CMFToneGeneratorDlg::OnCbnSelchangeComboWaveForm)
 	ON_WM_GETMINMAXINFO()
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 
@@ -487,4 +488,14 @@ void CMFToneGeneratorDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 {
 	__super::OnGetMinMaxInfo(lpMMI);
 	lpMMI->ptMinTrackSize = POINT({ 640, 460 });
+}
+
+
+void CMFToneGeneratorDlg::OnSize(UINT nType, int cx, int cy)
+{
+	__super::OnSize(nType, cx, cy);
+
+	if(m_context) {
+		m_context->onResizeWindow();
+	}
 }

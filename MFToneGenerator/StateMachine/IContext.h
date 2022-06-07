@@ -30,5 +30,6 @@ public:
 	virtual HRESULT startFile(LPCTSTR fileName, HWND hwnd) = 0;
 	virtual HRESULT stop() = 0;
 	virtual HRESULT pauseResume() = 0;
+	virtual HRESULT onResizeWindow() = 0;
 };
 }

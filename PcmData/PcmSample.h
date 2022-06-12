@@ -81,9 +81,9 @@ public:
 	static const Value& getZeroValue(IPcmData::SampleDataType);
 	static const Value& getLowValue(IPcmData::SampleDataType);
 
-	template<typename T> static const Value& HighValue;
-	template<typename T> static const Value& ZeroValue;
-	template<typename T> static const Value& LowValue;
+	template<typename T> static const Value HighValue;
+	template<typename T> static const Value ZeroValue;
+	template<typename T> static const Value LowValue;
 };
 
 // Creates IPcmSample object to access internal buffer of IPcmData object that contains 1 cycle samples.

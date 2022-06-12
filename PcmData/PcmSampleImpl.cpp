@@ -36,22 +36,13 @@ IPcmSample* createPcmSample(IPcmData::SampleDataType sampleDataType, void* buffe
 }
 
 template<typename T>
-const IPcmSample::Value _HighValue = ValueHelper<T>::createValue(&PcmData<T>::HighValue);
+/*static*/ const IPcmSample::Value IPcmSample::HighValue(ValueHelper<T>::createValue(&PcmData<T>::HighValue));
 
 template<typename T>
-/*static*/ const IPcmSample::Value& IPcmSample::HighValue(_HighValue<T>);
+/*static*/ const IPcmSample::Value IPcmSample::ZeroValue(ValueHelper<T>::createValue(&PcmData<T>::ZeroValue));
 
 template<typename T>
-const IPcmSample::Value _ZeroValue = ValueHelper<T>::createValue(&PcmData<T>::ZeroValue);
-
-template<typename T>
-/*static*/ const IPcmSample::Value& IPcmSample::ZeroValue(_ZeroValue<T>);
-
-template<typename T>
-const IPcmSample::Value _LowValue = ValueHelper<T>::createValue(&PcmData<T>::LowValue);
-
-template<typename T>
-/*static*/ const IPcmSample::Value& IPcmSample::LowValue(_LowValue<T>);
+/*static*/ const IPcmSample::Value IPcmSample::LowValue(ValueHelper<T>::createValue(&PcmData<T>::LowValue));
 
 /*static*/ const IPcmSample::Value& IPcmSample::getHighValue(IPcmData::SampleDataType sampleDataType)
 {

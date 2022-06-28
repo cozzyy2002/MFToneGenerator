@@ -33,7 +33,7 @@ static const BITMAPINFOHEADER defaultBitmapInfoHeader = {
 	sizeof(BITMAPINFOHEADER),
 	480, 320,		// Width x Height(Bottom-Up DIB with the origin at the lower left corner.)
 	1,
-	24,				// BPP
+	32,				// BPP
 	BI_RGB,
 };
 
@@ -49,13 +49,28 @@ HRESULT ToneVideoStream::createStreamDescriptor(DWORD streamId, IMFStreamDescrip
 
 HRESULT ToneVideoStream::onStart(const PROPVARIANT* pvarStartPosition)
 {
-	// Nothing to do.
+	BITMAPINFOHEADER bi;
+	HR_ASSERT_OK(initializeBitmapInfoHeader(m_mediaType, bi));
+
+	CComPtr<IWICImagingFactory> wicFactory;
+	HR_ASSERT_OK(wicFactory.CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER));
+	m_bitmap.Release();
+	HR_ASSERT_OK(wicFactory->CreateBitmap(bi.biWidth, bi.biHeight, GUID_WICPixelFormat32bppBGR, WICBitmapCacheOnDemand, &m_bitmap));
+	CComPtr<ID2D1Factory> d2d1Factory;
+	HR_ASSERT_OK(D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &d2d1Factory));
+	auto prop = D2D1::RenderTargetProperties(
+		D2D1_RENDER_TARGET_TYPE_DEFAULT,
+		D2D1::PixelFormat());
+	HR_ASSERT_OK(d2d1Factory->CreateWicBitmapRenderTarget(m_bitmap, prop, &m_renderTarget));
+
 	return S_OK;
 }
 
 HRESULT ToneVideoStream::onStop()
 {
-	// Nothing to do.
+	m_renderTarget.Release();
+	m_bitmap.Release();
+
 	return S_OK;
 }
 
@@ -67,46 +82,57 @@ HRESULT ToneVideoStream::onShutdown()
 
 HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 {
+	if(!m_renderTarget) return S_FALSE;
+
 	// Sample duration in mSec.
 	static const UINT32 duration = 33;		// 30 flames per second.
 
 	BITMAPINFOHEADER bi;
 	HR_ASSERT_OK(initializeBitmapInfoHeader(m_mediaType, bi));
 
-	// Create memory DC and select color Bitmap.
-	CDC dcSrc;
-	dcSrc.CreateCompatibleDC(NULL);
-	CBitmap hbitmapSrc;
-	auto bpp = dcSrc.GetDeviceCaps(BITSPIXEL);	// Bits/Pixel of display device.
-	hbitmapSrc.CreateBitmap(bi.biWidth, bi.biHeight, 1, bpp, NULL);
-	dcSrc.SelectObject(hbitmapSrc);
-
 	// Draw background and wave form on the background.
-	drawBackground(dcSrc, bi.biWidth, bi.biHeight);
-	drawWaveForm(dcSrc, bi.biWidth, bi.biHeight);
-
-	// Create IMFMediaBuffer.
-	CComPtr<IMFMediaBuffer> buffer;
-	BYTE* rawBuffer;
-	HR_ASSERT_OK(MFCreateMemoryBuffer(bi.biSizeImage, &buffer));
-	HR_ASSERT_OK(buffer->Lock(&rawBuffer, nullptr, nullptr));
-
-	// Copy contents of memory DC to the buffer.
-	CDC dcDest;
-	dcDest.CreateCompatibleDC(&dcSrc);
-	LPVOID dibBuffer;
-	auto hdib = CreateDIBSection(dcDest, (const BITMAPINFO*)&bi, DIB_RGB_COLORS, &dibBuffer, NULL, 0);
-	HR_EXPECT(hdib && dibBuffer, E_UNEXPECTED);
-	if(hdib) {
-		dcDest.SelectObject(hdib);
-		dcDest.BitBlt(0, 0, bi.biWidth, bi.biHeight, &dcSrc, 0, 0, SRCCOPY);
-		CopyMemory(rawBuffer, dibBuffer, bi.biSizeImage);
-
-		DeleteObject(hdib);
+	m_renderTarget->BeginDraw();
+	auto width = (float)bi.biWidth;
+	auto height = (float)bi.biHeight;
+	drawBackground(width, height);
+	drawWaveForm(width, height);
+	D2D1_TAG tag1, tag2;
+	auto hr = HR_EXPECT_OK(m_renderTarget->EndDraw(&tag1, &tag2));
+	if(FAILED(hr)) {
+		Logger logger;
+		if(hr == D2DERR_RECREATE_TARGET) {
+			logger.log(_T("Recreate ID1D2RenderTarget"));
+			onStop();
+			PROPVARIANT var;
+			PropVariantInit(&var);
+			onStart(&var);
+		} else {
+			logger.log(_T("ID1D2RenderTarget::EndDraw() failed. HRESULT=%p, TAG=%I64u:%I64u"), hr, tag1, tag2);
+			return hr;
+		}
 	}
 
-	HR_ASSERT_OK(buffer->Unlock());
-	HR_ASSERT_OK(buffer->SetCurrentLength(bi.biSizeImage));
+	// Create IMFMediaBuffer and copy contents of IWICBitmap to it.
+	WICRect wicRect = {0, 0, bi.biWidth, bi.biHeight};
+	CComPtr<IMFMediaBuffer> buffer;
+	UINT bitmapSize;
+	{
+		// In this scope:
+		//   IWICBitmapLock object is retrieved from IWICBitmap and released.
+		//   IMFMediaBuffer::Lock() and Unlock() are called.
+		CComPtr<IWICBitmapLock> bitmapLock;
+		HR_ASSERT_OK(m_bitmap->Lock(&wicRect, WICBitmapLockRead, &bitmapLock));
+		BYTE* bitmap;
+		HR_ASSERT_OK(bitmapLock->GetDataPointer(&bitmapSize, &bitmap));
+
+		BYTE* rawBuffer;
+		HR_ASSERT_OK(MFCreateMemoryBuffer(bitmapSize, &buffer));
+		HR_ASSERT_OK(buffer->Lock(&rawBuffer, nullptr, nullptr));
+		ScopedDeleter<IMFMediaBuffer> unlockBuffer(buffer, [](IMFMediaBuffer* p) { HR_EXPECT_OK(p->Unlock()); });
+
+		CopyMemory(rawBuffer, bitmap, bitmapSize);
+	}
+	HR_ASSERT_OK(buffer->SetCurrentLength(bitmapSize));
 
 	// Add the buffer to IMFSample object.
 	sample->AddBuffer(buffer);
@@ -119,30 +145,29 @@ HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 	return S_OK;
 }
 
-void ToneVideoStream::drawBackground(CDC& dc, int width, int height)
+void ToneVideoStream::drawBackground(float width, float height)
 {
 	// Fill background.
-	CRect bgRect(0, 0, width, height);
-	CBrush bgBrush(bgColor);
-	dc.FillRect(bgRect, &bgBrush);
+	auto bgColor = D2D1::ColorF(D2D1::ColorF::WhiteSmoke);
+	m_renderTarget->Clear(bgColor);
 
-	// Write text of each channel number using color as same as wave form.
-	static const CString textFormat(_T("———— Channel %d"));
-	auto textSize = dc.GetTextExtent(textFormat);
-	auto channels = m_pcmData->getChannels();
-	int margin = 2;
-	int x = width - textSize.cx - margin;	// Right aligned.
-	int y = margin;
-	for(WORD ch = 0; ch < channels; ch++) {
-		CString text;
-		text.Format(textFormat, ch + 1);
-		dc.SetTextColor(colors[ch % ARRAYSIZE(colors)]);
-		dc.TextOut(x, y, text);
-		y += (textSize.cy + margin);
-	}
+	//// Write text of each channel number using color as same as wave form.
+	//static const CString textFormat(_T("———— Channel %d"));
+	//auto textSize = dc.GetTextExtent(textFormat);
+	//auto channels = m_pcmData->getChannels();
+	//int margin = 2;
+	//int x = width - textSize.cx - margin;	// Right aligned.
+	//int y = margin;
+	//for(WORD ch = 0; ch < channels; ch++) {
+	//	CString text;
+	//	text.Format(textFormat, ch + 1);
+	//	dc.SetTextColor(colors[ch % ARRAYSIZE(colors)]);
+	//	dc.TextOut(x, y, text);
+	//	y += (textSize.cy + margin);
+	//}
 }
 
-void ToneVideoStream::drawWaveForm(CDC& dc, int width, int height)
+void ToneVideoStream::drawWaveForm(float width, float height)
 {
 	auto sampleDataType = m_pcmData->getSampleDataType();
 	auto channels = m_pcmData->getChannels();
@@ -174,7 +199,7 @@ void ToneVideoStream::drawWaveForm(CDC& dc, int width, int height)
 				// Show wave form of all channels in piles.
 				y += (height / 2);
 			}
-			dc.SetPixel(x, y, colors[sampleIndex % channels % ARRAYSIZE(colors)]);
+			//dc.SetPixel(x, y, colors[sampleIndex % channels % ARRAYSIZE(colors)]);
 			sampleIndex++;
 		}
 	}
@@ -186,7 +211,7 @@ HRESULT initializeBitmapInfoHeader(IMFMediaType* mediaType, BITMAPINFOHEADER& bi
 {
 	GUID subType;
 	mediaType->GetGUID(MF_MT_SUBTYPE, &subType);
-	HR_ASSERT(subType == MFVideoFormat_RGB24, MF_E_INVALIDMEDIATYPE);
+	HR_ASSERT(subType == MFVideoFormat_RGB32, MF_E_INVALIDMEDIATYPE);
 
 	bi = defaultBitmapInfoHeader;
 

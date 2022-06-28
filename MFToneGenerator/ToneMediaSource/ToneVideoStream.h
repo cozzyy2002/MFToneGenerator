@@ -27,6 +27,9 @@ protected:
     // so that wave form moves from right to left.
     size_t m_startSampleIndex;
 
-    void drawBackground(CDC& dc, int width, int height);
-    void drawWaveForm(CDC& dc, int width, int height);
+    void drawBackground(float width, float height);
+    void drawWaveForm(float width, float height);
+
+    CComPtr<ID2D1RenderTarget> m_renderTarget;
+    CComPtr<IWICBitmap> m_bitmap;
 };

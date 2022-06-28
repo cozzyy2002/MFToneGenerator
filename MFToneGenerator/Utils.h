@@ -36,3 +36,6 @@ protected:
 	using Writer = void (*)(LPCTSTR);
 	Writer m_writer;
 };
+
+template<typename T>
+using ScopedDeleter = std::unique_ptr<T, void (*)(T*)>;

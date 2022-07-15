@@ -17,6 +17,9 @@ protected:
     virtual HRESULT onShutdown() override;
     virtual HRESULT onRequestSample(IMFSample* sample) override;
 
+    HRESULT createDeviceResources();
+    HRESULT discardDeviceResources();
+
 protected:
     std::shared_ptr<IPcmData> m_pcmData;
     std::unique_ptr<IPcmSample> m_pcmSample;
@@ -32,4 +35,6 @@ protected:
 
     CComPtr<ID2D1RenderTarget> m_renderTarget;
     CComPtr<IWICBitmap> m_bitmap;
+    CComPtr<IDWriteTextFormat> m_textFormat;
+    std::vector<CComPtr<ID2D1SolidColorBrush>> m_brushes;
 };

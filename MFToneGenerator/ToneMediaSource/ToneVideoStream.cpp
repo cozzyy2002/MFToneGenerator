@@ -6,15 +6,15 @@
 
 // Colors for channel number text and wave form of each channel.
 // First color is used for channel 1, second for channel 2, and so on.
-static const COLORREF colors[] = {
-	RGB(0 ,0 ,0),			// Black
-	RGB(0xff, 0x00, 0x00),	// Red
-	RGB(0xff, 0xff, 0x00),	// Yellow
-	RGB(0x00, 0xff, 0xff),	// Blue
-	RGB(0x80, 0x00, 0x80),	// Violet
-	RGB(0xff, 0xa5, 0x00),	// Orange
-	RGB(0x00, 0x80, 0x00),	// Green
-	RGB(0x00, 0x00, 0xff),	// Indigo
+static const D2D1::ColorF colors[] = {
+	D2D1::ColorF::Black,
+	D2D1::ColorF::Red,
+	D2D1::ColorF::Yellow,
+	D2D1::ColorF::Blue,
+	D2D1::ColorF::Violet,
+	D2D1::ColorF::Orange,
+	D2D1::ColorF::Green,
+	D2D1::ColorF::Indigo,
 };
 
 // Background color
@@ -32,7 +32,7 @@ ToneVideoStream::ToneVideoStream(ToneMediaSource* mediaSource, IMFStreamDescript
 static const BITMAPINFOHEADER defaultBitmapInfoHeader = {
 	sizeof(BITMAPINFOHEADER),
 	480, 320,		// Width x Height(Bottom-Up DIB with the origin at the lower left corner.)
-	1,
+	1,				// Planes
 	32,				// BPP
 	BI_RGB,
 };
@@ -43,33 +43,39 @@ HRESULT ToneVideoStream::createStreamDescriptor(DWORD streamId, IMFStreamDescrip
 	auto& bi = defaultBitmapInfoHeader;
 	HR_ASSERT_OK(MFCreateVideoMediaTypeFromBitMapInfoHeaderEx(&bi, bi.biSize, bi.biWidth, bi.biHeight, MFVideoInterlace_Progressive, 0, 1, 30, 0, &mediaType));
 
+	UINT32 stride;
+	auto hr = HR_EXPECT_OK(mediaType->GetUINT32(MF_MT_DEFAULT_STRIDE, &stride));
+	if(SUCCEEDED(hr)) {
+		auto iStride = (INT32)stride;
+		if(iStride < 0) {
+			// Set positive value as default stride to tell that the image is top-down.
+			HR_ASSERT_OK(mediaType->SetUINT32(MF_MT_DEFAULT_STRIDE, (UINT32)(-iStride)));
+		}
+	}
+
 	IMFMediaType* mediaTypes[] = { mediaType };
 	return ToneMediaStream::createStreamDescriptor(mediaTypes, streamId, ppsd);
 }
 
 HRESULT ToneVideoStream::onStart(const PROPVARIANT* pvarStartPosition)
 {
-	BITMAPINFOHEADER bi;
-	HR_ASSERT_OK(initializeBitmapInfoHeader(m_mediaType, bi));
+	HR_ASSERT_OK(createDeviceResources());
 
-	CComPtr<IWICImagingFactory> wicFactory;
-	HR_ASSERT_OK(wicFactory.CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER));
-	m_bitmap.Release();
-	HR_ASSERT_OK(wicFactory->CreateBitmap(bi.biWidth, bi.biHeight, GUID_WICPixelFormat32bppBGR, WICBitmapCacheOnDemand, &m_bitmap));
-	CComPtr<ID2D1Factory> d2d1Factory;
-	HR_ASSERT_OK(D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &d2d1Factory));
-	auto prop = D2D1::RenderTargetProperties(
-		D2D1_RENDER_TARGET_TYPE_DEFAULT,
-		D2D1::PixelFormat());
-	HR_ASSERT_OK(d2d1Factory->CreateWicBitmapRenderTarget(m_bitmap, prop, &m_renderTarget));
+	CComPtr<IDWriteFactory> dwFactory;
+	HR_ASSERT_OK(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&dwFactory)));
+
+	HR_ASSERT_OK(dwFactory->CreateTextFormat(
+		L"System", NULL,
+		DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+		20, L"", &m_textFormat));
+	HR_ASSERT_OK(m_textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING));
 
 	return S_OK;
 }
 
 HRESULT ToneVideoStream::onStop()
 {
-	m_renderTarget.Release();
-	m_bitmap.Release();
+	HR_ASSERT_OK(discardDeviceResources());
 
 	return S_OK;
 }
@@ -80,9 +86,45 @@ HRESULT ToneVideoStream::onShutdown()
 	return S_OK;
 }
 
+HRESULT ToneVideoStream::createDeviceResources()
+{
+	BITMAPINFOHEADER bi;
+	HR_ASSERT_OK(initializeBitmapInfoHeader(m_mediaType, bi));
+
+	CComPtr<IWICImagingFactory> wicFactory;
+	HR_ASSERT_OK(wicFactory.CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER));
+
+	// Note: GUID_WICPixelFormat32bppBGR is suitable for MFVideoFormat_RGB32
+	HR_ASSERT_OK(wicFactory->CreateBitmap(bi.biWidth, bi.biHeight, GUID_WICPixelFormat32bppBGR, WICBitmapCacheOnDemand, &m_bitmap));
+	CComPtr<ID2D1Factory> d2d1Factory;
+	HR_ASSERT_OK(D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &d2d1Factory));
+	auto prop = D2D1::RenderTargetProperties(
+		D2D1_RENDER_TARGET_TYPE_DEFAULT,
+		D2D1::PixelFormat());
+	HR_ASSERT_OK(d2d1Factory->CreateWicBitmapRenderTarget(m_bitmap, prop, &m_renderTarget));
+
+	m_brushes.reserve(ARRAYSIZE(colors));
+	for(auto& color : colors) {
+		CComPtr<ID2D1SolidColorBrush> brush;
+		HR_ASSERT_OK(m_renderTarget->CreateSolidColorBrush(color, &brush));
+		m_brushes.push_back(brush);
+	}
+
+	return S_OK;
+}
+
+HRESULT ToneVideoStream::discardDeviceResources()
+{
+	m_brushes.clear();
+	m_renderTarget.Release();
+	m_bitmap.Release();
+
+	return S_OK;
+}
+
 HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 {
-	if(!m_renderTarget) return S_FALSE;
+	if(!m_renderTarget) { return S_FALSE; }
 
 	// Sample duration in mSec.
 	static const UINT32 duration = 33;		// 30 flames per second.
@@ -90,24 +132,24 @@ HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 	BITMAPINFOHEADER bi;
 	HR_ASSERT_OK(initializeBitmapInfoHeader(m_mediaType, bi));
 
-	// Draw background and wave form on the background.
+	// Draw background and wave form to IWICBitmap through ID2D1RenderTarget.
 	m_renderTarget->BeginDraw();
 	auto width = (float)bi.biWidth;
 	auto height = (float)bi.biHeight;
 	drawBackground(width, height);
 	drawWaveForm(width, height);
+	// Workaround to avoid that CComPtr::operator->() fails at `ATLASSERT(p!=NULL)`.
+	if(!m_renderTarget) { return S_FALSE; }
 	D2D1_TAG tag1, tag2;
 	auto hr = HR_EXPECT_OK(m_renderTarget->EndDraw(&tag1, &tag2));
 	if(FAILED(hr)) {
 		Logger logger;
 		if(hr == D2DERR_RECREATE_TARGET) {
-			logger.log(_T("Recreate ID1D2RenderTarget"));
-			onStop();
-			PROPVARIANT var;
-			PropVariantInit(&var);
-			onStart(&var);
+			logger.log(_T("Recreate ID2D1RenderTarget"));
+			HR_ASSERT_OK(discardDeviceResources());
+			HR_ASSERT_OK(createDeviceResources());
 		} else {
-			logger.log(_T("ID1D2RenderTarget::EndDraw() failed. HRESULT=%p, TAG=%I64u:%I64u"), hr, tag1, tag2);
+			logger.log(_T("ID2D1RenderTarget::EndDraw() failed. HRESULT=0x%p, TAG=%I64u:%I64u"), hr, tag1, tag2);
 			return hr;
 		}
 	}
@@ -120,6 +162,7 @@ HRESULT ToneVideoStream::onRequestSample(IMFSample* sample)
 		// In this scope:
 		//   IWICBitmapLock object is retrieved from IWICBitmap and released.
 		//   IMFMediaBuffer::Lock() and Unlock() are called.
+		//   Copy contents of IWICBitmap to IMFMediaBuffer.
 		CComPtr<IWICBitmapLock> bitmapLock;
 		HR_ASSERT_OK(m_bitmap->Lock(&wicRect, WICBitmapLockRead, &bitmapLock));
 		BYTE* bitmap;
@@ -151,20 +194,21 @@ void ToneVideoStream::drawBackground(float width, float height)
 	auto bgColor = D2D1::ColorF(D2D1::ColorF::WhiteSmoke);
 	m_renderTarget->Clear(bgColor);
 
-	//// Write text of each channel number using color as same as wave form.
-	//static const CString textFormat(_T("———— Channel %d"));
-	//auto textSize = dc.GetTextExtent(textFormat);
-	//auto channels = m_pcmData->getChannels();
-	//int margin = 2;
-	//int x = width - textSize.cx - margin;	// Right aligned.
-	//int y = margin;
-	//for(WORD ch = 0; ch < channels; ch++) {
-	//	CString text;
-	//	text.Format(textFormat, ch + 1);
-	//	dc.SetTextColor(colors[ch % ARRAYSIZE(colors)]);
-	//	dc.TextOut(x, y, text);
-	//	y += (textSize.cy + margin);
-	//}
+	// Write text of each channel number using color as same as wave form.
+	static const CString textFormat(_T("———— Channel %d"));
+	D2D1_SIZE_F textSize = {100, 20};		// TODO: Retrieve text size.
+	auto channels = m_pcmData->getChannels();
+	static const float margin = 2;
+	textSize.height += margin;
+	D2D1_RECT_F textRect = {margin, margin, width - margin, textSize.height};
+	for(WORD ch = 0; ch < channels; ch++) {
+		CString text;
+		text.Format(textFormat, ch + 1);
+		auto& textBrush = m_brushes[ch % m_brushes.size()];
+		m_renderTarget->DrawText(text, text.GetLength(), m_textFormat, textRect, textBrush);
+		textRect.top += textSize.height;
+		textRect.bottom += textSize.height;
+	}
 }
 
 void ToneVideoStream::drawWaveForm(float width, float height)

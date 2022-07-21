@@ -33,6 +33,7 @@ protected:
     void drawBackground(float width, float height);
     void drawWaveForm(float width, float height);
 
+    CComPtr<ID2D1Factory> m_d2d1Factory;
     CComPtr<ID2D1RenderTarget> m_renderTarget;
     CComPtr<IWICBitmap> m_bitmap;
     CComPtr<IDWriteTextFormat> m_textFormat;

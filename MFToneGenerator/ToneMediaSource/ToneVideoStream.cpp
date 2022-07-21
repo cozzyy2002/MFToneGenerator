@@ -96,12 +96,13 @@ HRESULT ToneVideoStream::createDeviceResources()
 
 	// Note: GUID_WICPixelFormat32bppBGR is suitable for MFVideoFormat_RGB32
 	HR_ASSERT_OK(wicFactory->CreateBitmap(bi.biWidth, bi.biHeight, GUID_WICPixelFormat32bppBGR, WICBitmapCacheOnDemand, &m_bitmap));
-	CComPtr<ID2D1Factory> d2d1Factory;
-	HR_ASSERT_OK(D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &d2d1Factory));
+	if(!m_d2d1Factory) {
+		HR_ASSERT_OK(D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &m_d2d1Factory));
+	}
 	auto prop = D2D1::RenderTargetProperties(
 		D2D1_RENDER_TARGET_TYPE_DEFAULT,
 		D2D1::PixelFormat());
-	HR_ASSERT_OK(d2d1Factory->CreateWicBitmapRenderTarget(m_bitmap, prop, &m_renderTarget));
+	HR_ASSERT_OK(m_d2d1Factory->CreateWicBitmapRenderTarget(m_bitmap, prop, &m_renderTarget));
 
 	m_brushes.reserve(ARRAYSIZE(colors));
 	for(auto& color : colors) {
@@ -230,6 +231,7 @@ void ToneVideoStream::drawWaveForm(float width, float height)
 	}
 
 	auto sampleCount = m_pcmSample->getSampleCount();
+#if 0
 	size_t sampleIndex = m_startSampleIndex;
 	for(LONG x = 0; x < width; x++) {
 		for(WORD ch = 0; ch < channels; ch++) {
@@ -247,7 +249,27 @@ void ToneVideoStream::drawWaveForm(float width, float height)
 			sampleIndex++;
 		}
 	}
+#else
+	for(WORD ch = 0; ch < channels; ch++) {
+		size_t sampleIndex = m_startSampleIndex + ch;
+		CComPtr<ID2D1Geometry> geometry;
+		m_d2d1Factory->CreatePathGeometry();
+		for(LONG x = 0; x < width; x++) {
+			auto value = (*m_pcmSample)[sampleIndex % sampleCount].getInt32() - zeroValue.getInt32();
+			auto y = (int)((double)value * height / valueHeight);
+			if(showInPane) {
+				// Show wave form of each channel in it's pane.
+				y /= channels;
+				y += ((height / channels / 2) + (height / channels * ch));
+			} else {
+				// Show wave form of all channels in piles.
+				y += (height / 2);
+			}
 
+			sampleIndex += channels;
+		}
+	}
+#endif
 	m_startSampleIndex = (m_startSampleIndex + channels) % sampleCount;
 }
 
